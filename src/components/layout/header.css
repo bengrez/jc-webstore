@@ -1,0 +1,241 @@
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: linear-gradient(135deg, var(--color-header), var(--color-surface));
+  padding: 12px 18px;
+  box-shadow: var(--shadow-sm);
+}
+
+[data-theme-mode='corporate'] .site-header {
+  background: linear-gradient(120deg, #0f1d2b, #1b2a3a);
+}
+
+.site-header__upper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.site-header__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.site-header__logo {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  background-color: rgba(255, 255, 255, 0.65);
+  padding: 6px;
+}
+
+.site-header__brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.brand-label {
+  font-family: var(--heading-font);
+  font-size: 1.1rem;
+  letter-spacing: 0.5px;
+}
+
+.brand-tagline {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.75);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.site-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.site-header__mode-context {
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  padding-right: 8px;
+  border-right: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.site-header__mode-label {
+  text-transform: uppercase;
+  font-size: 0.62rem;
+  letter-spacing: 0.28em;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.site-header__mode-value {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.site-header__mode-switch {
+  display: none;
+}
+
+.site-header__menu-toggle {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: none;
+  background: var(--color-surface);
+  display: grid;
+  place-items: center;
+  gap: 4px;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px var(--color-divider);
+}
+
+.site-header__menu-toggle span {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: var(--color-primary);
+  border-radius: 999px;
+}
+
+.site-header__nav {
+  display: none;
+}
+
+.site-header__nav.is-open {
+  display: block;
+}
+
+.site-header__nav-panel {
+  margin-top: 14px;
+  background: var(--color-surface-strong);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.site-header__nav-mode {
+  display: block;
+}
+
+.site-header__nav-mode-copy {
+  margin-bottom: 10px;
+  font-size: 0.85rem;
+  color: var(--color-text-soft);
+}
+
+.site-header__nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.site-header__link {
+  display: block;
+  padding: 14px 18px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.6);
+  font-weight: 600;
+  color: var(--color-text-soft);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.03);
+  transition: background var(--transition-soft), color var(--transition-soft);
+  position: relative;
+}
+
+.site-header__link.is-active {
+  background: var(--color-accent-soft);
+  color: var(--color-primary-strong);
+}
+
+.site-header__link.is-active::after {
+  content: '';
+  position: absolute;
+  inset: auto 18px -6px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--color-accent);
+}
+
+.site-header__link:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+@media (min-width: 768px) {
+  .site-header {
+    padding: 16px 42px;
+  }
+
+  .site-header__logo {
+    width: 56px;
+    height: 56px;
+  }
+
+  .brand-label {
+    font-size: 1.3rem;
+  }
+
+  .brand-tagline {
+    font-size: 0.75rem;
+  }
+
+  .site-header__mode-context {
+    display: flex;
+  }
+
+  .site-header__mode-switch {
+    display: block;
+  }
+
+  .site-header__menu-toggle {
+    display: none;
+  }
+
+  .site-header__nav {
+    display: block;
+  }
+
+  .site-header__nav-panel {
+    margin-top: 12px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .site-header__nav-mode {
+    display: none;
+  }
+
+  .site-header__nav ul {
+    flex-direction: row;
+    gap: 12px;
+  }
+
+  .site-header__link {
+    padding: 10px 16px;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .site-header__link.is-active {
+    background: transparent;
+    color: var(--color-accent);
+  }
+
+  .site-header__link:hover {
+    background: rgba(255, 255, 255, 0.28);
+  }
+}

@@ -1,0 +1,201 @@
+:root {
+  color-scheme: only light;
+  --font-body: 'Work Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-heading-graduation: 'Cormorant Garamond', 'Times New Roman', serif;
+  --font-heading-corporate: 'Poppins', 'Helvetica Neue', sans-serif;
+  --shadow-sm: 0 6px 18px rgba(17, 24, 16, 0.08);
+  --radius-lg: 24px;
+  --radius-md: 16px;
+  --radius-sm: 10px;
+  --transition-soft: 180ms ease-in-out;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-background);
+  color: var(--color-text);
+  margin: 0;
+  line-height: 1.7;
+  letter-spacing: 0.01em;
+  -webkit-font-smoothing: antialiased;
+  transition:
+    background-color var(--transition-soft),
+    color var(--transition-soft);
+}
+
+#root {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+}
+
+[data-theme-mode='graduation'] {
+  --heading-font: var(--font-heading-graduation);
+  --color-background: #eef2e3;
+  --color-surface: #f8f9f3;
+  --color-surface-strong: #ffffff;
+  --color-primary: #8daf93;
+  --color-primary-strong: #78a07c;
+  --color-header: #a7c4a9;
+  --color-accent: #c9a34a;
+  --color-accent-soft: rgba(201, 163, 74, 0.1);
+  --color-text: #1f2a23;
+  --color-text-soft: #3e4a3d;
+  --color-muted: #6e7b6b;
+  --color-divider: rgba(60, 75, 63, 0.18);
+}
+
+[data-theme-mode='corporate'] {
+  --heading-font: var(--font-heading-corporate);
+  --color-background: #f5f7f4;
+  --color-surface: #ffffff;
+  --color-surface-strong: #fff;
+  --color-primary: #1b2a3a;
+  --color-primary-strong: #15212f;
+  --color-header: #0f1d2b;
+  --color-accent: #c59f3e;
+  --color-accent-soft: rgba(197, 159, 62, 0.12);
+  --color-text: #12161c;
+  --color-text-soft: #3e4a56;
+  --color-muted: #6b7682;
+  --color-divider: rgba(26, 36, 46, 0.15);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  font-family: var(--heading-font);
+  color: var(--color-text);
+}
+
+p {
+  margin: 0;
+  color: var(--color-text);
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  font-size: 0.72rem;
+  color: var(--color-muted);
+}
+
+.dropcap::first-letter {
+  font-family: var(--heading-font);
+  font-size: 3rem;
+  line-height: 1;
+  float: left;
+  padding-right: 10px;
+  color: var(--color-accent);
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border: none;
+  cursor: pointer;
+  transition:
+    transform var(--transition-soft),
+    background-color var(--transition-soft),
+    color var(--transition-soft),
+    box-shadow var(--transition-soft);
+}
+
+.button:focus-visible {
+  outline: 3px solid rgba(21, 33, 47, 0.4);
+  outline-offset: 2px;
+}
+
+.button--primary {
+  background: var(--color-primary);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.button--primary:hover {
+  transform: translateY(-2px);
+  background: var(--color-primary-strong);
+}
+
+.button--ghost {
+  background: transparent;
+  color: var(--color-primary-strong);
+  box-shadow: inset 0 0 0 1px var(--color-divider);
+}
+
+.button--ghost:hover {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.button--accent {
+  background: var(--color-accent);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.button--accent:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.link::after {
+  content: '→';
+  transition: transform var(--transition-soft);
+}
+
+.link:hover::after {
+  transform: translateX(4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
