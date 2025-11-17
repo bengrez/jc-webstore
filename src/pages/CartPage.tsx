@@ -18,6 +18,10 @@ const CartPage = () => {
   const { items, total, updateQuantity, removeItem, clearCart } = useCart()
   const [form, setForm] = useState(initialFormState)
   const [submitted, setSubmitted] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [status, setStatus] = useState<null | { type: 'success' | 'error'; message: string }>(
+    null
+  )
 
   const hasItems = items.length > 0
 
@@ -36,12 +40,54 @@ const CartPage = () => {
   const handleInputChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = event.target
     setForm((prev) => ({ ...prev, [name]: value }))
+    setErrors((prev) => {
+      if (!prev[name]) return prev
+      const next = { ...prev }
+      delete next[name]
+      return next
+    })
+    setStatus((prev) => (prev?.type === 'error' ? null : prev))
+  }
+
+  const validateForm = () => {
+    const nextErrors: Record<string, string> = {}
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const phonePattern = /^\+?\d[\d .-]{7,}$/
+
+    if (!form.name.trim()) {
+      nextErrors.name = 'El nombre es obligatorio.'
+    }
+
+    if (!form.email.trim()) {
+      nextErrors.email = 'El correo electrónico es obligatorio.'
+    } else if (!emailPattern.test(form.email.trim())) {
+      nextErrors.email = 'Ingresa un correo electrónico válido.'
+    }
+
+    if (form.phone.trim() && !phonePattern.test(form.phone.trim())) {
+      nextErrors.phone = 'Ingresa un teléfono válido (incluye código de país).'
+    }
+
+    return nextErrors
   }
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!hasItems) return
+    if (!hasItems) {
+      setStatus({ type: 'error', message: 'Agrega productos al carrito antes de enviar.' })
+      return
+    }
 
+    const validationErrors = validateForm()
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors)
+      setStatus({ type: 'error', message: 'Revisa los campos requeridos antes de enviar.' })
+      return
+    }
+
+    setErrors({})
+    setStatus({ type: 'success', message: '¡Solicitud enviada! Te contactaremos pronto.' })
     setSubmitted(true)
     clearCart()
     setForm(initialFormState)
@@ -57,6 +103,11 @@ const CartPage = () => {
             responderán dentro de 24 horas hábiles con los próximos pasos.
           </p>
         </header>
+        {status?.message && (
+          <div className="cart-status" role="status" aria-live="polite" data-variant={status.type}>
+            {status.message}
+          </div>
+        )}
         <div className="cart-success">
           <div className="cart-success__note">
             <p>
@@ -194,6 +245,12 @@ const CartPage = () => {
             <form className="cart-form" onSubmit={handleSubmit}>
               <h2>Datos para tu cotización</h2>
 
+              {status?.type === 'error' && (
+                <div className="cart-status" role="alert" aria-live="assertive" data-variant="error">
+                  {status.message}
+                </div>
+              )}
+
               <label htmlFor="cart-name">Nombre y apellido</label>
               <input
                 id="cart-name"
@@ -203,6 +260,11 @@ const CartPage = () => {
                 onChange={handleInputChange}
                 required
               />
+              {errors.name && (
+                <p className="cart-form__error" role="alert" aria-live="assertive">
+                  {errors.name}
+                </p>
+              )}
 
               <label htmlFor="cart-email">Correo electrónico</label>
               <input
@@ -213,6 +275,11 @@ const CartPage = () => {
                 onChange={handleInputChange}
                 required
               />
+              {errors.email && (
+                <p className="cart-form__error" role="alert" aria-live="assertive">
+                  {errors.email}
+                </p>
+              )}
 
               <label htmlFor="cart-phone">Teléfono</label>
               <input
@@ -223,6 +290,11 @@ const CartPage = () => {
                 onChange={handleInputChange}
                 placeholder="+56 9 ..."
               />
+              {errors.phone && (
+                <p className="cart-form__error" role="alert" aria-live="assertive">
+                  {errors.phone}
+                </p>
+              )}
 
               <label htmlFor="cart-message">Detalles adicionales</label>
               <textarea
