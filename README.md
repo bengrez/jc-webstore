@@ -1,73 +1,49 @@
-# React + TypeScript + Vite
+# JC Webstore
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+JC Webstore is a single-page React application that showcases a curated catalog of graduation essentials such as embroidered stoles, signature mortarboards, and customizable gift kits. The experience is built to help parents and schools browse offerings, learn about the brand, and start a purchase flow through cart management and contact options.
 
-Currently, two official plugins are available:
+## Features
+- **Home hero & value props** highlighting the ceremony aesthetic and call-to-action buttons for catalog browsing.
+- **Product catalog** with price, lead time, and promotional badges sourced from `src/data/products.ts`.
+- **Persistent layout** with navigation, footer, and branded styling shared across pages.
+- **Cart experience** that summarizes selected products and costs.
+- **About & contact pages** to present the company story and provide outreach channels.
+- **Responsive design** optimized for desktop and mobile via modular SCSS styles.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Tech stack
+- [Vite](https://vitejs.dev/) + [React](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
+- Routing with [React Router](https://reactrouter.com/)
+- Styling with modular SCSS under `src/styles`
 
-## React Compiler
+## Getting started
+1. **Install dependencies**
+   ```bash
+   npm install
+   ```
+2. **Start the development server**
+   ```bash
+   npm run dev
+   ```
+   Vite will print a local URL (typically `http://localhost:5173`) for live reloading.
+3. **Run lint checks**
+   ```bash
+   npm run lint
+   ```
+4. **Create a production build**
+   ```bash
+   npm run build
+   ```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Project structure
+- `src/App.tsx` – Route map for home, catalog, about, contact, cart, and 404 pages.
+- `src/components/` – Reusable UI such as layout, headers, product cards, and cart elements.
+- `src/pages/` – Page-level screens composed from components.
+- `src/data/` – Product catalog seed data and shared types.
+- `src/styles/` – Global and component-scoped SCSS styles.
 
-## Expanding the ESLint configuration
+## Deployment notes
+- This template is configured as an SPA suitable for static hosting platforms (Netlify, Vercel, GitHub Pages).
+- Ensure `npm run build` completes successfully before deploying the `dist/` output.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## License
+This project is provided for educational and portfolio use. Customize and extend it to fit your graduation merchandising needs.
