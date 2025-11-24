@@ -7,22 +7,47 @@ const initialFormState = {
   email: '',
   phone: '',
   company: '',
+  service: 'Graduación',
+  fileName: '',
   message: '',
 }
 
 const ContactPage = () => {
   const [form, setForm] = useState(initialFormState)
   const [submitted, setSubmitted] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
 
-  const handleInputChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value } = event.target
     setForm((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      setForm((prev) => ({ ...prev, fileName: file.name }))
+    }
+  }
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    setSubmitted(true)
-    setForm(initialFormState)
+    setError(null)
+    setLoading(true)
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 700))
+      window.dataLayer = window.dataLayer || []
+      window.dataLayer.push({ event: 'contact_submit', payload: form })
+      setSubmitted(true)
+      setForm(initialFormState)
+    } catch (err) {
+      console.error(err)
+      setError('Ocurrió un error al enviar. Intenta nuevamente o contáctanos por WhatsApp.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -109,6 +134,15 @@ const ContactPage = () => {
             />
           </div>
 
+          <div className="contact-form__field">
+            <label htmlFor="service">Interés principal</label>
+            <select id="service" name="service" value={form.service} onChange={handleInputChange}>
+              <option value="Graduación">Graduación</option>
+              <option value="Corporativo">Corporativo</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+
           <div className="contact-form__field contact-form__field--full">
             <label htmlFor="message">Cuéntanos tu necesidad</label>
             <textarea
@@ -122,9 +156,18 @@ const ContactPage = () => {
             />
           </div>
 
+          <div className="contact-form__field contact-form__field--full">
+            <label htmlFor="brief">
+              Adjuntar logo o brief (opcional)
+              <input id="brief" name="brief" type="file" onChange={handleFileChange} />
+            </label>
+            {form.fileName && <span className="contact-form__file">{form.fileName}</span>}
+          </div>
+
           <button type="submit" className="button button--primary">
-            Enviar mensaje
+            {loading ? 'Enviando…' : 'Enviar mensaje'}
           </button>
+          {error && <p className="contact-error">{error}</p>}
         </form>
 
         <aside className="contact-sidebar">
@@ -132,6 +175,13 @@ const ContactPage = () => {
             <h2>Datos de contacto</h2>
             <p>contacto@gradumarketing.cl</p>
             <p>+56 9 1234 5678</p>
+            <div className="contact-chips">
+              <a href="https://wa.me/56912345678" target="_blank" rel="noreferrer">
+                Chat inmediato
+              </a>
+              <a href="tel:+56912345678">Llamada directa</a>
+              <a href="mailto:contacto@gradumarketing.cl">Correo</a>
+            </div>
           </div>
           <div>
             <h3>Horario</h3>
@@ -142,6 +192,14 @@ const ContactPage = () => {
             <h3>Visítanos</h3>
             <p>Taller en Santiago, Chile.</p>
             <p>Agenda previa coordinando por correo.</p>
+          </div>
+          <div className="contact-panel">
+            <h3>SLA y soporte</h3>
+            <ul>
+              <li>Respuesta inicial &lt; 24 horas hábiles.</li>
+              <li>Entrega comprometida por escrito y seguimiento de despacho.</li>
+              <li>Correcciones incluidas cuando la muestra aprobada difiere.</li>
+            </ul>
           </div>
         </aside>
       </section>

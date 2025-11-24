@@ -101,7 +101,8 @@
 }
 
 .contact-form input,
-.contact-form textarea {
+.contact-form textarea,
+.contact-form select {
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-divider);
   padding: 12px 14px;
@@ -113,10 +114,21 @@
 }
 
 .contact-form input:focus,
-.contact-form textarea:focus {
+.contact-form textarea:focus,
+.contact-form select:focus {
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 4px rgba(30, 48, 64, 0.12);
+}
+
+.contact-form__file {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.contact-error {
+  color: #9b1b30;
+  font-weight: 700;
 }
 
 .contact-sidebar {
@@ -140,6 +152,35 @@
 
 .contact-sidebar p + p {
   margin-top: 4px;
+}
+
+.contact-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.contact-chips a {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.05);
+  font-weight: 600;
+}
+
+.contact-panel {
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.contact-panel ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: var(--color-text-soft);
+  display: grid;
+  gap: 6px;
 }
 
 @media (min-width: 768px) {

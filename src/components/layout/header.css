@@ -58,6 +58,15 @@
   gap: 12px;
 }
 
+.site-header__cta {
+  display: none;
+  gap: 8px;
+}
+
+.site-header__cta .button {
+  padding: 10px 16px;
+}
+
 .site-header__mode-context {
   display: none;
   flex-direction: column;
@@ -120,6 +129,11 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.site-header__mobile-cta {
+  display: grid;
+  gap: 8px;
 }
 
 .site-header__nav-mode {
@@ -195,6 +209,10 @@
 
   .site-header__mode-switch {
     display: block;
+  }
+
+  .site-header__cta {
+    display: inline-flex;
   }
 
   .site-header__menu-toggle {

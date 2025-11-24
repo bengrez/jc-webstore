@@ -5,9 +5,10 @@ import './product-card.css'
 type ProductCardProps = {
   product: Product
   onAddToCart?: (product: Product) => void
+  onViewDetails?: (product: Product) => void
 }
 
-const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
+const ProductCard = ({ product, onAddToCart, onViewDetails }: ProductCardProps) => {
   return (
     <article className="product-card">
       {product.badge && <span className="product-card__badge">{product.badge}</span>}
@@ -24,17 +25,36 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
           {product.leadTime && <span className="product-card__lead-time">{product.leadTime}</span>}
         </div>
         <p>{product.description}</p>
+        <div className="product-card__specs" aria-label="Especificaciones rápidas">
+          {product.specs?.map((spec) => (
+            <span key={spec}>{spec}</span>
+          ))}
+          {product.personalization && <span>{product.personalization}</span>}
+          {product.availability && <span>Disponibilidad: {product.availability}</span>}
+          {product.minOrder && <span>{product.minOrder}</span>}
+        </div>
         <div className="product-card__footer">
           <span className="product-card__price">{formatCurrency(product.price)}</span>
-          {onAddToCart && (
-            <button
-              type="button"
-              className="button button--primary"
-              onClick={() => onAddToCart(product)}
-            >
-              Agregar
-            </button>
-          )}
+          <div className="product-card__actions">
+            {onViewDetails && (
+              <button
+                type="button"
+                className="button button--ghost"
+                onClick={() => onViewDetails(product)}
+              >
+                Ver ficha
+              </button>
+            )}
+            {onAddToCart && (
+              <button
+                type="button"
+                className="button button--primary"
+                onClick={() => onAddToCart(product)}
+              >
+                Añadir
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </article>

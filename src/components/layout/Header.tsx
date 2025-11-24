@@ -5,7 +5,7 @@ import ModeSwitch from '../shared/ModeSwitch'
 import './header.css'
 
 const NAV_LINKS = [
-  { to: '/', label: 'Home' },
+  { to: '/', label: 'Inicio' },
   { to: '/catalogo', label: 'Catálogo' },
   { to: '/sobre-nosotros', label: 'Sobre nosotros' },
   { to: '/contacto', label: 'Contacto' },
@@ -18,6 +18,10 @@ const Header = () => {
 
   const handleToggle = () => setOpen((prev) => !prev)
   const handleNavigate = () => setOpen(false)
+  const trackCta = (label: string) => {
+    window.dataLayer = window.dataLayer || []
+    window.dataLayer.push({ event: 'cta_click', label })
+  }
 
   return (
     <header className="site-header">
@@ -39,6 +43,24 @@ const Header = () => {
           </div>
           <div className="site-header__mode-switch">
             <ModeSwitch />
+          </div>
+          <div className="site-header__cta">
+            <NavLink
+              to="/contacto"
+              className="button button--ghost"
+              onClick={() => trackCta('cotizar-header')}
+            >
+              Cotizar
+            </NavLink>
+            <a
+              className="button button--primary"
+              href="https://wa.me/56912345678"
+              target="_blank"
+              rel="noreferrer"
+              onClick={() => trackCta('whatsapp-header')}
+            >
+              WhatsApp
+            </a>
           </div>
           <button
             type="button"
@@ -82,6 +104,14 @@ const Header = () => {
               </li>
             ))}
           </ul>
+          <div className="site-header__mobile-cta">
+            <NavLink to="/contacto" className="button button--primary" onClick={handleNavigate}>
+              Solicitar cotización
+            </NavLink>
+            <a className="button button--ghost" href="https://wa.me/56912345678" target="_blank" rel="noreferrer">
+              WhatsApp
+            </a>
+          </div>
         </div>
       </nav>
     </header>
