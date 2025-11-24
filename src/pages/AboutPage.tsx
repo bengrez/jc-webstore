@@ -43,15 +43,28 @@ const AboutPage = () => {
   return (
     <div className="about-page">
       <section className="about-hero">
+        <nav className="about-breadcrumb" aria-label="Breadcrumb">
+          <ol>
+            <li>
+              <a href="/">Inicio</a>
+            </li>
+            <li aria-current="page">Sobre nosotros</li>
+          </ol>
+        </nav>
         <h1>Una empresa familiar que vive la confección</h1>
         <p>
           Somos Confecciones Juany, taller creativo y productora textil que acompaña a instituciones
           educativas y marcas corporativas en sus hitos más importantes. Nuestra dueña y diseñadora
           lidera cada proyecto de principio a fin.
         </p>
+        <div className="about-anchors">
+          <a href="#valores">Valores</a>
+          <a href="#hitos">Hitos</a>
+          <a href="#faq">FAQ</a>
+        </div>
       </section>
 
-      <section className="about-values">
+      <section className="about-values" id="valores">
         <h2>Nuestro sello</h2>
         <div className="about-values__grid">
           {values.map((value) => (
@@ -63,7 +76,7 @@ const AboutPage = () => {
         </div>
       </section>
 
-      <section className="about-milestones">
+      <section className="about-milestones" id="hitos">
         <h2>Hitos que nos trajeron hasta aquí</h2>
         <div className="about-milestones__timeline">
           {milestones.map((milestone) => (
@@ -76,6 +89,32 @@ const AboutPage = () => {
             </article>
           ))}
         </div>
+      </section>
+
+      <section className="about-panels" id="faq">
+        <article>
+          <h3>Servicios y alcances</h3>
+          <ul>
+            <li>Diseño y producción de estolas, túnicas, birretes y kits corporativos.</li>
+            <li>Prototipos previos y revisión de arte sin costo adicional.</li>
+            <li>Pick & pack por persona o sede con trazabilidad.</li>
+          </ul>
+        </article>
+        <article>
+          <h3>Preguntas frecuentes</h3>
+          <details open>
+            <summary>¿Trabajan con urgencias?</summary>
+            <p>Validamos stock y ajustamos turnos para entregas express. Confirmamos fechas por escrito.</p>
+          </details>
+          <details>
+            <summary>¿Cómo gestionan logos y colores?</summary>
+            <p>Recibimos Pantone o referencias CMYK y realizamos pruebas de bordado/impresión antes de aprobar producción.</p>
+          </details>
+          <details>
+            <summary>¿Qué incluye la logística?</summary>
+            <p>Embalaje individual, rotulado y tracking compartido. Seguro opcional para envíos a regiones.</p>
+          </details>
+        </article>
       </section>
 
       <section className="about-cta">

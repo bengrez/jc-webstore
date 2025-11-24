@@ -8,5 +8,10 @@ export type Product = {
   image: string
   category: ProductCategory
   leadTime?: string
-  badge?: 'Nuevo' | 'Edición limitada' | 'Top ventas'
+  availability?: 'Disponible' | 'A pedido'
+  badge?: 'Nuevo' | 'Edición limitada' | 'Top ventas' | 'Personalizado'
+  specs?: string[]
+  personalization?: string
+  minOrder?: string
+  sampleEligible?: boolean
 }
