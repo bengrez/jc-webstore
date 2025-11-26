@@ -37,6 +37,11 @@
   color: var(--color-muted);
 }
 
+.site-footer__fact {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
 @media (min-width: 768px) {
   .site-footer {
     padding: 48px 60px 36px;
@@ -56,5 +61,6 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
   }
 }

@@ -119,7 +119,7 @@ const CartPage = () => {
             <Link to="/catalogo" className="button button--primary">
               Volver al catálogo
             </Link>
-            <Link to="/" className="button button--ghost">
+            <Link to="/inicio" className="button button--ghost">
               Ir al inicio
             </Link>
           </div>
@@ -152,7 +152,8 @@ const CartPage = () => {
           <h2>Tu carrito está vacío</h2>
           <p>
             Agrega productos desde el catálogo para solicitar una cotización consolidada. Puedes
-            alternar entre modo Graduación y Corporativo según lo que necesites.
+            cambiar de enfoque desde la portada principal si necesitas cotizar graduaciones o
+            productos corporativos.
           </p>
           <Link to="/catalogo" className="button button--primary">
             Explorar catálogo

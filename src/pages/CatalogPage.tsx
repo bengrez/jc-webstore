@@ -113,7 +113,7 @@ const CatalogPage = () => {
         <nav className="catalog-breadcrumb" aria-label="Breadcrumb">
           <ol>
             <li>
-              <Link to="/">Inicio</Link>
+              <Link to="/inicio">Inicio</Link>
             </li>
             <li aria-current="page">Catálogo</li>
           </ol>

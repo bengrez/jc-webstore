@@ -1,6 +1,31 @@
+import { useEffect, useState } from 'react'
 import './footer.css'
 
 const Footer = () => {
+  const [catFact, setCatFact] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    const loadFact = async () => {
+      try {
+        const response = await fetch('https://catfact.ninja/fact')
+        if (!response.ok) return
+        const data: unknown = await response.json()
+        if (cancelled) return
+        if (data && typeof data === 'object' && 'fact' in data && typeof (data as { fact?: unknown }).fact === 'string') {
+          setCatFact((data as { fact: string }).fact)
+        }
+      } catch {
+        /* ignore errors silently */
+      }
+    }
+
+    void loadFact()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   return (
     <footer className="site-footer">
       <div className="site-footer__content">
@@ -20,6 +45,7 @@ const Footer = () => {
       <div className="site-footer__bottom">
         <span>© {new Date().getFullYear()} Gradumarketing. Todos los derechos reservados.</span>
         <span>Diseño dual: Graduación & Corporativo</span>
+        {catFact && <span className="site-footer__fact">Dato gatuno: {catFact}</span>}
       </div>
     </footer>
   )

@@ -1,11 +1,10 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useThemeMode } from '../../context/ThemeContext'
-import ModeSwitch from '../shared/ModeSwitch'
 import './header.css'
 
 const NAV_LINKS = [
-  { to: '/', label: 'Inicio' },
+  { to: '/inicio', label: 'Inicio' },
   { to: '/catalogo', label: 'Catálogo' },
   { to: '/sobre-nosotros', label: 'Sobre nosotros' },
   { to: '/contacto', label: 'Contacto' },
@@ -26,7 +25,7 @@ const Header = () => {
   return (
     <header className="site-header">
       <div className="site-header__upper">
-        <NavLink to="/" className="site-header__brand" onClick={handleNavigate}>
+        <NavLink to="/inicio" className="site-header__brand" onClick={handleNavigate}>
           <img src="/logo.png" alt="Gradumarketing logo" className="site-header__logo" />
           <div className="site-header__brand-text">
             <span className="brand-label">Gradumarketing</span>
@@ -36,13 +35,13 @@ const Header = () => {
 
         <div className="site-header__actions">
           <div className="site-header__mode-context">
-            <span className="site-header__mode-label">Modo activo</span>
+            <span className="site-header__mode-label">Enfoque</span>
             <span className="site-header__mode-value">
               {mode === 'graduation' ? 'Graduación' : 'Corporativo'}
             </span>
-          </div>
-          <div className="site-header__mode-switch">
-            <ModeSwitch />
+            <NavLink to="/" className="site-header__mode-change" onClick={handleNavigate}>
+              Cambiar
+            </NavLink>
           </div>
           <div className="site-header__cta">
             <NavLink
@@ -84,9 +83,11 @@ const Header = () => {
         <div className="site-header__nav-panel">
           <div className="site-header__nav-mode">
             <p className="site-header__nav-mode-copy">
-              Sintoniza la identidad que quieres explorar.
+              Selecciona el enfoque que necesites desde la portada principal.
             </p>
-            <ModeSwitch />
+            <NavLink to="/" className="button button--ghost" onClick={handleNavigate}>
+              Elegir enfoque
+            </NavLink>
           </div>
           <ul>
             {NAV_LINKS.map((link) => (
