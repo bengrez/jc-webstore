@@ -1,49 +1,47 @@
-# JC Webstore
+# JC Webstore (Confecciones Juany)
 
-JC Webstore is a single-page React application that showcases a curated catalog of graduation essentials such as embroidered stoles, signature mortarboards, and customizable gift kits. The experience is built to help parents and schools browse offerings, learn about the brand, and start a purchase flow through cart management and contact options.
+Monorepo para el sitio de catálogo + carrito de cotización (web + backend juntos).
 
-## Features
-- **Home hero & value props** highlighting the ceremony aesthetic and call-to-action buttons for catalog browsing.
-- **Product catalog** with price, lead time, and promotional badges sourced from `src/data/products.ts`.
-- **Persistent layout** with navigation, footer, and branded styling shared across pages.
-- **Cart experience** that summarizes selected products and costs.
-- **About & contact pages** to present the company story and provide outreach channels.
-- **Responsive design** optimized for desktop and mobile via modular SCSS styles.
+## Estructura
+- `apps/web` – Frontend React + Vite.
+- `apps/server` – Backend Node (Express) + SQLite (Prisma) que también sirve el frontend en producción.
 
-## Tech stack
-- [Vite](https://vitejs.dev/) + [React](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
-- Routing with [React Router](https://reactrouter.com/)
-- Styling with modular SCSS under `src/styles`
+## Requisitos
+- Node.js 18+
 
-## Getting started
-1. **Install dependencies**
+## Desarrollo
+1. Instalar dependencias:
    ```bash
    npm install
    ```
-2. **Start the development server**
+2. Configurar variables de entorno:
+   ```bash
+   cp apps/server/.env.example apps/server/.env
+   ```
+   - Para Gmail usa **App Password** (no tu contraseña normal).
+3. Crear DB y seed:
+   ```bash
+   npm run db:migrate
+   npm run db:seed
+   ```
+4. Levantar web + API:
    ```bash
    npm run dev
    ```
-   Vite will print a local URL (typically `http://localhost:5173`) for live reloading.
-3. **Run lint checks**
-   ```bash
-   npm run lint
-   ```
-4. **Create a production build**
-   ```bash
-   npm run build
-   ```
+   - Web: `http://localhost:5173`
+   - API: `http://localhost:3001/api/health`
 
-## Project structure
-- `src/App.tsx` – Route map for home, catalog, about, contact, cart, and 404 pages.
-- `src/components/` – Reusable UI such as layout, headers, product cards, and cart elements.
-- `src/pages/` – Page-level screens composed from components.
-- `src/data/` – Product catalog seed data and shared types.
-- `src/styles/` – Global and component-scoped SCSS styles.
+## Admin
+- Login en `http://localhost:5173/admin/login`
+- Usuario/clave: se crean desde `ADMIN_EMAIL` / `ADMIN_PASSWORD` con `npm run db:seed`.
 
-## Deployment notes
-- This template is configured as an SPA suitable for static hosting platforms (Netlify, Vercel, GitHub Pages).
-- Ensure `npm run build` completes successfully before deploying the `dist/` output.
+## Producción (todo junto)
+```bash
+npm run db:deploy
+# opcional (solo 1 vez o cuando cambies credenciales)
+npm run db:seed
+npm run build
+npm start
+```
 
-## License
-This project is provided for educational and portfolio use. Customize and extend it to fit your graduation merchandising needs.
+En producción el backend sirve el build de `apps/web`, por lo que todo queda en un solo servicio/URL.

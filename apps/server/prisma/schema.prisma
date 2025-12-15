@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum ProductCategory {
+  graduaciones
+  marketing
+}
+
+enum ProductAvailability {
+  DISPONIBLE
+  A_PEDIDO
+}
+
+enum QuoteStatus {
+  NEW
+  IN_REVIEW
+  QUOTED
+  ACCEPTED
+  REJECTED
+}
+
+model AdminUser {
+  id           Int        @id @default(autoincrement())
+  email        String     @unique
+  passwordHash String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  notes        QuoteNote[]
+}
+
+model Product {
+  id            String               @id @default(cuid())
+  name          String
+  description   String
+  category      ProductCategory
+  price         Int
+  images        String               @default("[]")
+  tags          String               @default("[]")
+  specs         String               @default("[]")
+  personalization String
+  minOrder      String
+  leadTime      String
+  availability  ProductAvailability
+  badge         String?
+  sampleEligible Boolean
+  isActive      Boolean              @default(true)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  quoteItems    QuoteItem[]
+}
+
+model Quote {
+  id              Int         @id @default(autoincrement())
+  status          QuoteStatus @default(NEW)
+  customerName    String
+  customerEmail   String
+  customerPhone   String?
+  customerMessage String?
+  subtotal        Int
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  items           QuoteItem[]
+  notes           QuoteNote[]
+}
+
+model QuoteItem {
+  id            Int     @id @default(autoincrement())
+  quoteId       Int
+  productId     String
+  quantity      Int
+  unitPrice     Int
+  productSnapshot String
+
+  quote   Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([quoteId])
+  @@index([productId])
+}
+
+model QuoteNote {
+  id          Int      @id @default(autoincrement())
+  quoteId     Int
+  adminUserId Int
+  body        String
+  createdAt   DateTime @default(now())
+
+  quote     Quote     @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  adminUser AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([quoteId])
+  @@index([adminUserId])
+}
