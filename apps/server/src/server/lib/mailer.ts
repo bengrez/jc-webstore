@@ -3,6 +3,8 @@ import { env } from '../../lib/env.js'
 import { formatClp } from './currency.js'
 import { formatQuoteFolio } from './quote-folio.js'
 
+type ConfigEntry = { label: string; type: string; value: string }
+
 type QuoteEmailInput = {
   quoteId: number
   customerName: string
@@ -17,6 +19,7 @@ type QuoteEmailInput = {
     leadTime: string
     minOrder: string
     availability: string
+    configuration?: ConfigEntry[]
   }>
   subtotal: number
 }
@@ -53,12 +56,14 @@ export const sendQuoteNotificationEmail = async (input: QuoteEmailInput) => {
     input.customerMessage ? `- Mensaje: ${input.customerMessage}` : undefined,
     '',
     'Items',
-    ...input.items.map(
-      (item) =>
-        `- ${item.quantity} x ${item.name} (${formatClp(item.unitPrice)} + IVA) | ${item.availability} | ${
-          item.leadTime
-        } | ${item.minOrder}`
-    ),
+    ...input.items.flatMap((item) => {
+      const line = `- ${item.quantity} x ${item.name} (${formatClp(item.unitPrice)} + IVA) | ${item.availability} | ${item.leadTime} | ${item.minOrder}`
+      const configLines =
+        item.configuration && item.configuration.length > 0
+          ? item.configuration.map((c) => `    ${c.label}: ${c.value}`)
+          : []
+      return [line, ...configLines]
+    }),
     '',
     `Subtotal referencial: ${formatClp(input.subtotal)} + IVA`,
   ].filter(Boolean)

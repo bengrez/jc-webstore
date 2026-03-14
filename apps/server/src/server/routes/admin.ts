@@ -85,6 +85,7 @@ adminRouter.get('/products', async (req, res) => {
   const products = await prisma.product.findMany({
     where: includeInactive ? {} : { isActive: true },
     orderBy: { updatedAt: 'desc' },
+    include: { options: { orderBy: { sortOrder: 'asc' } } },
   })
 
   res.json(products.map(productToAdminResponse))
@@ -135,6 +136,7 @@ adminRouter.post('/products', async (req, res) => {
       sampleEligible: parsed.data.sampleEligible,
       isActive: parsed.data.isActive ?? true,
     },
+    include: { options: { orderBy: { sortOrder: 'asc' } } },
   })
 
   res.status(201).json(productToAdminResponse(created))
@@ -169,6 +171,7 @@ adminRouter.put('/products/:id', async (req, res) => {
       sampleEligible: parsed.data.sampleEligible,
       isActive: parsed.data.isActive ?? true,
     },
+    include: { options: { orderBy: { sortOrder: 'asc' } } },
   })
 
   res.json(productToAdminResponse(updated))
@@ -178,9 +181,131 @@ adminRouter.delete('/products/:id', async (req, res) => {
   const updated = await prisma.product.update({
     where: { id: req.params.id },
     data: { isActive: false },
+    include: { options: { orderBy: { sortOrder: 'asc' } } },
   })
 
   res.json(productToAdminResponse(updated))
+})
+
+// Product options CRUD
+const productOptionSchema = z.object({
+  type: z.enum(['COLOR', 'TEXT', 'FILE']),
+  label: z.string().trim().min(1),
+  required: z.boolean().default(false),
+  choices: z
+    .array(z.object({ label: z.string().trim().min(1), value: z.string().trim().min(1) }))
+    .default([]),
+  sortOrder: z.number().int().default(0),
+})
+
+adminRouter.get('/products/:id/options', async (req, res) => {
+  const options = await prisma.productOption.findMany({
+    where: { productId: req.params.id },
+    orderBy: { sortOrder: 'asc' },
+  })
+
+  res.json(
+    options.map((opt) => ({
+      id: opt.id,
+      type: opt.type,
+      label: opt.label,
+      required: opt.required,
+      choices: (() => {
+        try {
+          return JSON.parse(opt.choices)
+        } catch {
+          return []
+        }
+      })(),
+      sortOrder: opt.sortOrder,
+    }))
+  )
+})
+
+adminRouter.post('/products/:id/options', async (req, res) => {
+  const parsed = productOptionSchema.safeParse(req.body)
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'validation_error', details: parsed.error.flatten() })
+  }
+
+  const product = await prisma.product.findUnique({ where: { id: req.params.id } })
+  if (!product) {
+    return res.status(404).json({ error: 'not_found' })
+  }
+
+  const created = await prisma.productOption.create({
+    data: {
+      productId: req.params.id,
+      type: parsed.data.type,
+      label: parsed.data.label,
+      required: parsed.data.required,
+      choices: JSON.stringify(parsed.data.choices),
+      sortOrder: parsed.data.sortOrder,
+    },
+  })
+
+  res.status(201).json({
+    id: created.id,
+    type: created.type,
+    label: created.label,
+    required: created.required,
+    choices: parsed.data.choices,
+    sortOrder: created.sortOrder,
+  })
+})
+
+adminRouter.put('/products/:id/options/:optId', async (req, res) => {
+  const optId = Number(req.params.optId)
+  if (!Number.isFinite(optId) || optId <= 0) {
+    return res.status(400).json({ error: 'validation_error', message: 'ID inválido.' })
+  }
+
+  const parsed = productOptionSchema.safeParse(req.body)
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'validation_error', details: parsed.error.flatten() })
+  }
+
+  const option = await prisma.productOption.findUnique({
+    where: { id: optId },
+  })
+  if (!option || option.productId !== req.params.id) {
+    return res.status(404).json({ error: 'not_found' })
+  }
+
+  const updated = await prisma.productOption.update({
+    where: { id: optId },
+    data: {
+      type: parsed.data.type,
+      label: parsed.data.label,
+      required: parsed.data.required,
+      choices: JSON.stringify(parsed.data.choices),
+      sortOrder: parsed.data.sortOrder,
+    },
+  })
+
+  res.json({
+    id: updated.id,
+    type: updated.type,
+    label: updated.label,
+    required: updated.required,
+    choices: parsed.data.choices,
+    sortOrder: updated.sortOrder,
+  })
+})
+
+adminRouter.delete('/products/:id/options/:optId', async (req, res) => {
+  const optId = Number(req.params.optId)
+  if (!Number.isFinite(optId) || optId <= 0) {
+    return res.status(400).json({ error: 'validation_error', message: 'ID inválido.' })
+  }
+
+  const option = await prisma.productOption.findUnique({ where: { id: optId } })
+  if (!option || option.productId !== req.params.id) {
+    return res.status(404).json({ error: 'not_found' })
+  }
+
+  await prisma.productOption.delete({ where: { id: optId } })
+  res.json({ ok: true })
 })
 
 adminRouter.get('/quotes', async (req, res) => {
@@ -256,19 +381,29 @@ adminRouter.get('/quotes/:id', async (req, res) => {
     subtotal: quote.subtotal,
     createdAt: quote.createdAt,
     updatedAt: quote.updatedAt,
-    items: quote.items.map((item) => ({
-      id: item.id,
-      quantity: item.quantity,
-      unitPrice: item.unitPrice,
-      productId: item.productId,
-      productName: item.product.name,
-      productCategory: item.product.category,
-      productLeadTime: item.product.leadTime,
-      productMinOrder: item.product.minOrder,
-      productAvailability: formatAvailabilityLabel(item.product.availability),
-      productBadge: item.product.badge,
-      productSnapshot: item.productSnapshot,
-    })),
+    items: quote.items.map((item) => {
+      let configuration: unknown[] = []
+      try {
+        const parsed = JSON.parse(item.configuration)
+        if (Array.isArray(parsed)) configuration = parsed
+      } catch {
+        // ignore
+      }
+      return {
+        id: item.id,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        productId: item.productId,
+        productName: item.product.name,
+        productCategory: item.product.category,
+        productLeadTime: item.product.leadTime,
+        productMinOrder: item.product.minOrder,
+        productAvailability: formatAvailabilityLabel(item.product.availability),
+        productBadge: item.product.badge,
+        productSnapshot: item.productSnapshot,
+        configuration,
+      }
+    }),
     notes: quote.notes.map((note) => ({
       id: note.id,
       body: note.body,

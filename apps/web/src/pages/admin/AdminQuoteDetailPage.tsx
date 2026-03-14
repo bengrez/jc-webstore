@@ -6,6 +6,13 @@ import './admin.css'
 
 type QuoteStatus = 'NEW' | 'IN_REVIEW' | 'QUOTED' | 'ACCEPTED' | 'REJECTED'
 
+type ConfigEntry = {
+  optionId: number
+  label: string
+  type: 'COLOR' | 'TEXT' | 'FILE'
+  value: string
+}
+
 type QuoteDetail = {
   id: number
   folio: string
@@ -25,6 +32,7 @@ type QuoteDetail = {
     productLeadTime: string
     productMinOrder: string
     productAvailability: string
+    configuration: ConfigEntry[]
   }>
   notes: Array<{
     id: number
@@ -152,6 +160,7 @@ const AdminQuoteDetailPage = () => {
               <th>Unit.</th>
               <th>Subtotal</th>
               <th>Info</th>
+              <th>Configuración</th>
             </tr>
           </thead>
           <tbody>
@@ -166,6 +175,31 @@ const AdminQuoteDetailPage = () => {
                   <div style={{ color: 'var(--color-muted)', fontSize: '0.9rem' }}>
                     {item.productLeadTime} · {item.productMinOrder}
                   </div>
+                </td>
+                <td>
+                  {item.configuration && item.configuration.length > 0 ? (
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      {item.configuration.map((c) => (
+                        <li key={c.optionId} style={{ fontSize: '0.82rem' }}>
+                          <span style={{ fontWeight: 600, color: 'var(--color-muted)' }}>{c.label}:</span>{' '}
+                          {c.type === 'COLOR' ? (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                              <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', background: c.value, border: '1px solid rgba(0,0,0,0.15)' }} />
+                              {c.value}
+                            </span>
+                          ) : c.type === 'FILE' ? (
+                            <a href={c.value} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary-strong)', textDecoration: 'underline' }}>
+                              {decodeURIComponent(c.value.split('/').pop() ?? c.value)}
+                            </a>
+                          ) : (
+                            c.value
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span style={{ color: 'var(--color-muted)', fontSize: '0.82rem' }}>—</span>
+                  )}
                 </td>
               </tr>
             ))}

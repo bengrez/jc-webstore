@@ -15,6 +15,7 @@ productsRouter.get('/', async (req, res) => {
       ...(category ? { category } : null),
     },
     orderBy: { createdAt: 'desc' },
+    include: { options: { orderBy: { sortOrder: 'asc' } } },
   })
 
   res.json(products.map(productToPublicResponse))

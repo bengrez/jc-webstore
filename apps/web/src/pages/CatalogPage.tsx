@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ProductCard from '../components/catalog/ProductCard'
+import ProductConfiguratorModal from '../components/catalog/ProductConfiguratorModal'
 import type { Product, ProductCategory } from '../data/types'
+import type { CartItemConfig } from '../context/CartContext'
 import { useCart } from '../context/CartContext'
 import { useThemeMode } from '../context/ThemeContext'
 import './catalog.css'
@@ -19,6 +21,7 @@ const CatalogPage = () => {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory>('graduaciones')
   const [feedback, setFeedback] = useState<string | null>(null)
+  const [configuringProduct, setConfiguringProduct] = useState<Product | null>(null)
 
   const filteredProducts = useMemo(
     () => products.filter((product) => product.category === selectedCategory),
@@ -66,8 +69,12 @@ const CatalogPage = () => {
     return () => window.clearTimeout(timeout)
   }, [feedback])
 
-  const handleAddToCart = (product: Product) => {
-    addItem(product)
+  const handleConfigure = (product: Product) => {
+    setConfiguringProduct(product)
+  }
+
+  const handleModalAdd = (product: Product, quantity: number, configuration: CartItemConfig[]) => {
+    addItem(product, quantity, configuration)
     setFeedback(`${product.name} fue agregado al carrito`)
   }
 
@@ -134,7 +141,7 @@ const CatalogPage = () => {
             </div>
           ) : filteredProducts.length > 0 ? (
             filteredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} onAddToCart={handleAddToCart} />
+              <ProductCard key={product.id} product={product} onConfigure={handleConfigure} />
             ))
           ) : (
             <div className="catalog-empty">
@@ -147,6 +154,14 @@ const CatalogPage = () => {
           )}
         </div>
       </section>
+
+      {configuringProduct && (
+        <ProductConfiguratorModal
+          product={configuringProduct}
+          onClose={() => setConfiguringProduct(null)}
+          onAdd={handleModalAdd}
+        />
+      )}
     </div>
   )
 }

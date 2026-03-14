@@ -4,10 +4,10 @@ import './product-card.css'
 
 type ProductCardProps = {
   product: Product
-  onAddToCart?: (product: Product) => void
+  onConfigure?: (product: Product) => void
 }
 
-const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
+const ProductCard = ({ product, onConfigure }: ProductCardProps) => {
   return (
     <article className="product-card">
       {product.badge && <span className="product-card__badge">{product.badge}</span>}
@@ -26,13 +26,13 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
         <p>{product.description}</p>
         <div className="product-card__footer">
           <span className="product-card__price">{`Desde ${formatCurrency(product.price)} + IVA`}</span>
-          {onAddToCart && (
+          {onConfigure && (
             <button
               type="button"
               className="button button--primary"
-              onClick={() => onAddToCart(product)}
+              onClick={() => onConfigure(product)}
             >
-              Agregar
+              Configurar
             </button>
           )}
         </div>

@@ -1,5 +1,26 @@
-import type { Product, ProductAvailability } from '@prisma/client'
+import type { Product, ProductAvailability, ProductOption } from '@prisma/client'
 import { parseStringArrayJson } from './json.js'
+
+type ProductOptionChoice = { label: string; value: string }
+
+const parseOptionChoices = (choices: string): ProductOptionChoice[] => {
+  try {
+    const parsed = JSON.parse(choices)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+const serializeOptions = (options: ProductOption[]) =>
+  options.map((opt) => ({
+    id: opt.id,
+    type: opt.type,
+    label: opt.label,
+    required: opt.required,
+    choices: parseOptionChoices(opt.choices),
+    sortOrder: opt.sortOrder,
+  }))
 
 export const formatAvailabilityLabel = (availability: ProductAvailability) => {
   return availability === 'DISPONIBLE' ? 'Disponible' : 'A pedido'
@@ -11,7 +32,9 @@ export const availabilityLabelToEnum = (label: string): ProductAvailability | nu
   return null
 }
 
-export const productToPublicResponse = (product: Product) => {
+export const productToPublicResponse = (
+  product: Product & { options?: ProductOption[] }
+) => {
   const images = parseStringArrayJson(product.images)
 
   return {
@@ -30,10 +53,13 @@ export const productToPublicResponse = (product: Product) => {
     availability: formatAvailabilityLabel(product.availability),
     badge: product.badge,
     sampleEligible: product.sampleEligible,
+    options: serializeOptions(product.options ?? []),
   }
 }
 
-export const productToAdminResponse = (product: Product) => {
+export const productToAdminResponse = (
+  product: Product & { options?: ProductOption[] }
+) => {
   const images = parseStringArrayJson(product.images)
 
   return {
@@ -54,5 +80,6 @@ export const productToAdminResponse = (product: Product) => {
     isActive: product.isActive,
     createdAt: product.createdAt,
     updatedAt: product.updatedAt,
+    options: serializeOptions(product.options ?? []),
   }
 }
