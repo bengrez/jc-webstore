@@ -17,6 +17,13 @@ quotesRouter.use(
   })
 )
 
+const configEntrySchema = z.object({
+  optionId: z.number().int(),
+  label: z.string(),
+  type: z.enum(['COLOR', 'TEXT', 'FILE']),
+  value: z.string(),
+})
+
 const createQuoteSchema = z.object({
   customer: z.object({
     name: z.string().trim().min(1),
@@ -29,6 +36,7 @@ const createQuoteSchema = z.object({
       z.object({
         productId: z.string().trim().min(1),
         quantity: z.number().int().positive().max(10_000),
+        configuration: z.array(configEntrySchema).default([]),
       })
     )
     .min(1),
@@ -55,23 +63,18 @@ quotesRouter.post('/', async (req, res) => {
     })
   }
 
-  const consolidated = new Map<string, number>()
-  for (const item of parsed.data.items) {
-    const prev = consolidated.get(item.productId) ?? 0
-    consolidated.set(item.productId, prev + item.quantity)
-  }
-
-  const quoteItems = Array.from(consolidated.entries()).map(([productId, quantity]) => {
-    const product = productMap.get(productId)
+  const quoteItems = parsed.data.items.map((item) => {
+    const product = productMap.get(item.productId)
     if (!product) {
-      throw new Error(`Producto no encontrado: ${productId}`)
+      throw new Error(`Producto no encontrado: ${item.productId}`)
     }
 
     return {
       product,
-      productId,
-      quantity,
+      productId: item.productId,
+      quantity: item.quantity,
       unitPrice: product.price,
+      configuration: JSON.stringify(item.configuration),
       productSnapshot: JSON.stringify({
         id: product.id,
         name: product.name,
@@ -108,6 +111,7 @@ quotesRouter.post('/', async (req, res) => {
             quantity: item.quantity,
             unitPrice: item.unitPrice,
             productSnapshot: item.productSnapshot,
+            configuration: item.configuration,
           })),
         },
       },
@@ -129,15 +133,25 @@ quotesRouter.post('/', async (req, res) => {
     customerEmail: quote.customerEmail,
     customerPhone: quote.customerPhone,
     customerMessage: quote.customerMessage,
-    items: quote.items.map((item) => ({
-      name: item.product.name,
-      quantity: item.quantity,
-      unitPrice: item.unitPrice,
-      category: item.product.category,
-      leadTime: item.product.leadTime,
-      minOrder: item.product.minOrder,
-      availability: formatAvailabilityLabel(item.product.availability),
-    })),
+    items: quote.items.map((item) => {
+      let configuration: Array<{ label: string; type: string; value: string }> = []
+      try {
+        const parsed = JSON.parse(item.configuration)
+        if (Array.isArray(parsed)) configuration = parsed
+      } catch {
+        // ignore malformed config
+      }
+      return {
+        name: item.product.name,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        category: item.product.category,
+        leadTime: item.product.leadTime,
+        minOrder: item.product.minOrder,
+        availability: formatAvailabilityLabel(item.product.availability),
+        configuration,
+      }
+    }),
     subtotal: quote.subtotal,
   }).catch((error) => {
     console.error('[mail] failed to send quote email', error)

@@ -26,16 +26,16 @@ const CartPage = () => {
 
   const hasItems = items.length > 0
 
-  const handleQuantityButton = (productId: string, delta: number) => {
-    const current = items.find((item) => item.id === productId)?.quantity ?? 0
+  const handleQuantityButton = (cartItemKey: string, delta: number) => {
+    const current = items.find((item) => item.cartItemKey === cartItemKey)?.quantity ?? 0
     const next = Math.max(0, current + delta)
-    updateQuantity(productId, next)
+    updateQuantity(cartItemKey, next)
   }
 
-  const handleQuantityInput = (productId: string, event: ChangeEvent<HTMLInputElement>) => {
+  const handleQuantityInput = (cartItemKey: string, event: ChangeEvent<HTMLInputElement>) => {
     const value = Number(event.target.value)
     if (Number.isNaN(value)) return
-    updateQuantity(productId, Math.max(0, value))
+    updateQuantity(cartItemKey, Math.max(0, value))
   }
 
   const handleInputChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -104,6 +104,7 @@ const CartPage = () => {
           items: items.map((item) => ({
             productId: item.id,
             quantity: item.quantity,
+            configuration: item.configuration,
           })),
         }),
       })
@@ -152,7 +153,7 @@ const CartPage = () => {
         <div className="cart-success">
           <div className="cart-success__note">
             <p>
-              <strong>“Tu proyecto ya está en mis manos.”</strong> — Juany, diseñadora y fundadora.
+              <strong>"Tu proyecto ya está en mis manos."</strong> — Juany, diseñadora y fundadora.
             </p>
             <span>Te enviaremos avances o prototipos según lo necesites.</span>
           </div>
@@ -173,7 +174,7 @@ const CartPage = () => {
     <div className="cart-page">
       <header className="cart-header">
         <h1>Carrito de cotizaciones</h1>
-        <p>Ajusta cantidades y completa tus datos. Los valores son “desde” y van + IVA.</p>
+        <p>Ajusta cantidades y completa tus datos. Los valores son "desde" y van + IVA.</p>
       </header>
 
       <div className="cart-progress">
@@ -197,11 +198,40 @@ const CartPage = () => {
         <div className="cart-layout">
           <section className="cart-items">
             {items.map((item) => (
-              <article key={item.id} className="cart-item">
+              <article key={item.cartItemKey} className="cart-item">
                 <div className="cart-item__info">
                   <h3>{item.name}</h3>
                   <p>{item.description}</p>
                   <span className="cart-item__lead">{item.leadTime}</span>
+                  {item.configuration.length > 0 && (
+                    <ul className="cart-item__config">
+                      {item.configuration.map((entry) => (
+                        <li key={entry.optionId}>
+                          <span className="cart-item__config-label">{entry.label}:</span>{' '}
+                          {entry.type === 'COLOR' ? (
+                            <span className="cart-item__config-value">
+                              <span
+                                className="cart-item__config-swatch"
+                                style={{ background: entry.value }}
+                              />
+                              {entry.value}
+                            </span>
+                          ) : entry.type === 'FILE' ? (
+                            <a
+                              href={entry.value}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="cart-item__config-file"
+                            >
+                              {decodeURIComponent(entry.value.split('/').pop() ?? entry.value)}
+                            </a>
+                          ) : (
+                            <span className="cart-item__config-value">{entry.value}</span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
 
                 <div className="cart-item__controls">
@@ -210,7 +240,7 @@ const CartPage = () => {
                     <div className="cart-quantity-input">
                       <button
                         type="button"
-                        onClick={() => handleQuantityButton(item.id, -1)}
+                        onClick={() => handleQuantityButton(item.cartItemKey, -1)}
                         disabled={item.quantity <= 1}
                         aria-label={`Disminuir cantidad de ${item.name}`}
                       >
@@ -220,12 +250,12 @@ const CartPage = () => {
                         type="number"
                         min={1}
                         value={item.quantity}
-                        onChange={(event) => handleQuantityInput(item.id, event)}
+                        onChange={(event) => handleQuantityInput(item.cartItemKey, event)}
                         aria-label={`Cantidad de ${item.name}`}
                       />
                       <button
                         type="button"
-                        onClick={() => handleQuantityButton(item.id, 1)}
+                        onClick={() => handleQuantityButton(item.cartItemKey, 1)}
                         aria-label={`Aumentar cantidad de ${item.name}`}
                       >
                         +
@@ -247,7 +277,7 @@ const CartPage = () => {
                 <button
                   type="button"
                   className="cart-item__remove"
-                  onClick={() => removeItem(item.id)}
+                  onClick={() => removeItem(item.cartItemKey)}
                 >
                   Eliminar
                 </button>

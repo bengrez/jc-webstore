@@ -8,24 +8,38 @@ import {
   useState,
 } from 'react'
 import type { ReactNode } from 'react'
-import type { Product } from '../data/types'
+import type { Product, ProductOptionType } from '../data/types'
+
+export type CartItemConfig = {
+  optionId: number
+  label: string
+  type: ProductOptionType
+  value: string
+}
 
 export type CartItem = Product & {
   quantity: number
+  cartItemKey: string
+  configuration: CartItemConfig[]
 }
 
 type CartContextValue = {
   items: CartItem[]
   total: number
-  addItem: (product: Product) => void
-  updateQuantity: (productId: string, quantity: number) => void
-  removeItem: (productId: string) => void
+  addItem: (product: Product, quantity: number, configuration: CartItemConfig[]) => void
+  updateQuantity: (cartItemKey: string, quantity: number) => void
+  removeItem: (cartItemKey: string) => void
   clearCart: () => void
 }
 
 const CartContext = createContext<CartContextValue | undefined>(undefined)
 
 const STORAGE_KEY = 'gradumarketing:cart'
+
+const makeCartItemKey = (productId: string, configuration: CartItemConfig[]) => {
+  const configKey = configuration.length > 0 ? JSON.stringify(configuration) : ''
+  return `${productId}::${configKey}`
+}
 
 const getInitialCart = (): CartItem[] => {
   if (typeof window === 'undefined') {
@@ -39,7 +53,10 @@ const getInitialCart = (): CartItem[] => {
     if (!Array.isArray(parsed)) return []
     return parsed.filter(
       (item): item is CartItem =>
-        Boolean(item?.id) && typeof item.quantity === 'number' && item.quantity > 0
+        Boolean(item?.id) &&
+        typeof item.quantity === 'number' &&
+        item.quantity > 0 &&
+        typeof item.cartItemKey === 'string'
     )
   } catch (error) {
     console.warn('No fue posible leer el carrito almacenado', error)
@@ -59,30 +76,38 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
   }, [items])
 
-  const addItem = useCallback((product: Product) => {
-    setItems((prev) => {
-      const existing = prev.find((item) => item.id === product.id)
-      if (existing) {
-        return prev.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
-        )
-      }
-      return [...prev, { ...product, quantity: 1 }]
-    })
-  }, [])
+  const addItem = useCallback(
+    (product: Product, quantity: number, configuration: CartItemConfig[]) => {
+      const cartItemKey = makeCartItemKey(product.id, configuration)
+      setItems((prev) => {
+        const existing = prev.find((item) => item.cartItemKey === cartItemKey)
+        if (existing) {
+          return prev.map((item) =>
+            item.cartItemKey === cartItemKey
+              ? { ...item, quantity: item.quantity + quantity }
+              : item
+          )
+        }
+        return [...prev, { ...product, quantity, cartItemKey, configuration }]
+      })
+    },
+    []
+  )
 
-  const updateQuantity = useCallback((productId: string, quantity: number) => {
+  const updateQuantity = useCallback((cartItemKey: string, quantity: number) => {
     setItems((prev) =>
       prev
         .map((item) =>
-          item.id === productId ? { ...item, quantity: Math.max(0, Math.floor(quantity)) } : item
+          item.cartItemKey === cartItemKey
+            ? { ...item, quantity: Math.max(0, Math.floor(quantity)) }
+            : item
         )
         .filter((item) => item.quantity > 0)
     )
   }, [])
 
-  const removeItem = useCallback((productId: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== productId))
+  const removeItem = useCallback((cartItemKey: string) => {
+    setItems((prev) => prev.filter((item) => item.cartItemKey !== cartItemKey))
   }, [])
 
   const clearCart = useCallback(() => {

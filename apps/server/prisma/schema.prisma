@@ -25,6 +25,12 @@ enum QuoteStatus {
   REJECTED
 }
 
+enum ProductOptionType {
+  COLOR
+  TEXT
+  FILE
+}
+
 model AdminUser {
   id           Int        @id @default(autoincrement())
   email        String     @unique
@@ -53,6 +59,20 @@ model Product {
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt
   quoteItems    QuoteItem[]
+  options       ProductOption[]
+}
+
+model ProductOption {
+  id        Int               @id @default(autoincrement())
+  productId String
+  type      ProductOptionType
+  label     String
+  required  Boolean           @default(false)
+  choices   String            @default("[]")
+  sortOrder Int               @default(0)
+  product   Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
 }
 
 model Quote {
@@ -76,6 +96,7 @@ model QuoteItem {
   quantity      Int
   unitPrice     Int
   productSnapshot String
+  configuration   String  @default("[]")
 
   quote   Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id])
