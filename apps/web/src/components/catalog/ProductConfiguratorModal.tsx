@@ -2,17 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import type { Product, ProductOption } from '../../data/types'
 import type { CartItemConfig } from '../../context/CartContext'
 import { formatCurrency } from '../../utils/format'
+import { parseMinOrder } from '../../utils/product'
 import './product-configurator-modal.css'
 
 type Props = {
   product: Product
   onClose: () => void
   onAdd: (product: Product, quantity: number, configuration: CartItemConfig[]) => void
-}
-
-const parseMinOrder = (minOrder: string): number => {
-  const match = minOrder.match(/\d+/)
-  return match ? Number(match[0]) : 1
 }
 
 const OptionField = ({

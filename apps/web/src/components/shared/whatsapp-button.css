@@ -1,0 +1,45 @@
+.whatsapp-button {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 90;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 999px;
+  background: #25d366;
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 10px 26px rgba(18, 140, 70, 0.35);
+  transition:
+    transform var(--transition-soft),
+    box-shadow var(--transition-soft);
+}
+
+.whatsapp-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 32px rgba(18, 140, 70, 0.45);
+}
+
+.whatsapp-button:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+/* En móvil queda solo el ícono para no tapar el contenido. */
+.whatsapp-button__label {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .whatsapp-button {
+    right: 28px;
+    bottom: 28px;
+    padding: 14px 22px 14px 18px;
+  }
+
+  .whatsapp-button__label {
+    display: inline;
+  }
+}

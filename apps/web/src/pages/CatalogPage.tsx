@@ -22,11 +22,40 @@ const CatalogPage = () => {
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory>('graduaciones')
   const [feedback, setFeedback] = useState<string | null>(null)
   const [configuringProduct, setConfiguringProduct] = useState<Product | null>(null)
+  const [search, setSearch] = useState('')
+  const [activeTag, setActiveTag] = useState<string | null>(null)
 
-  const filteredProducts = useMemo(
+  const categoryProducts = useMemo(
     () => products.filter((product) => product.category === selectedCategory),
     [products, selectedCategory]
   )
+
+  // Los tags ya venían en el modelo pero no se mostraban en ninguna parte.
+  const availableTags = useMemo(() => {
+    const tags = new Set<string>()
+    categoryProducts.forEach((product) => product.tags.forEach((tag) => tags.add(tag)))
+    return Array.from(tags).sort((a, b) => a.localeCompare(b, 'es'))
+  }, [categoryProducts])
+
+  const filteredProducts = useMemo(() => {
+    const term = search.trim().toLowerCase()
+    return categoryProducts.filter((product) => {
+      if (activeTag && !product.tags.includes(activeTag)) return false
+      if (!term) return true
+      return (
+        product.name.toLowerCase().includes(term) ||
+        product.description.toLowerCase().includes(term) ||
+        product.tags.some((tag) => tag.toLowerCase().includes(term))
+      )
+    })
+  }, [categoryProducts, activeTag, search])
+
+  const hasActiveFilters = search.trim().length > 0 || activeTag !== null
+
+  const clearFilters = () => {
+    setSearch('')
+    setActiveTag(null)
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -62,6 +91,11 @@ const CatalogPage = () => {
     const preferred = mode === 'graduation' ? 'graduaciones' : 'marketing'
     setSelectedCategory((current) => (current === preferred ? current : preferred))
   }, [mode])
+
+  // Al cambiar de colección el tag activo pertenece a la anterior.
+  useEffect(() => {
+    setActiveTag(null)
+  }, [selectedCategory])
 
   useEffect(() => {
     if (!feedback) return
@@ -133,6 +167,41 @@ const CatalogPage = () => {
           </span>
         </div>
 
+        <div className="catalog-filters">
+          <input
+            type="search"
+            className="catalog-filters__search"
+            placeholder="Buscar por nombre, descripción o tag…"
+            aria-label="Buscar productos"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+          {availableTags.length > 0 && (
+            <div className="catalog-filters__tags" role="group" aria-label="Filtrar por tag">
+              {availableTags.map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  className="catalog-filters__tag"
+                  aria-pressed={activeTag === tag}
+                  onClick={() => setActiveTag((current) => (current === tag ? null : tag))}
+                >
+                  {tag}
+                </button>
+              ))}
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  className="catalog-filters__clear"
+                  onClick={clearFilters}
+                >
+                  Limpiar filtros
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
         <div className="catalog-grid">
           {loading ? (
             <div className="catalog-empty">
@@ -151,6 +220,14 @@ const CatalogPage = () => {
             filteredProducts.map((product) => (
               <ProductCard key={product.id} product={product} onConfigure={handleConfigure} />
             ))
+          ) : hasActiveFilters ? (
+            <div className="catalog-empty">
+              <h3>Sin resultados para tu búsqueda</h3>
+              <p>Prueba con otro término o quita los filtros para ver toda la colección.</p>
+              <button type="button" className="button button--primary" onClick={clearFilters}>
+                Limpiar filtros
+              </button>
+            </div>
           ) : (
             <div className="catalog-empty">
               <h3>Aún estamos preparando esta colección</h3>
