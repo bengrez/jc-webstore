@@ -32,7 +32,7 @@ const ModeLandingPage = () => {
 
   const handleSelect = (next: ThemeMode) => {
     setMode(next)
-    navigate('/inicio')
+    navigate('/')
   }
 
   return (

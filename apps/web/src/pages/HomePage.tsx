@@ -1,5 +1,6 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useThemeMode } from '../context/ThemeContext'
+import type { ThemeMode } from '../context/ThemeContext'
 import './home.css'
 
 const highlights = [
@@ -24,7 +25,15 @@ const serviceStats = [
 ]
 
 const HomePage = () => {
-  const { mode } = useThemeMode()
+  const { mode, setMode } = useThemeMode()
+  const navigate = useNavigate()
+
+  // Sin el selector de modo en "/", estas tarjetas son la vía principal para
+  // cruzar de una colección a la otra: deben cambiar el modo, no solo navegar.
+  const goToCollection = (target: ThemeMode) => {
+    setMode(target)
+    navigate('/catalogo')
+  }
 
   const heroContent =
     mode === 'graduation'
@@ -90,17 +99,17 @@ const HomePage = () => {
           <span className="home-modes__badge">Graduación</span>
           <h3>Graduación, sin complicaciones</h3>
           <p>Estolas, birretes y túnicas personalizables para tu ceremonia.</p>
-          <Link to="/catalogo" className="link">
+          <button type="button" className="link" onClick={() => goToCollection('graduation')}>
             Ver graduación
-          </Link>
+          </button>
         </div>
         <div className="home-modes__card">
           <span className="home-modes__badge home-modes__badge--corporate">Corporativo</span>
           <h3>Regalos corporativos listos</h3>
           <p>Kits, textiles y accesorios con terminación premium.</p>
-          <Link to="/catalogo" className="link">
+          <button type="button" className="link" onClick={() => goToCollection('corporate')}>
             Ver corporativo
-          </Link>
+          </button>
         </div>
       </section>
 

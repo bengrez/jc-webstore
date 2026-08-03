@@ -14,7 +14,7 @@ const categories: Array<{ id: ProductCategory; label: string }> = [
 ]
 
 const CatalogPage = () => {
-  const { mode } = useThemeMode()
+  const { mode, setMode } = useThemeMode()
   const { addItem } = useCart()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
@@ -69,6 +69,14 @@ const CatalogPage = () => {
     return () => window.clearTimeout(timeout)
   }, [feedback])
 
+  // Los tabs y el switch del header controlaban lo mismo por caminos distintos:
+  // cambiar el modo reordenaba los tabs, pero cambiar de tab dejaba el modo
+  // desincronizado. El modo es ahora la única fuente de verdad.
+  const handleSelectCategory = (category: ProductCategory) => {
+    setSelectedCategory(category)
+    setMode(category === 'graduaciones' ? 'graduation' : 'corporate')
+  }
+
   const handleConfigure = (product: Product) => {
     setConfiguringProduct(product)
   }
@@ -104,7 +112,7 @@ const CatalogPage = () => {
               className={`catalog-tabs__button ${
                 selectedCategory === category.id ? 'is-active' : ''
               }`}
-              onClick={() => setSelectedCategory(category.id)}
+              onClick={() => handleSelectCategory(category.id)}
             >
               {category.label}
             </button>
