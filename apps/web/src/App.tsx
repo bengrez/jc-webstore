@@ -22,14 +22,18 @@ const App = () => {
         <Route path="quotes" element={<AdminQuotesPage />} />
         <Route path="quotes/:id" element={<AdminQuoteDetailPage />} />
       </Route>
-      <Route index element={<ModeLandingPage />} />
+      {/* El selector de modo deja de ser un peaje en "/": la mayor parte de la
+          demanda es de graduación, así que la home entra directo con el modo
+          guardado (graduación por defecto). El selector queda en /modo. */}
+      <Route path="modo" element={<ModeLandingPage />} />
       <Route element={<Layout />}>
-        <Route path="inicio" element={<HomePage />} />
+        <Route index element={<HomePage />} />
+        <Route path="inicio" element={<Navigate to="/" replace />} />
         <Route path="catalogo" element={<CatalogPage />} />
         <Route path="sobre-nosotros" element={<AboutPage />} />
         <Route path="contacto" element={<ContactPage />} />
         <Route path="carrito" element={<CartPage />} />
-        <Route path="*" element={<Navigate to="/inicio" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
   )

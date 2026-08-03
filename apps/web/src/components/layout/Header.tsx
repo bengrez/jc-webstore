@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { NavLink } from 'react-router-dom'
+import { useCart } from '../../context/CartContext'
 import { useThemeMode } from '../../context/ThemeContext'
 import ModeSwitch from '../shared/ModeSwitch'
 import './header.css'
 
 const NAV_LINKS = [
-  { to: '/inicio', label: 'Home' },
+  { to: '/', label: 'Home' },
   { to: '/catalogo', label: 'Catálogo' },
   { to: '/sobre-nosotros', label: 'Sobre nosotros' },
   { to: '/contacto', label: 'Contacto' },
@@ -14,7 +15,13 @@ const NAV_LINKS = [
 
 const Header = () => {
   const { mode } = useThemeMode()
+  const { items } = useCart()
   const [open, setOpen] = useState(false)
+
+  const cartCount = useMemo(
+    () => items.reduce((sum, item) => sum + item.quantity, 0),
+    [items]
+  )
 
   const handleToggle = () => setOpen((prev) => !prev)
   const handleNavigate = () => setOpen(false)
@@ -22,10 +29,10 @@ const Header = () => {
   return (
     <header className="site-header">
       <div className="site-header__upper">
-        <NavLink to="/inicio" className="site-header__brand" onClick={handleNavigate}>
-          <img src="/logo.png" alt="Gradumarketing logo" className="site-header__logo" />
+        <NavLink to="/" className="site-header__brand" onClick={handleNavigate}>
+          <img src="/logo.png" alt="Confecciones Juany logo" className="site-header__logo" />
           <div className="site-header__brand-text">
-            <span className="brand-label">Gradumarketing</span>
+            <span className="brand-label">Confecciones Juany</span>
             <span className="brand-tagline">Graduación y marketing en Chile</span>
           </div>
         </NavLink>
@@ -62,7 +69,7 @@ const Header = () => {
         <div className="site-header__nav-panel">
           <div className="site-header__nav-mode">
             <p className="site-header__nav-mode-copy">Elige qué colección quieres ver.</p>
-            <NavLink to="/" className="button button--ghost" onClick={handleNavigate}>
+            <NavLink to="/modo" className="button button--ghost" onClick={handleNavigate}>
               Cambiar modo
             </NavLink>
           </div>
@@ -75,9 +82,19 @@ const Header = () => {
                     `site-header__link ${isActive ? 'is-active' : ''}`
                   }
                   onClick={handleNavigate}
-                  end={link.to === '/inicio'}
+                  end={link.to === '/'}
+                  aria-label={
+                    link.to === '/carrito' && cartCount > 0
+                      ? `Carrito, ${cartCount} ${cartCount === 1 ? 'artículo' : 'artículos'}`
+                      : undefined
+                  }
                 >
                   {link.label}
+                  {link.to === '/carrito' && cartCount > 0 && (
+                    <span className="site-header__cart-count" aria-hidden="true">
+                      {cartCount}
+                    </span>
+                  )}
                 </NavLink>
               </li>
             ))}

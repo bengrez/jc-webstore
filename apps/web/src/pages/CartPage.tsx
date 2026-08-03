@@ -3,6 +3,7 @@ import type { ChangeEvent, FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { formatCurrency } from '../utils/format'
+import { parseMinOrder } from '../utils/product'
 import './cart.css'
 
 const initialFormState = {
@@ -26,16 +27,24 @@ const CartPage = () => {
 
   const hasItems = items.length > 0
 
+  // El configurador exige el mínimo de compra del producto, pero el carrito
+  // dejaba bajar hasta 0 y el ítem desaparecía sin aviso. Aquí se respeta el
+  // mismo mínimo; para quitar un producto está el botón "Eliminar".
+  const minQuantityFor = (cartItemKey: string) => {
+    const item = items.find((entry) => entry.cartItemKey === cartItemKey)
+    return item ? parseMinOrder(item.minOrder) : 1
+  }
+
   const handleQuantityButton = (cartItemKey: string, delta: number) => {
     const current = items.find((item) => item.cartItemKey === cartItemKey)?.quantity ?? 0
-    const next = Math.max(0, current + delta)
+    const next = Math.max(minQuantityFor(cartItemKey), current + delta)
     updateQuantity(cartItemKey, next)
   }
 
   const handleQuantityInput = (cartItemKey: string, event: ChangeEvent<HTMLInputElement>) => {
     const value = Number(event.target.value)
     if (Number.isNaN(value)) return
-    updateQuantity(cartItemKey, Math.max(0, value))
+    updateQuantity(cartItemKey, Math.max(minQuantityFor(cartItemKey), value))
   }
 
   const handleInputChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -134,7 +143,7 @@ const CartPage = () => {
         <header className="cart-header">
           <h1>Solicitud enviada</h1>
           <p>
-            Gracias por confiar en Gradumarketing. Responderemos dentro de 24 horas hábiles con tu
+            Gracias por confiar en Confecciones Juany. Responderemos dentro de 24 horas hábiles con tu
             cotización final.
           </p>
         </header>
@@ -197,7 +206,9 @@ const CartPage = () => {
       ) : (
         <div className="cart-layout">
           <section className="cart-items">
-            {items.map((item) => (
+            {items.map((item) => {
+              const minQty = parseMinOrder(item.minOrder)
+              return (
               <article key={item.cartItemKey} className="cart-item">
                 <div className="cart-item__info">
                   <h3>{item.name}</h3>
@@ -241,14 +252,14 @@ const CartPage = () => {
                       <button
                         type="button"
                         onClick={() => handleQuantityButton(item.cartItemKey, -1)}
-                        disabled={item.quantity <= 1}
+                        disabled={item.quantity <= minQty}
                         aria-label={`Disminuir cantidad de ${item.name}`}
                       >
                         –
                       </button>
                       <input
                         type="number"
-                        min={1}
+                        min={minQty}
                         value={item.quantity}
                         onChange={(event) => handleQuantityInput(item.cartItemKey, event)}
                         aria-label={`Cantidad de ${item.name}`}
@@ -261,6 +272,9 @@ const CartPage = () => {
                         +
                       </button>
                     </div>
+                    {minQty > 1 && (
+                      <span className="cart-item__moq">Mínimo {minQty} unidades</span>
+                    )}
                   </div>
 
                   <div className="cart-item__price">
@@ -282,7 +296,8 @@ const CartPage = () => {
                   Eliminar
                 </button>
               </article>
-            ))}
+              )
+            })}
 
             <Link to="/catalogo" className="link">
               Seguir explorando productos
