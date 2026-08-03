@@ -5,7 +5,7 @@ const Footer = () => {
     <footer className="site-footer">
       <div className="site-footer__content">
         <div>
-          <h3>Gradumarketing</h3>
+          <h3>Confecciones Juany</h3>
           <p>Estolas, túnicas y artículos publicitarios hechos en Chile.</p>
         </div>
         <div className="site-footer__contact">
@@ -15,7 +15,9 @@ const Footer = () => {
         </div>
       </div>
       <div className="site-footer__bottom">
-        <span>© {new Date().getFullYear()} Gradumarketing. Todos los derechos reservados.</span>
+        <span>
+          © {new Date().getFullYear()} Confecciones Juany. Todos los derechos reservados.
+        </span>
         <span>Diseño dual: Graduación & Corporativo</span>
       </div>
     </footer>

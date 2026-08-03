@@ -23,9 +23,9 @@ const Header = () => {
     <header className="site-header">
       <div className="site-header__upper">
         <NavLink to="/inicio" className="site-header__brand" onClick={handleNavigate}>
-          <img src="/logo.png" alt="Gradumarketing logo" className="site-header__logo" />
+          <img src="/logo.png" alt="Confecciones Juany logo" className="site-header__logo" />
           <div className="site-header__brand-text">
-            <span className="brand-label">Gradumarketing</span>
+            <span className="brand-label">Confecciones Juany</span>
             <span className="brand-tagline">Graduación y marketing en Chile</span>
           </div>
         </NavLink>

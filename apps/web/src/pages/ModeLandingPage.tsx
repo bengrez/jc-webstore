@@ -39,7 +39,7 @@ const ModeLandingPage = () => {
     <section className="mode-landing">
       <div className="mode-landing__shell">
         <p className="mode-landing__eyebrow">Elige tu experiencia</p>
-        <h1>Gradumarketing a tu medida</h1>
+        <h1>Confecciones Juany a tu medida</h1>
         <p className="mode-landing__lede">
           Decide si quieres ver artículos de graduaciones o soluciones corporativas. Guardaremos tu
           preferencia para seguir navegando.

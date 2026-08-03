@@ -94,7 +94,7 @@ const CatalogPage = () => {
         <span className="catalog-hero__mode">
           {mode === 'graduation' ? 'Modo Graduación' : 'Modo Corporativo'}
         </span>
-        <h1>Catálogo Gradumarketing</h1>
+        <h1>Catálogo Confecciones Juany</h1>
         <p>Elige la colección y suma productos a tu cotización.</p>
         <div className="catalog-tabs">
           {categories.map((category) => (

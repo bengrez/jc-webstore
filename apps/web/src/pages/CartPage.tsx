@@ -134,7 +134,7 @@ const CartPage = () => {
         <header className="cart-header">
           <h1>Solicitud enviada</h1>
           <p>
-            Gracias por confiar en Gradumarketing. Responderemos dentro de 24 horas hábiles con tu
+            Gracias por confiar en Confecciones Juany. Responderemos dentro de 24 horas hábiles con tu
             cotización final.
           </p>
         </header>
