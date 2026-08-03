@@ -1,10 +1,24 @@
 import { Router } from 'express'
 import multer from 'multer'
+import rateLimit from 'express-rate-limit'
 import path from 'node:path'
 import crypto from 'node:crypto'
 import { requireAdminAuth } from '../middleware/admin-auth.js'
 
 export const uploadsRouter = Router()
+
+// El endpoint público de subida no requiere sesión: sin un límite propio, el
+// tope global de 300 req/15min permite ~1.5 GB de disco por IP cada 15 minutos.
+const customerUploadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: 'too_many_uploads',
+    message: 'Demasiadas subidas. Intenta nuevamente en una hora.',
+  },
+})
 
 const ALLOWED_MIME_TYPES = new Set([
   'image/jpeg',
@@ -43,7 +57,7 @@ uploadsRouter.post('/logo', requireAdminAuth, upload.single('file'), (req, res) 
 })
 
 // Customer-facing logo upload (not admin-protected, used from configurator modal)
-uploadsRouter.post('/customer-logo', upload.single('file'), (req, res) => {
+uploadsRouter.post('/customer-logo', customerUploadLimiter, upload.single('file'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'no_file', message: 'No se recibió ningún archivo.' })
   }
