@@ -477,3 +477,33 @@ adminRouter.post('/quotes/:id/notes', async (req, res) => {
   })
 })
 
+adminRouter.get('/messages', async (req, res) => {
+  const pendingOnly = req.query.pending === 'true'
+
+  const messages = await prisma.contactMessage.findMany({
+    where: pendingOnly ? { handled: false } : {},
+    orderBy: { createdAt: 'desc' },
+    take: 200,
+  })
+
+  res.json(messages)
+})
+
+adminRouter.patch('/messages/:id', async (req, res) => {
+  const id = Number(req.params.id)
+  if (!Number.isFinite(id) || id <= 0) {
+    return res.status(400).json({ error: 'validation_error', message: 'ID inválido.' })
+  }
+
+  const parsed = z.object({ handled: z.boolean() }).safeParse(req.body)
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'validation_error', details: parsed.error.flatten() })
+  }
+
+  const updated = await prisma.contactMessage.update({
+    where: { id },
+    data: { handled: parsed.data.handled },
+  })
+
+  res.json(updated)
+})
