@@ -1,6 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import type { Product } from '../../data/types'
 import { adminFetch } from './adminApi'
+import AdminProductPreview from './AdminProductPreview'
+import type { PreviewState } from './AdminProductPreview'
 import './admin.css'
 
 type ProductCategory = 'graduaciones' | 'marketing'
@@ -68,6 +71,57 @@ const emptyOptionForm = {
   choices: [] as Array<{ label: string; value: string }>,
 }
 
+const productToForm = (product: AdminProduct): typeof emptyForm => ({
+  name: product.name,
+  description: product.description,
+  category: product.category,
+  price: product.price,
+  images: joinLines(product.images),
+  tags: joinLines(product.tags),
+  specs: joinLines(product.specs),
+  personalization: product.personalization,
+  minOrder: product.minOrder,
+  leadTime: product.leadTime,
+  availability: product.availability,
+  badge: product.badge ?? '',
+  sampleEligible: product.sampleEligible,
+  isActive: product.isActive,
+})
+
+const PREVIEW_PLACEHOLDER_IMAGE =
+  'data:image/svg+xml;charset=utf-8,' +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect width="400" height="300" fill="#ecefe8"/><text x="200" y="155" font-family="sans-serif" font-size="20" fill="#8a9185" text-anchor="middle">Agrega una imagen</text></svg>'
+  )
+
+// Mismas reglas que valida el backend al guardar (productInputSchema).
+const getMissingFields = (form: typeof emptyForm) => {
+  const missing: string[] = []
+  if (!form.name.trim()) missing.push('Nombre')
+  if (!form.description.trim()) missing.push('Descripción')
+  if (!Number.isInteger(Number(form.price)) || Number(form.price) <= 0) {
+    missing.push('Precio (número entero mayor a 0)')
+  }
+  if (splitLines(form.images).length === 0) missing.push('Al menos una imagen')
+  if (splitLines(form.tags).length === 0) missing.push('Al menos un tag')
+  if (splitLines(form.specs).length === 0) missing.push('Al menos una característica (specs)')
+  if (!form.personalization.trim()) missing.push('Personalización')
+  if (!form.leadTime.trim()) missing.push('Plazo de entrega')
+  if (!form.minOrder.trim()) missing.push('Pedido mínimo')
+  return missing
+}
+
+const getWarnings = (form: typeof emptyForm) => {
+  const warnings: string[] = []
+  if (form.minOrder.trim() && !/\d/.test(form.minOrder)) {
+    warnings.push('El pedido mínimo no tiene un número: el configurador partirá en 1 unidad.')
+  }
+  if (form.description.trim().length > 140) {
+    warnings.push('La descripción es larga; en la tarjeta del catálogo puede verse muy alta.')
+  }
+  return warnings
+}
+
 const AdminProductsPage = () => {
   const [products, setProducts] = useState<AdminProduct[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -79,6 +133,9 @@ const AdminProductsPage = () => {
   const [editingOptionId, setEditingOptionId] = useState<number | null>(null)
   const [optionStatus, setOptionStatus] = useState<null | { type: 'error' | 'success'; message: string }>(null)
   const [showOptionForm, setShowOptionForm] = useState(false)
+  const formSectionRef = useRef<HTMLElement>(null)
+  const [imageUploading, setImageUploading] = useState(false)
+  const [imageUploadError, setImageUploadError] = useState<string | null>(null)
 
   const selected = useMemo(
     () => products.find((product) => product.id === selectedId) ?? null,
@@ -98,22 +155,7 @@ const AdminProductsPage = () => {
 
   useEffect(() => {
     if (!selected) return
-    setForm({
-      name: selected.name,
-      description: selected.description,
-      category: selected.category,
-      price: selected.price,
-      images: joinLines(selected.images),
-      tags: joinLines(selected.tags),
-      specs: joinLines(selected.specs),
-      personalization: selected.personalization,
-      minOrder: selected.minOrder,
-      leadTime: selected.leadTime,
-      availability: selected.availability,
-      badge: selected.badge ?? '',
-      sampleEligible: selected.sampleEligible,
-      isActive: selected.isActive,
-    })
+    setForm(productToForm(selected))
     setShowOptionForm(false)
     setEditingOptionId(null)
     setOptionStatus(null)
@@ -267,6 +309,73 @@ const AdminProductsPage = () => {
     setOptionForm((prev) => ({ ...prev, choices: prev.choices.filter((_, i) => i !== index) }))
   }
 
+  const handleImageUpload = async (file: File) => {
+    setImageUploading(true)
+    setImageUploadError(null)
+    try {
+      const body = new FormData()
+      body.append('file', file)
+      const { url } = await adminFetch<{ url: string }>('/api/uploads/logo', {
+        method: 'POST',
+        body,
+      })
+      setForm((prev) => ({
+        ...prev,
+        images: prev.images.trim() ? `${prev.images.trim()}\n${url}` : url,
+      }))
+    } catch (error) {
+      const message = (error as { message?: string })?.message
+      setImageUploadError(message ?? 'No se pudo subir la imagen.')
+    } finally {
+      setImageUploading(false)
+    }
+  }
+
+  // La vista previa incluye la opción que se está editando, aunque aún no se guarde.
+  const draftOptions = useMemo(() => {
+    const saved = selected?.options ?? []
+    if (!showOptionForm || !optionForm.label.trim()) return saved
+    const draft = { ...optionForm, id: editingOptionId ?? -1 }
+    const merged =
+      editingOptionId !== null
+        ? saved.map((opt) => (opt.id === editingOptionId ? draft : opt))
+        : [...saved, draft]
+    return [...merged].sort((a, b) => a.sortOrder - b.sortOrder)
+  }, [selected, showOptionForm, optionForm, editingOptionId])
+
+  const previewProduct = useMemo<Product>(() => {
+    const images = splitLines(form.images)
+    return {
+      id: selected?.id ?? 'preview',
+      name: form.name.trim() || 'Nombre del producto',
+      description: form.description.trim() || 'Aquí aparecerá la descripción del producto.',
+      price: Number(form.price) || 0,
+      image: images[0] ?? PREVIEW_PLACEHOLDER_IMAGE,
+      images: images.length > 0 ? images : [PREVIEW_PLACEHOLDER_IMAGE],
+      category: form.category,
+      leadTime: form.leadTime.trim(),
+      availability: form.availability,
+      badge: form.badge.trim() || null,
+      tags: splitLines(form.tags),
+      specs: splitLines(form.specs),
+      personalization: form.personalization,
+      minOrder: form.minOrder,
+      sampleEligible: form.sampleEligible,
+      options: draftOptions,
+    }
+  }, [form, selected, draftOptions])
+
+  const isDirty = JSON.stringify(form) !== JSON.stringify(selected ? productToForm(selected) : emptyForm)
+  const previewState: PreviewState = !selected
+    ? isDirty
+      ? 'draft'
+      : 'new'
+    : isDirty
+      ? 'unsaved'
+      : selected.isActive
+        ? 'published'
+        : 'inactive'
+
   const optionTypeLabel = (type: ProductOptionType) => {
     if (type === 'COLOR') return 'Color'
     if (type === 'TEXT') return 'Texto'
@@ -274,8 +383,8 @@ const AdminProductsPage = () => {
   }
 
   return (
-    <div className="admin-grid admin-grid--2">
-      <section className="admin-card">
+    <div className="admin-grid admin-products">
+      <section className="admin-card admin-products__list">
         <div className="admin-form__actions">
           <h2 style={{ margin: 0 }}>Productos</h2>
           <button type="button" className="button button--primary" onClick={handleCreateNew}>
@@ -286,8 +395,8 @@ const AdminProductsPage = () => {
           <thead>
             <tr>
               <th>Nombre</th>
-              <th>Categoría</th>
-              <th>Precio</th>
+              <th className="admin-products__extra-col">Categoría</th>
+              <th className="admin-products__extra-col">Precio</th>
               <th>Estado</th>
             </tr>
           </thead>
@@ -298,14 +407,20 @@ const AdminProductsPage = () => {
                   <button
                     type="button"
                     className="link"
-                    onClick={() => setSelectedId(product.id)}
+                    onClick={() => {
+                      setSelectedId(product.id)
+                      // En pantallas medianas el listado va arriba: llevamos al formulario.
+                      if (window.innerWidth < 1280) {
+                        formSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                      }
+                    }}
                     style={{ background: 'none', border: 'none', padding: 0 }}
                   >
                     {product.name}
                   </button>
                 </td>
-                <td>{product.category}</td>
-                <td>{product.price}</td>
+                <td className="admin-products__extra-col">{product.category}</td>
+                <td className="admin-products__extra-col">{product.price}</td>
                 <td>{product.isActive ? 'Activo' : 'Inactivo'}</td>
               </tr>
             ))}
@@ -313,7 +428,7 @@ const AdminProductsPage = () => {
         </table>
       </section>
 
-      <section className="admin-card">
+      <section className="admin-card admin-products__form" ref={formSectionRef}>
         <h2 style={{ marginTop: 0 }}>{selected ? 'Editar producto' : 'Crear producto'}</h2>
 
         {status && (
@@ -395,6 +510,28 @@ const AdminProductsPage = () => {
             onChange={(event) => setForm((prev) => ({ ...prev, images: event.target.value }))}
             required
           />
+          <div className="admin-form__upload">
+            <label className="button button--ghost" aria-disabled={imageUploading}>
+              {imageUploading ? 'Subiendo…' : 'Subir imagen'}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                hidden
+                disabled={imageUploading}
+                onChange={(event) => {
+                  const file = event.target.files?.[0]
+                  event.target.value = ''
+                  if (file) handleImageUpload(file)
+                }}
+              />
+            </label>
+            <span>La primera imagen es la portada. Formato horizontal 4:3, máx. 5 MB.</span>
+          </div>
+          {imageUploadError && (
+            <div className="admin-status" data-variant="error" role="alert">
+              {imageUploadError}
+            </div>
+          )}
 
           <label htmlFor="prod-tags">Tags (uno por línea)</label>
           <textarea
@@ -643,6 +780,16 @@ const AdminProductsPage = () => {
           </div>
         )}
       </section>
+
+      <div className="admin-products__preview">
+        <AdminProductPreview
+          product={previewProduct}
+          state={previewState}
+          missing={getMissingFields(form)}
+          warnings={getWarnings(form)}
+          includesDraftOption={Boolean(selected) && showOptionForm && optionForm.label.trim() !== ''}
+        />
+      </div>
     </div>
   )
 }

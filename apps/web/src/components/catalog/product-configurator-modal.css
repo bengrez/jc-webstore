@@ -359,3 +359,15 @@
   width: 100%;
   margin-top: auto;
 }
+
+.pcm-config__preview-note {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  text-align: center;
+}
+
+.pcm-config__add:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

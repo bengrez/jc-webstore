@@ -69,6 +69,7 @@ const AdminLayout = () => {
         <nav className="admin-header__nav" aria-label="Navegación admin">
           <NavLink to="/admin/products">Productos</NavLink>
           <NavLink to="/admin/quotes">Cotizaciones</NavLink>
+          <NavLink to="/admin/messages">Mensajes</NavLink>
         </nav>
         <div className="admin-header__right">
           <span>{me.email}</span>

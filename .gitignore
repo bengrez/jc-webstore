@@ -35,3 +35,6 @@ coverage
 *.sln
 *.sw?
 
+
+# Archivos subidos por clientes/admin
+apps/server/uploads/

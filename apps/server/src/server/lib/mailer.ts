@@ -32,6 +32,10 @@ const getTransport = () => {
       user: env.SMTP_USER,
       pass: env.SMTP_PASS,
     },
+    // Si Gmail no responde, no dejamos colgada la respuesta al cliente.
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 15_000,
   })
 }
 
@@ -73,6 +77,47 @@ export const sendQuoteNotificationEmail = async (input: QuoteEmailInput) => {
     from,
     replyTo: input.customerEmail,
     subject: `Nueva cotización ${folio}`,
+    text: lines.join('\n'),
+  })
+
+  return true
+}
+
+type ContactEmailInput = {
+  messageId: number
+  name: string
+  email: string
+  phone?: string | null
+  company?: string | null
+  message: string
+}
+
+export const sendContactNotificationEmail = async (input: ContactEmailInput) => {
+  const transporter = getTransport()
+  if (!transporter) {
+    console.warn('[mail] SMTP_USER/SMTP_PASS no configurados; se omite envío de correo.')
+    return false
+  }
+
+  const to = env.QUOTES_TO_EMAIL ?? env.SMTP_USER
+  const from = env.SMTP_FROM ?? env.SMTP_USER
+
+  const lines = [
+    `Nuevo mensaje de contacto (#${input.messageId})`,
+    '',
+    `- Nombre: ${input.name}`,
+    `- Email: ${input.email}`,
+    input.phone ? `- Teléfono: ${input.phone}` : undefined,
+    input.company ? `- Institución o empresa: ${input.company}` : undefined,
+    '',
+    input.message,
+  ].filter((line) => line !== undefined)
+
+  await transporter.sendMail({
+    to,
+    from,
+    replyTo: input.email,
+    subject: `Nuevo mensaje de contacto: ${input.name}`,
     text: lines.join('\n'),
   })
 

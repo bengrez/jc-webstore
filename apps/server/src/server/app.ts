@@ -5,9 +5,6 @@ import path from 'node:path'
 import rateLimit from 'express-rate-limit'
 import { apiRouter } from './routes/api.js'
 import { errorHandler } from './middleware/error-handler.js'
-import { fileURLToPath } from 'node:url'
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export const createApp = () => {
   const app = express()
@@ -37,14 +34,25 @@ export const createApp = () => {
   )
   app.use('/api', apiRouter)
 
-  // Serve uploaded files (logos, etc.)
+  // Serve uploaded files (logos, etc.). Solo tipos permitidos: si alguna vez llegó otro
+  // archivo al disco, no se sirve como HTML/JS desde nuestro dominio.
   const uploadsDir = path.resolve(process.cwd(), 'uploads')
-  app.use('/uploads', express.static(uploadsDir))
+  const allowedUploadExtensions = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp', '.pdf'])
+  app.use(
+    '/uploads',
+    (req, res, next) => {
+      if (!allowedUploadExtensions.has(path.extname(req.path).toLowerCase())) {
+        return res.status(404).end()
+      }
+      next()
+    },
+    express.static(uploadsDir, { dotfiles: 'deny', index: false })
+  )
 
   if (process.env.NODE_ENV === 'production') {
     const distDir = path.resolve(process.cwd(), '../web/dist')
     app.use(express.static(distDir))
-    app.get('*', (req, res, next) => {
+    app.get('/{*splat}', (req, res, next) => {
       if (req.path.startsWith('/api')) return next()
       res.sendFile(path.join(distDir, 'index.html'))
     })
