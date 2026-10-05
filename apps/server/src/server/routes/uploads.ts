@@ -42,6 +42,14 @@ uploadsRouter.post('/logo', requireAdminAuth, upload.single('file'), (req, res) 
   res.json({ url: `/uploads/${req.file.filename}`, originalName: req.file.originalname })
 })
 
+// Admin-only product image upload
+uploadsRouter.post('/product-image', requireAdminAuth, upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'no_file', message: 'No se recibió ningún archivo.' })
+  }
+  res.json({ url: `/uploads/${req.file.filename}` })
+})
+
 // Customer-facing logo upload (not admin-protected, used from configurator modal)
 uploadsRouter.post('/customer-logo', upload.single('file'), (req, res) => {
   if (!req.file) {

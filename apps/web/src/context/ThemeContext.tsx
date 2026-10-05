@@ -12,7 +12,7 @@ type ThemeContextValue = {
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined)
 
-const STORAGE_KEY = 'gradumarketing:theme-mode'
+const STORAGE_KEY = 'confeccionesjuany:theme-mode'
 
 const getInitialMode = (): ThemeMode => {
   if (typeof window === 'undefined') {

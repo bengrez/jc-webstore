@@ -53,6 +53,7 @@ export const productToPublicResponse = (
     availability: formatAvailabilityLabel(product.availability),
     badge: product.badge,
     sampleEligible: product.sampleEligible,
+    stockNote: product.stockNote,
     options: serializeOptions(product.options ?? []),
   }
 }
@@ -77,6 +78,7 @@ export const productToAdminResponse = (
     availability: formatAvailabilityLabel(product.availability),
     badge: product.badge,
     sampleEligible: product.sampleEligible,
+    stockNote: product.stockNote,
     isActive: product.isActive,
     createdAt: product.createdAt,
     updatedAt: product.updatedAt,

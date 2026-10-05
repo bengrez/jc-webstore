@@ -6,6 +6,22 @@ import './admin.css'
 
 type QuoteStatus = 'NEW' | 'IN_REVIEW' | 'QUOTED' | 'ACCEPTED' | 'REJECTED'
 
+const quoteStatusLabel = (s: QuoteStatus) => {
+  const map: Record<QuoteStatus, string> = {
+    NEW: 'Nueva', IN_REVIEW: 'En revisión', QUOTED: 'Cotizada',
+    ACCEPTED: 'Aceptada', REJECTED: 'Rechazada',
+  }
+  return map[s]
+}
+
+const quoteStatusVariant = (s: QuoteStatus) => {
+  const map: Record<QuoteStatus, string> = {
+    NEW: 'new', IN_REVIEW: 'review', QUOTED: 'quoted',
+    ACCEPTED: 'accepted', REJECTED: 'rejected',
+  }
+  return map[s]
+}
+
 type ConfigEntry = {
   optionId: number
   label: string
@@ -21,12 +37,15 @@ type QuoteDetail = {
   customerEmail: string
   customerPhone?: string | null
   customerMessage?: string | null
+  adminMessage?: string | null
+  quotedAt?: string | null
   subtotal: number
   createdAt: string
   items: Array<{
     id: number
     quantity: number
     unitPrice: number
+    quotedUnitPrice?: number | null
     productName: string
     productCategory: string
     productLeadTime: string
@@ -49,12 +68,24 @@ const AdminQuoteDetailPage = () => {
   const [noteBody, setNoteBody] = useState('')
   const [saving, setSaving] = useState(false)
 
+  // Send quote state
+  const [quotedPrices, setQuotedPrices] = useState<Record<number, number>>({})
+  const [adminMessage, setAdminMessage] = useState('')
+  const [sending, setSending] = useState(false)
+  const [sendStatus, setSendStatus] = useState<null | 'success' | 'error'>(null)
+
   useEffect(() => {
     if (!id) return
     adminFetch<QuoteDetail>(`/api/admin/quotes/${id}`)
       .then((data) => {
         setQuote(data)
         setError(null)
+        const initialPrices: Record<number, number> = {}
+        for (const item of data.items) {
+          initialPrices[item.id] = item.quotedUnitPrice ?? item.unitPrice
+        }
+        setQuotedPrices(initialPrices)
+        if (data.adminMessage) setAdminMessage(data.adminMessage)
       })
       .catch(() => setError('No fue posible cargar la cotización.'))
   }, [id])
@@ -80,10 +111,7 @@ const AdminQuoteDetailPage = () => {
     try {
       const created = await adminFetch<QuoteDetail['notes'][number]>(
         `/api/admin/quotes/${quote.id}/notes`,
-        {
-          method: 'POST',
-          json: { body: noteBody },
-        }
+        { method: 'POST', json: { body: noteBody } }
       )
       setQuote((prev) => (prev ? { ...prev, notes: [created, ...prev.notes] } : prev))
       setNoteBody('')
@@ -92,13 +120,53 @@ const AdminQuoteDetailPage = () => {
     }
   }
 
+  const handleSendQuote = async () => {
+    if (!quote) return
+    setSending(true)
+    setSendStatus(null)
+    try {
+      const result = await adminFetch<{ status: string; quotedAt: string; quotedSubtotal: number }>(
+        `/api/admin/quotes/${quote.id}/send-quote`,
+        {
+          method: 'POST',
+          json: {
+            adminMessage: adminMessage.trim() || null,
+            items: quote.items.map((item) => ({
+              itemId: item.id,
+              quotedUnitPrice: quotedPrices[item.id] ?? item.unitPrice,
+            })),
+          },
+        }
+      )
+      setQuote((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: result.status as QuoteStatus,
+              adminMessage: adminMessage.trim() || null,
+              quotedAt: result.quotedAt,
+              subtotal: result.quotedSubtotal,
+            }
+          : prev
+      )
+      setSendStatus('success')
+    } catch {
+      setSendStatus('error')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  const isFinalStatus =
+    quote?.status === 'QUOTED' ||
+    quote?.status === 'ACCEPTED' ||
+    quote?.status === 'REJECTED'
+
   if (error) {
     return (
       <div className="admin-card">
         <p>{error}</p>
-        <Link to="/admin/quotes" className="link">
-          Volver
-        </Link>
+        <Link to="/admin/quotes" className="link">Volver</Link>
       </div>
     )
   }
@@ -112,9 +180,7 @@ const AdminQuoteDetailPage = () => {
       <section className="admin-card">
         <div className="admin-form__actions">
           <h2 style={{ margin: 0 }}>{quote.folio}</h2>
-          <Link to="/admin/quotes" className="link">
-            Volver
-          </Link>
+          <Link to="/admin/quotes" className="link">Volver</Link>
         </div>
 
         <p style={{ marginTop: 8, color: 'var(--color-muted)' }}>
@@ -130,6 +196,11 @@ const AdminQuoteDetailPage = () => {
           </div>
           <div>
             <strong>Estado</strong>
+            <div style={{ marginBottom: 8, marginTop: 4 }}>
+              <span className={`admin-badge admin-badge--status-${quoteStatusVariant(quote.status)}`}>
+                {quoteStatusLabel(quote.status)}
+              </span>
+            </div>
             <select
               value={quote.status}
               onChange={(event) => handleStatusChange(event.target.value as QuoteStatus)}
@@ -146,7 +217,7 @@ const AdminQuoteDetailPage = () => {
 
         {quote.customerMessage && (
           <>
-            <strong>Mensaje</strong>
+            <strong>Mensaje del cliente</strong>
             <p>{quote.customerMessage}</p>
           </>
         )}
@@ -157,7 +228,8 @@ const AdminQuoteDetailPage = () => {
             <tr>
               <th>Producto</th>
               <th>Cant.</th>
-              <th>Unit.</th>
+              <th>Precio original</th>
+              <th>Precio cotizado</th>
               <th>Subtotal</th>
               <th>Info</th>
               <th>Configuración</th>
@@ -168,8 +240,22 @@ const AdminQuoteDetailPage = () => {
               <tr key={item.id}>
                 <td>{item.productName}</td>
                 <td>{item.quantity}</td>
-                <td>{item.unitPrice}</td>
-                <td>{item.unitPrice * item.quantity}</td>
+                <td style={{ color: 'var(--color-text-muted)' }}>{item.unitPrice.toLocaleString('es-CL')}</td>
+                <td>
+                  <input
+                    type="number"
+                    min={1}
+                    value={quotedPrices[item.id] ?? item.unitPrice}
+                    onChange={(e) =>
+                      setQuotedPrices((prev) => ({ ...prev, [item.id]: Number(e.target.value) }))
+                    }
+                    style={{ width: 100, padding: '4px 8px', borderRadius: 8, border: '1px solid var(--color-divider)', fontSize: '0.9rem' }}
+                    disabled={isFinalStatus}
+                  />
+                </td>
+                <td>
+                  {((quotedPrices[item.id] ?? item.unitPrice) * item.quantity).toLocaleString('es-CL')}
+                </td>
                 <td>
                   <div>{item.productAvailability}</div>
                   <div style={{ color: 'var(--color-muted)', fontSize: '0.9rem' }}>
@@ -207,8 +293,54 @@ const AdminQuoteDetailPage = () => {
         </table>
 
         <p>
-          <strong>Subtotal referencial:</strong> {quote.subtotal} + IVA
+          <strong>Subtotal:</strong>{' '}
+          {quote.subtotal.toLocaleString('es-CL')} + IVA
         </p>
+
+        {/* ── Send formal quote ── */}
+        {(quote.status === 'NEW' || quote.status === 'IN_REVIEW') && (
+          <div style={{ marginTop: 24, padding: 16, borderRadius: 12, border: '1px solid var(--color-divider)', background: 'rgba(255,255,255,0.6)' }}>
+            <h3 style={{ marginTop: 0 }}>Enviar cotización formal</h3>
+            <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginTop: 0 }}>
+              Ajusta los precios cotizados arriba si es necesario, luego envía la cotización al cliente por email con un PDF adjunto.
+            </p>
+            <label htmlFor="admin-message" style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>
+              Mensaje al cliente (opcional)
+            </label>
+            <textarea
+              id="admin-message"
+              rows={3}
+              value={adminMessage}
+              onChange={(e) => setAdminMessage(e.target.value)}
+              placeholder="Ej: Incluimos el costo de bordado en los precios indicados…"
+              style={{ width: '100%', marginBottom: 12, padding: 10, borderRadius: 10, border: '1px solid var(--color-divider)', fontFamily: 'inherit', fontSize: '0.9rem', boxSizing: 'border-box' }}
+            />
+            {sendStatus === 'success' && (
+              <div className="admin-status" data-variant="success" style={{ marginBottom: 10 }}>
+                Cotización enviada al cliente por email con PDF adjunto.
+              </div>
+            )}
+            {sendStatus === 'error' && (
+              <div className="admin-status" data-variant="error" style={{ marginBottom: 10 }}>
+                No se pudo enviar. Intenta de nuevo.
+              </div>
+            )}
+            <button
+              type="button"
+              className="button button--accent"
+              onClick={handleSendQuote}
+              disabled={sending}
+            >
+              {sending ? 'Enviando…' : 'Enviar cotización formal'}
+            </button>
+          </div>
+        )}
+
+        {quote.status === 'QUOTED' && quote.quotedAt && (
+          <p style={{ color: 'var(--color-muted)', fontSize: '0.85rem', marginTop: 12 }}>
+            Cotización formal enviada el {new Date(quote.quotedAt).toLocaleString('es-CL')}
+          </p>
+        )}
       </section>
 
       <section className="admin-card">
@@ -248,4 +380,3 @@ const AdminQuoteDetailPage = () => {
 }
 
 export default AdminQuoteDetailPage
-

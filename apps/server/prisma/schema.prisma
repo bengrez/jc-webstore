@@ -55,6 +55,7 @@ model Product {
   availability  ProductAvailability
   badge         String?
   sampleEligible Boolean
+  stockNote     String?
   isActive      Boolean              @default(true)
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt
@@ -83,6 +84,8 @@ model Quote {
   customerPhone   String?
   customerMessage String?
   subtotal        Int
+  adminMessage    String?
+  quotedAt        DateTime?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   items           QuoteItem[]
@@ -90,11 +93,12 @@ model Quote {
 }
 
 model QuoteItem {
-  id            Int     @id @default(autoincrement())
-  quoteId       Int
-  productId     String
-  quantity      Int
-  unitPrice     Int
+  id              Int     @id @default(autoincrement())
+  quoteId         Int
+  productId       String
+  quantity        Int
+  unitPrice       Int
+  quotedUnitPrice Int?
   productSnapshot String
   configuration   String  @default("[]")
 
@@ -110,6 +114,7 @@ model QuoteNote {
   quoteId     Int
   adminUserId Int
   body        String
+  isPublic    Boolean  @default(false)
   createdAt   DateTime @default(now())
 
   quote     Quote     @relation(fields: [quoteId], references: [id], onDelete: Cascade)
@@ -117,4 +122,14 @@ model QuoteNote {
 
   @@index([quoteId])
   @@index([adminUserId])
+}
+
+model ContactMessage {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  phone     String?
+  company   String?
+  message   String
+  createdAt DateTime @default(now())
 }

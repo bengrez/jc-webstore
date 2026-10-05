@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { adminFetch } from './adminApi'
 import './admin.css'
@@ -31,6 +31,7 @@ type AdminProduct = {
   availability: AvailabilityLabel
   badge?: string | null
   sampleEligible: boolean
+  stockNote?: string | null
   isActive: boolean
   options: AdminProductOption[]
 }
@@ -48,7 +49,7 @@ const emptyForm = {
   description: '',
   category: 'graduaciones' as ProductCategory,
   price: 0,
-  images: '',
+  images: [] as string[],
   tags: '',
   specs: '',
   personalization: '',
@@ -57,6 +58,7 @@ const emptyForm = {
   availability: 'A pedido' as AvailabilityLabel,
   badge: '',
   sampleEligible: true,
+  stockNote: '',
   isActive: true,
 }
 
@@ -73,6 +75,13 @@ const AdminProductsPage = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [form, setForm] = useState(emptyForm)
   const [status, setStatus] = useState<null | { type: 'error' | 'success'; message: string }>(null)
+  const [confirmDeactivate, setConfirmDeactivate] = useState(false)
+
+  // Image manager state
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const [addUrlInput, setAddUrlInput] = useState('')
+  const [showAddUrl, setShowAddUrl] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Options state
   const [optionForm, setOptionForm] = useState(emptyOptionForm)
@@ -98,12 +107,13 @@ const AdminProductsPage = () => {
 
   useEffect(() => {
     if (!selected) return
+    setConfirmDeactivate(false)
     setForm({
       name: selected.name,
       description: selected.description,
       category: selected.category,
       price: selected.price,
-      images: joinLines(selected.images),
+      images: selected.images,
       tags: joinLines(selected.tags),
       specs: joinLines(selected.specs),
       personalization: selected.personalization,
@@ -112,18 +122,24 @@ const AdminProductsPage = () => {
       availability: selected.availability,
       badge: selected.badge ?? '',
       sampleEligible: selected.sampleEligible,
+      stockNote: selected.stockNote ?? '',
       isActive: selected.isActive,
     })
     setShowOptionForm(false)
     setEditingOptionId(null)
     setOptionStatus(null)
+    setShowAddUrl(false)
+    setAddUrlInput('')
   }, [selected])
 
   const handleCreateNew = () => {
     setSelectedId(null)
     setForm(emptyForm)
     setStatus(null)
+    setConfirmDeactivate(false)
     setShowOptionForm(false)
+    setShowAddUrl(false)
+    setAddUrlInput('')
   }
 
   const handleSubmit = async (event: FormEvent) => {
@@ -135,7 +151,7 @@ const AdminProductsPage = () => {
       description: form.description,
       category: form.category,
       price: Number(form.price),
-      images: splitLines(form.images),
+      images: form.images,
       tags: splitLines(form.tags),
       specs: splitLines(form.specs),
       personalization: form.personalization,
@@ -144,6 +160,7 @@ const AdminProductsPage = () => {
       availability: form.availability,
       badge: form.badge ? form.badge : null,
       sampleEligible: form.sampleEligible,
+      stockNote: form.stockNote ? form.stockNote : null,
       isActive: form.isActive,
     }
 
@@ -176,6 +193,77 @@ const AdminProductsPage = () => {
     await loadProducts()
     setStatus({ type: 'success', message: 'Producto desactivado.' })
   }
+
+  const handleReactivate = async () => {
+    if (!selected) return
+    try {
+      const updated = await adminFetch<AdminProduct>(`/api/admin/products/${selected.id}`, {
+        method: 'PUT',
+        json: {
+          name: form.name,
+          description: form.description,
+          category: form.category,
+          price: Number(form.price),
+          images: form.images,
+          tags: splitLines(form.tags),
+          specs: splitLines(form.specs),
+          personalization: form.personalization,
+          minOrder: form.minOrder,
+          leadTime: form.leadTime,
+          availability: form.availability,
+          badge: form.badge || null,
+          sampleEligible: form.sampleEligible,
+          stockNote: form.stockNote || null,
+          isActive: true,
+        },
+      })
+      setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
+      setSelectedId(updated.id)
+      setStatus({ type: 'success', message: 'Producto reactivado.' })
+    } catch {
+      setStatus({ type: 'error', message: 'No fue posible reactivar el producto.' })
+    }
+  }
+
+  // Image manager handlers
+  const handleImageUpload = async (file: File) => {
+    setUploadingImage(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/uploads/product-image', {
+        method: 'POST',
+        body: fd,
+        credentials: 'include',
+      })
+      if (!res.ok) throw new Error('upload failed')
+      const data = (await res.json()) as { url: string }
+      setForm((prev) => ({ ...prev, images: [...prev.images, data.url] }))
+    } catch {
+      setStatus({ type: 'error', message: 'No se pudo subir la imagen. Intenta de nuevo.' })
+    } finally {
+      setUploadingImage(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  const handleAddImageUrl = () => {
+    const url = addUrlInput.trim()
+    if (url) setForm((prev) => ({ ...prev, images: [...prev.images, url] }))
+    setAddUrlInput('')
+    setShowAddUrl(false)
+  }
+
+  const handleRemoveImage = (i: number) =>
+    setForm((prev) => ({ ...prev, images: prev.images.filter((_, idx) => idx !== i) }))
+
+  const handleMoveImage = (i: number, dir: 'up' | 'down') =>
+    setForm((prev) => {
+      const next = [...prev.images]
+      const swap = dir === 'up' ? i - 1 : i + 1
+      ;[next[i], next[swap]] = [next[swap], next[i]]
+      return { ...prev, images: next }
+    })
 
   // Option handlers
   const handleEditOption = (option: AdminProductOption) => {
@@ -275,11 +363,12 @@ const AdminProductsPage = () => {
 
   return (
     <div className="admin-grid admin-grid--2">
+      {/* ── Left: Product list ── */}
       <section className="admin-card">
         <div className="admin-form__actions">
           <h2 style={{ margin: 0 }}>Productos</h2>
           <button type="button" className="button button--primary" onClick={handleCreateNew}>
-            Nuevo
+            Nuevo producto
           </button>
         </div>
         <table className="admin-table" aria-label="Listado de productos">
@@ -292,27 +381,31 @@ const AdminProductsPage = () => {
             </tr>
           </thead>
           <tbody>
-            {products.map((product) => (
-              <tr key={product.id}>
+            {products.map((p) => (
+              <tr
+                key={p.id}
+                className={`admin-table__row--clickable${selectedId === p.id ? ' admin-table__row--selected' : ''}`}
+                onClick={() => { setSelectedId(p.id); setConfirmDeactivate(false) }}
+              >
+                <td>{p.name}</td>
                 <td>
-                  <button
-                    type="button"
-                    className="link"
-                    onClick={() => setSelectedId(product.id)}
-                    style={{ background: 'none', border: 'none', padding: 0 }}
-                  >
-                    {product.name}
-                  </button>
+                  <span className={`admin-badge ${p.category === 'graduaciones' ? 'admin-badge--grad' : 'admin-badge--mkt'}`}>
+                    {p.category === 'graduaciones' ? 'Graduaciones' : 'Marketing'}
+                  </span>
                 </td>
-                <td>{product.category}</td>
-                <td>{product.price}</td>
-                <td>{product.isActive ? 'Activo' : 'Inactivo'}</td>
+                <td>{p.price.toLocaleString('es-CL')}</td>
+                <td>
+                  <span className={`admin-badge ${p.isActive ? 'admin-badge--active' : 'admin-badge--inactive'}`}>
+                    {p.isActive ? 'Activo' : 'Inactivo'}
+                  </span>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </section>
 
+      {/* ── Right: Product form ── */}
       <section className="admin-card">
         <h2 style={{ marginTop: 0 }}>{selected ? 'Editar producto' : 'Crear producto'}</h2>
 
@@ -323,170 +416,312 @@ const AdminProductsPage = () => {
         )}
 
         <form className="admin-form" onSubmit={handleSubmit}>
-          <div className="admin-form__row">
-            <div>
-              <label htmlFor="prod-name">Nombre</label>
-              <input
-                id="prod-name"
-                value={form.name}
-                onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
-                required
-              />
+
+          {/* ── Información básica ── */}
+          <div className="admin-form-section">
+            <h4 className="admin-form-section__title">Información básica</h4>
+
+            <div className="admin-form__row">
+              <div>
+                <label htmlFor="prod-name">Nombre</label>
+                <input
+                  id="prod-name"
+                  value={form.name}
+                  onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="prod-category">Categoría</label>
+                <select
+                  id="prod-category"
+                  value={form.category}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, category: e.target.value as ProductCategory }))
+                  }
+                >
+                  <option value="graduaciones">Graduaciones</option>
+                  <option value="marketing">Marketing</option>
+                </select>
+              </div>
             </div>
-            <div>
-              <label htmlFor="prod-category">Categoría</label>
-              <select
-                id="prod-category"
-                value={form.category}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, category: event.target.value as ProductCategory }))
-                }
-              >
-                <option value="graduaciones">graduaciones</option>
-                <option value="marketing">marketing</option>
-              </select>
+
+            <label htmlFor="prod-description">Descripción</label>
+            <textarea
+              id="prod-description"
+              rows={3}
+              value={form.description}
+              onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
+              required
+            />
+          </div>
+
+          {/* ── Precio y logística ── */}
+          <div className="admin-form-section">
+            <h4 className="admin-form-section__title">Precio y logística</h4>
+
+            <div className="admin-form__row">
+              <div>
+                <label htmlFor="prod-price">Precio (desde, en CLP)</label>
+                <input
+                  id="prod-price"
+                  type="number"
+                  min={1}
+                  value={form.price}
+                  onChange={(e) => setForm((prev) => ({ ...prev, price: Number(e.target.value) }))}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="prod-availability">Disponibilidad</label>
+                <select
+                  id="prod-availability"
+                  value={form.availability}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      availability: e.target.value as AvailabilityLabel,
+                    }))
+                  }
+                >
+                  <option value="Disponible">Disponible</option>
+                  <option value="A pedido">A pedido</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="admin-form__row">
+              <div>
+                <label htmlFor="prod-leadtime">Tiempo de entrega</label>
+                <input
+                  id="prod-leadtime"
+                  value={form.leadTime}
+                  onChange={(e) => setForm((prev) => ({ ...prev, leadTime: e.target.value }))}
+                  placeholder="Ej: 7–10 días hábiles"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="prod-minorder">Pedido mínimo (MOQ)</label>
+                <input
+                  id="prod-minorder"
+                  value={form.minOrder}
+                  onChange={(e) => setForm((prev) => ({ ...prev, minOrder: e.target.value }))}
+                  placeholder="Ej: Mínimo 50 unidades"
+                  required
+                />
+              </div>
             </div>
           </div>
 
-          <label htmlFor="prod-description">Descripción</label>
-          <textarea
-            id="prod-description"
-            rows={3}
-            value={form.description}
-            onChange={(event) => setForm((prev) => ({ ...prev, description: event.target.value }))}
-            required
-          />
+          {/* ── Imágenes ── */}
+          <div className="admin-form-section">
+            <h4 className="admin-form-section__title">Imágenes</h4>
 
-          <div className="admin-form__row">
-            <div>
-              <label htmlFor="prod-price">Precio (desde)</label>
-              <input
-                id="prod-price"
-                type="number"
-                min={1}
-                value={form.price}
-                onChange={(event) => setForm((prev) => ({ ...prev, price: Number(event.target.value) }))}
-                required
-              />
-            </div>
-            <div>
-              <label htmlFor="prod-availability">Disponibilidad</label>
-              <select
-                id="prod-availability"
-                value={form.availability}
-                onChange={(event) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    availability: event.target.value as AvailabilityLabel,
-                  }))
-                }
-              >
-                <option value="Disponible">Disponible</option>
-                <option value="A pedido">A pedido</option>
-              </select>
-            </div>
-          </div>
+            <div className="admin-image-manager">
+              {form.images.length === 0 && (
+                <p className="admin-image-empty">Sin imágenes. Sube una o añade una URL.</p>
+              )}
+              {form.images.map((url, i) => (
+                <div key={`${url}-${i}`} className="admin-image-row">
+                  <img src={url} alt="" className="admin-image-thumb" />
+                  <span className="admin-image-url" title={url}>
+                    {url.startsWith('/uploads/') ? url.split('/').pop() : url}
+                  </span>
+                  <div className="admin-image-controls">
+                    <button
+                      type="button"
+                      onClick={() => handleMoveImage(i, 'up')}
+                      disabled={i === 0}
+                      title="Subir"
+                    >
+                      ↑
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleMoveImage(i, 'down')}
+                      disabled={i === form.images.length - 1}
+                      title="Bajar"
+                    >
+                      ↓
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(i)}
+                      className="admin-image-remove"
+                      title="Eliminar"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              ))}
 
-          <label htmlFor="prod-images">Imágenes (una por línea)</label>
-          <textarea
-            id="prod-images"
-            rows={3}
-            value={form.images}
-            onChange={(event) => setForm((prev) => ({ ...prev, images: event.target.value }))}
-            required
-          />
+              <div className="admin-image-actions">
+                <label className={`button button--ghost admin-image-upload-btn${uploadingImage ? ' is-loading' : ''}`}>
+                  {uploadingImage ? 'Subiendo…' : '+ Subir imagen'}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    disabled={uploadingImage}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0]
+                      if (f) handleImageUpload(f)
+                    }}
+                  />
+                </label>
 
-          <label htmlFor="prod-tags">Tags (uno por línea)</label>
-          <textarea
-            id="prod-tags"
-            rows={2}
-            value={form.tags}
-            onChange={(event) => setForm((prev) => ({ ...prev, tags: event.target.value }))}
-            required
-          />
-
-          <label htmlFor="prod-specs">Specs (uno por línea)</label>
-          <textarea
-            id="prod-specs"
-            rows={2}
-            value={form.specs}
-            onChange={(event) => setForm((prev) => ({ ...prev, specs: event.target.value }))}
-            required
-          />
-
-          <div className="admin-form__row">
-            <div>
-              <label htmlFor="prod-leadtime">Lead time</label>
-              <input
-                id="prod-leadtime"
-                value={form.leadTime}
-                onChange={(event) => setForm((prev) => ({ ...prev, leadTime: event.target.value }))}
-                required
-              />
-            </div>
-            <div>
-              <label htmlFor="prod-minorder">MOQ</label>
-              <input
-                id="prod-minorder"
-                value={form.minOrder}
-                onChange={(event) => setForm((prev) => ({ ...prev, minOrder: event.target.value }))}
-                required
-              />
-            </div>
-          </div>
-
-          <label htmlFor="prod-personalization">Personalización</label>
-          <textarea
-            id="prod-personalization"
-            rows={2}
-            value={form.personalization}
-            onChange={(event) =>
-              setForm((prev) => ({ ...prev, personalization: event.target.value }))
-            }
-            required
-          />
-
-          <div className="admin-form__row">
-            <div>
-              <label htmlFor="prod-badge">Badge (opcional)</label>
-              <input
-                id="prod-badge"
-                value={form.badge}
-                onChange={(event) => setForm((prev) => ({ ...prev, badge: event.target.value }))}
-              />
-            </div>
-            <div>
-              <label htmlFor="prod-sample">¿Muestra disponible?</label>
-              <select
-                id="prod-sample"
-                value={form.sampleEligible ? 'yes' : 'no'}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, sampleEligible: event.target.value === 'yes' }))
-                }
-              >
-                <option value="yes">Sí</option>
-                <option value="no">No</option>
-              </select>
+                {!showAddUrl ? (
+                  <button
+                    type="button"
+                    className="button button--ghost"
+                    onClick={() => setShowAddUrl(true)}
+                  >
+                    + Añadir URL
+                  </button>
+                ) : (
+                  <div className="admin-image-url-row">
+                    <input
+                      value={addUrlInput}
+                      onChange={(e) => setAddUrlInput(e.target.value)}
+                      placeholder="https://…"
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddImageUrl() } }}
+                      autoFocus
+                    />
+                    <button type="button" className="button button--primary" onClick={handleAddImageUrl}>
+                      Añadir
+                    </button>
+                    <button
+                      type="button"
+                      className="button button--ghost"
+                      onClick={() => { setShowAddUrl(false); setAddUrlInput('') }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
+          {/* ── Detalles ── */}
+          <div className="admin-form-section">
+            <h4 className="admin-form-section__title">Detalles</h4>
+
+            <label htmlFor="prod-tags">Tags (uno por línea)</label>
+            <textarea
+              id="prod-tags"
+              rows={2}
+              value={form.tags}
+              onChange={(e) => setForm((prev) => ({ ...prev, tags: e.target.value }))}
+              required
+            />
+
+            <label htmlFor="prod-specs">Especificaciones (una por línea)</label>
+            <textarea
+              id="prod-specs"
+              rows={2}
+              value={form.specs}
+              onChange={(e) => setForm((prev) => ({ ...prev, specs: e.target.value }))}
+              required
+            />
+
+            <label htmlFor="prod-personalization">Personalización</label>
+            <textarea
+              id="prod-personalization"
+              rows={2}
+              value={form.personalization}
+              onChange={(e) => setForm((prev) => ({ ...prev, personalization: e.target.value }))}
+              required
+            />
+
+            <div className="admin-form__row">
+              <div>
+                <label htmlFor="prod-badge">Badge (opcional)</label>
+                <input
+                  id="prod-badge"
+                  value={form.badge}
+                  onChange={(e) => setForm((prev) => ({ ...prev, badge: e.target.value }))}
+                  placeholder="Ej: Nuevo, Popular…"
+                />
+              </div>
+              <div>
+                <label htmlFor="prod-sample">¿Muestra disponible?</label>
+                <select
+                  id="prod-sample"
+                  value={form.sampleEligible ? 'yes' : 'no'}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, sampleEligible: e.target.value === 'yes' }))
+                  }
+                >
+                  <option value="yes">Sí</option>
+                  <option value="no">No</option>
+                </select>
+              </div>
+            </div>
+
+            <label htmlFor="prod-stock-note">Nota de stock (visible al cliente, opcional)</label>
+            <input
+              id="prod-stock-note"
+              value={form.stockNote}
+              onChange={(e) => setForm((prev) => ({ ...prev, stockNote: e.target.value }))}
+              placeholder="Ej: Últimas 30 unidades, Sin stock hasta abril…"
+            />
+          </div>
+
+          {/* ── Actions ── */}
           <div className="admin-form__actions">
             <button type="submit" className="button button--accent">
               {selected ? 'Guardar cambios' : 'Crear producto'}
             </button>
-            {selected && selected.isActive && (
-              <button type="button" className="button button--ghost" onClick={handleDeactivate}>
+            {selected && selected.isActive && !confirmDeactivate && (
+              <button
+                type="button"
+                className="button button--ghost"
+                style={{ color: 'rgb(140, 40, 40)', borderColor: 'rgba(199, 62, 62, 0.35)' }}
+                onClick={() => setConfirmDeactivate(true)}
+              >
                 Desactivar
+              </button>
+            )}
+            {selected && !selected.isActive && (
+              <button type="button" className="button button--ghost" onClick={handleReactivate}>
+                Reactivar producto
               </button>
             )}
           </div>
         </form>
 
-        {/* Options section – only shown when a product is selected */}
+        {confirmDeactivate && (
+          <div className="admin-confirm-row">
+            <span>¿Seguro que quieres desactivar este producto?</span>
+            <button
+              type="button"
+              className="button button--ghost"
+              style={{ color: 'rgb(140, 40, 40)', borderColor: 'rgba(199, 62, 62, 0.35)' }}
+              onClick={async () => { await handleDeactivate(); setConfirmDeactivate(false) }}
+            >
+              Sí, desactivar
+            </button>
+            <button
+              type="button"
+              className="button button--ghost"
+              onClick={() => setConfirmDeactivate(false)}
+            >
+              Cancelar
+            </button>
+          </div>
+        )}
+
+        {/* ── Options section ── */}
         {selected && (
-          <div style={{ marginTop: 32, borderTop: '1px solid var(--color-divider)', paddingTop: 24 }}>
-            <div className="admin-form__actions" style={{ marginBottom: 16 }}>
-              <h3 style={{ margin: 0 }}>Opciones de personalización</h3>
+          <div className="admin-form-section admin-form-section--options">
+            <div className="admin-form__actions" style={{ marginBottom: 4 }}>
+              <h4 className="admin-form-section__title" style={{ fontSize: '0.9rem' }}>
+                Opciones de personalización
+              </h4>
               {!showOptionForm && (
                 <button type="button" className="button button--primary" onClick={handleAddOption}>
                   Añadir opción
@@ -511,7 +746,7 @@ const AdminProductsPage = () => {
                 <thead>
                   <tr>
                     <th>Tipo</th>
-                    <th>Label</th>
+                    <th>Etiqueta</th>
                     <th>Obligatoria</th>
                     <th>Orden</th>
                     <th></th>
@@ -578,7 +813,7 @@ const AdminProductsPage = () => {
                 </div>
 
                 <div>
-                  <label>Label</label>
+                  <label>Etiqueta</label>
                   <input
                     value={optionForm.label}
                     onChange={(e) => setOptionForm((prev) => ({ ...prev, label: e.target.value }))}

@@ -141,6 +141,94 @@
   color: rgb(18, 92, 62);
 }
 
+/* Image manager */
+.admin-image-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-image-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--color-divider);
+  border-radius: 10px;
+}
+
+.admin-image-thumb {
+  width: 52px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+  background: var(--color-divider);
+}
+
+.admin-image-url {
+  flex: 1;
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-image-row button {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--color-divider);
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 0.8rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.admin-image-row button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.admin-image-row button:last-child {
+  color: rgb(140, 40, 40);
+  border-color: rgba(199, 62, 62, 0.3);
+}
+
+.admin-image-empty {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  padding: 8px 0;
+  font-style: italic;
+}
+
+.admin-image-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.admin-image-url-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex: 1;
+}
+
+.admin-image-url-row input {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--color-divider);
+  background: rgba(255, 255, 255, 0.9);
+  font: inherit;
+  font-size: 0.85rem;
+}
+
 @media (min-width: 980px) {
   .admin-grid--2 {
     grid-template-columns: 1fr 0.95fr;
@@ -149,5 +237,89 @@
   .admin-form__row {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+/* ── Form sections ── */
+.admin-form-section {
+  display: grid;
+  gap: 12px;
+  border-top: 1px solid var(--color-border);
+  padding-top: 20px;
+  margin-top: 8px;
+}
+
+.admin-form-section:first-child {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+
+.admin-form-section__title {
+  margin: 0 0 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+}
+
+.admin-form-section--options {
+  border-top: 1px solid var(--color-border);
+  padding-top: 24px;
+  margin-top: 32px;
+}
+
+/* ── Admin badges ── */
+.admin-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 99px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.6;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.admin-badge--grad     { background: rgba(201, 100, 40, 0.12); color: rgb(150, 65, 20); }
+.admin-badge--mkt      { background: rgba(30, 140, 130, 0.12); color: rgb(18, 100, 92); }
+.admin-badge--active   { background: rgba(31, 122, 84, 0.10);  color: rgb(18, 92, 62); }
+.admin-badge--inactive { background: rgba(120, 110, 100, 0.10); color: var(--color-text-muted); }
+
+.admin-badge--status-new      { background: rgba(37, 99, 195, 0.10);  color: rgb(28, 72, 155); }
+.admin-badge--status-review   { background: rgba(201, 151, 58, 0.14); color: rgb(145, 100, 18); }
+.admin-badge--status-quoted   { background: rgba(120, 60, 190, 0.10); color: rgb(88, 40, 150); }
+.admin-badge--status-accepted { background: rgba(31, 122, 84, 0.10);  color: rgb(18, 92, 62); }
+.admin-badge--status-rejected { background: rgba(199, 62, 62, 0.08);  color: rgb(140, 40, 40); }
+
+/* ── Confirm deactivate row ── */
+.admin-confirm-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  margin-top: 10px;
+  border-radius: var(--radius-md);
+  background: rgba(201, 151, 58, 0.10);
+  border: 1px solid rgba(201, 151, 58, 0.30);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgb(120, 80, 10);
+}
+
+/* ── Clickable table rows ── */
+.admin-table__row--clickable {
+  cursor: pointer;
+  transition: background-color 150ms;
+}
+
+.admin-table__row--clickable:hover {
+  background: rgba(44, 36, 32, 0.035);
+}
+
+.admin-table__row--selected,
+.admin-table__row--selected:hover {
+  background: rgba(201, 100, 40, 0.07);
 }
 

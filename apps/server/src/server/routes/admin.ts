@@ -9,6 +9,8 @@ import {
   productToAdminResponse,
 } from '../lib/product.js'
 import { formatQuoteFolio } from '../lib/quote-folio.js'
+import { generateQuotePdf } from '../lib/pdf.js'
+import { sendFormalQuoteToCustomer } from '../lib/mailer.js'
 import {
   clearAdminSessionCookie,
   createAdminSessionToken,
@@ -105,6 +107,7 @@ const productInputSchema = z.object({
   availability: z.enum(['Disponible', 'A pedido']),
   badge: z.string().trim().min(1).optional().nullable(),
   sampleEligible: z.boolean(),
+  stockNote: z.string().trim().min(1).optional().nullable(),
   isActive: z.boolean().optional(),
 })
 
@@ -134,6 +137,7 @@ adminRouter.post('/products', async (req, res) => {
       availability,
       badge: parsed.data.badge ?? null,
       sampleEligible: parsed.data.sampleEligible,
+      stockNote: parsed.data.stockNote ?? null,
       isActive: parsed.data.isActive ?? true,
     },
     include: { options: { orderBy: { sortOrder: 'asc' } } },
@@ -169,6 +173,7 @@ adminRouter.put('/products/:id', async (req, res) => {
       availability,
       badge: parsed.data.badge ?? null,
       sampleEligible: parsed.data.sampleEligible,
+      stockNote: parsed.data.stockNote ?? null,
       isActive: parsed.data.isActive ?? true,
     },
     include: { options: { orderBy: { sortOrder: 'asc' } } },
@@ -477,3 +482,88 @@ adminRouter.post('/quotes/:id/notes', async (req, res) => {
   })
 })
 
+adminRouter.post('/quotes/:id/send-quote', async (req, res) => {
+  const id = Number(req.params.id)
+  if (!Number.isFinite(id) || id <= 0) {
+    return res.status(400).json({ error: 'validation_error', message: 'ID inválido.' })
+  }
+
+  const parsed = z
+    .object({
+      adminMessage: z.string().trim().optional().nullable(),
+      items: z.array(
+        z.object({
+          itemId: z.number().int().positive(),
+          quotedUnitPrice: z.number().int().positive(),
+        })
+      ),
+    })
+    .safeParse(req.body)
+
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'validation_error', details: parsed.error.flatten() })
+  }
+
+  const quote = await prisma.quote.findUnique({
+    where: { id },
+    include: { items: { include: { product: true } } },
+  })
+
+  if (!quote) return res.status(404).json({ error: 'not_found' })
+
+  const priceMap = new Map(parsed.data.items.map((i) => [i.itemId, i.quotedUnitPrice]))
+
+  await Promise.all(
+    quote.items.map((item) => {
+      const qp = priceMap.get(item.id)
+      if (qp === undefined) return Promise.resolve()
+      return prisma.quoteItem.update({ where: { id: item.id }, data: { quotedUnitPrice: qp } })
+    })
+  )
+
+  const quotedSubtotal = quote.items.reduce((sum, item) => {
+    const qp = priceMap.get(item.id) ?? item.quotedUnitPrice ?? item.unitPrice
+    return sum + qp * item.quantity
+  }, 0)
+
+  const updated = await prisma.quote.update({
+    where: { id },
+    data: {
+      status: 'QUOTED',
+      adminMessage: parsed.data.adminMessage ?? null,
+      quotedAt: new Date(),
+      subtotal: quotedSubtotal,
+    },
+  })
+
+  const pdfBuffer = await generateQuotePdf({
+    quoteId: quote.id,
+    customerName: quote.customerName,
+    customerEmail: quote.customerEmail,
+    customerPhone: quote.customerPhone,
+    adminMessage: parsed.data.adminMessage,
+    items: quote.items.map((item) => ({
+      name: item.product.name,
+      quantity: item.quantity,
+      quotedUnitPrice: priceMap.get(item.id) ?? item.quotedUnitPrice ?? item.unitPrice,
+    })),
+    quotedSubtotal,
+  })
+
+  await sendFormalQuoteToCustomer({
+    quoteId: quote.id,
+    customerName: quote.customerName,
+    customerEmail: quote.customerEmail,
+    adminMessage: parsed.data.adminMessage,
+    quotedSubtotal,
+    pdfBuffer,
+  })
+
+  res.json({
+    id: updated.id,
+    folio: formatQuoteFolio(updated.id),
+    status: updated.status,
+    quotedAt: updated.quotedAt,
+    quotedSubtotal,
+  })
+})

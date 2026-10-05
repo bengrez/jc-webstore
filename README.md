@@ -1,4 +1,4 @@
-# JC Webstore (Confecciones Juany)
+# JC Webstore (Confecciones Juany Reyes)
 
 Monorepo para el sitio de catálogo + carrito de cotización (web + backend juntos).
 

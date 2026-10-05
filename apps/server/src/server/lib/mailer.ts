@@ -78,3 +78,152 @@ export const sendQuoteNotificationEmail = async (input: QuoteEmailInput) => {
 
   return true
 }
+
+export const sendQuoteConfirmationToCustomer = async (input: {
+  quoteId: number
+  customerName: string
+  customerEmail: string
+  subtotal: number
+  itemCount: number
+}) => {
+  const transporter = getTransport()
+  if (!transporter) return false
+
+  const from = env.SMTP_FROM ?? env.SMTP_USER
+  const folio = formatQuoteFolio(input.quoteId)
+
+  const text = [
+    `Hola ${input.customerName},`,
+    '',
+    `Recibimos tu solicitud de cotización (${folio}).`,
+    `Incluiste ${input.itemCount} producto${input.itemCount !== 1 ? 's' : ''} con un subtotal referencial de ${formatClp(input.subtotal)} + IVA.`,
+    '',
+    'Nuestro equipo revisará tu pedido y te contactaremos dentro de 24 horas hábiles.',
+    '',
+    `Puedes consultar el estado de tu cotización en cualquier momento:`,
+    `https://confeccionesjuany.cl/cotizacion/${folio}`,
+    '',
+    'Gracias por confiar en Confecciones Juany Reyes.',
+    '— Equipo Confecciones Juany Reyes',
+  ].join('\n')
+
+  await transporter.sendMail({
+    to: input.customerEmail,
+    from,
+    subject: `Tu cotización ${folio} fue recibida`,
+    text,
+  })
+
+  return true
+}
+
+export const sendFormalQuoteToCustomer = async (input: {
+  quoteId: number
+  customerName: string
+  customerEmail: string
+  adminMessage?: string | null
+  quotedSubtotal: number
+  pdfBuffer: Buffer
+}) => {
+  const transporter = getTransport()
+  if (!transporter) return false
+
+  const from = env.SMTP_FROM ?? env.SMTP_USER
+  const folio = formatQuoteFolio(input.quoteId)
+  const portalUrl = `https://confeccionesjuany.cl/cotizacion/${folio}`
+
+  const lines = [
+    `Hola ${input.customerName.split(' ')[0]},`,
+    '',
+    `Te enviamos tu cotización oficial (${folio}).`,
+    '',
+    ...(input.adminMessage ? [input.adminMessage, ''] : []),
+    `Subtotal neto: ${formatClp(input.quotedSubtotal)} + IVA`,
+    '',
+    'Para aceptar o rechazar esta cotización, ingresa a:',
+    portalUrl,
+    '',
+    'Gracias por confiar en Confecciones Juany Reyes.',
+    '— Equipo Confecciones Juany Reyes',
+  ]
+
+  await transporter.sendMail({
+    to: input.customerEmail,
+    from,
+    subject: `Tu cotización ${folio} está lista`,
+    text: lines.join('\n'),
+    attachments: [
+      {
+        filename: `${folio}.pdf`,
+        content: input.pdfBuffer,
+        contentType: 'application/pdf',
+      },
+    ],
+  })
+
+  return true
+}
+
+export const sendCustomerResponseNotification = async (input: {
+  quoteId: number
+  customerName: string
+  action: 'ACCEPTED' | 'REJECTED'
+}) => {
+  const transporter = getTransport()
+  if (!transporter) return false
+
+  const to = env.QUOTES_TO_EMAIL ?? env.SMTP_USER
+  const from = env.SMTP_FROM ?? env.SMTP_USER
+  const folio = formatQuoteFolio(input.quoteId)
+  const verb = input.action === 'ACCEPTED' ? 'ACEPTÓ' : 'RECHAZÓ'
+
+  await transporter.sendMail({
+    to,
+    from,
+    subject: `${input.customerName} ${verb} la cotización ${folio}`,
+    text: `${input.customerName} ha ${input.action === 'ACCEPTED' ? 'aceptado' : 'rechazado'} la cotización ${folio}.`,
+  })
+
+  return true
+}
+
+type ContactEmailInput = {
+  name: string
+  email: string
+  phone?: string
+  company?: string
+  message: string
+}
+
+export const sendContactNotificationEmail = async (input: ContactEmailInput) => {
+  const transporter = getTransport()
+  if (!transporter) {
+    console.warn('[mail] SMTP no configurado; se omite correo de contacto.')
+    return false
+  }
+
+  const to = env.QUOTES_TO_EMAIL ?? env.SMTP_USER
+  const from = env.SMTP_FROM ?? env.SMTP_USER
+
+  const lines = [
+    'Nuevo mensaje de contacto',
+    '',
+    `Nombre: ${input.name}`,
+    `Email: ${input.email}`,
+    input.phone ? `Teléfono: ${input.phone}` : undefined,
+    input.company ? `Empresa: ${input.company}` : undefined,
+    '',
+    'Mensaje:',
+    input.message,
+  ].filter(Boolean)
+
+  await transporter.sendMail({
+    to,
+    from,
+    replyTo: input.email,
+    subject: `Contacto web: ${input.name}`,
+    text: lines.join('\n'),
+  })
+
+  return true
+}

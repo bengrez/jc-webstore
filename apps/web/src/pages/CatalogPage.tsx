@@ -10,7 +10,7 @@ import './catalog.css'
 
 const categories: Array<{ id: ProductCategory; label: string }> = [
   { id: 'graduaciones', label: 'Graduaciones' },
-  { id: 'marketing', label: 'Artículos publicitarios' },
+  { id: 'marketing', label: 'Corporativo' },
 ]
 
 const CatalogPage = () => {
@@ -69,91 +69,72 @@ const CatalogPage = () => {
     return () => window.clearTimeout(timeout)
   }, [feedback])
 
+  useEffect(() => {
+    document.documentElement.dataset.catalogCategory = selectedCategory
+    return () => {
+      delete document.documentElement.dataset.catalogCategory
+    }
+  }, [selectedCategory])
+
   const handleConfigure = (product: Product) => {
     setConfiguringProduct(product)
   }
 
   const handleModalAdd = (product: Product, quantity: number, configuration: CartItemConfig[]) => {
     addItem(product, quantity, configuration)
-    setFeedback(`${product.name} fue agregado al carrito`)
+    setFeedback(`${product.name} agregado al carrito`)
   }
 
-  const title =
-    selectedCategory === 'graduaciones'
-      ? 'Graduación en modo simple'
-      : 'Corporativo listo para entregar'
-
-  const description =
-    selectedCategory === 'graduaciones'
-      ? 'Estolas, túnicas y birretes listos para personalizar con tus colores.'
-      : 'Kits y regalos premium listos para llevar tu marca.'
-
   return (
-    <div className="catalog-page">
-      <header className="catalog-hero">
-        <span className="catalog-hero__mode">
-          {mode === 'graduation' ? 'Modo Graduación' : 'Modo Corporativo'}
-        </span>
-        <h1>Catálogo Gradumarketing</h1>
-        <p>Elige la colección y suma productos a tu cotización.</p>
-        <div className="catalog-tabs">
+    <div className="catalog">
+      <header className="catalog__header">
+        <h1>Catálogo</h1>
+        <div className="catalog__tabs">
           {categories.map((category) => (
             <button
               key={category.id}
               type="button"
-              className={`catalog-tabs__button ${
-                selectedCategory === category.id ? 'is-active' : ''
-              }`}
+              className={`catalog__tab ${selectedCategory === category.id ? 'is-active' : ''}`}
               onClick={() => setSelectedCategory(category.id)}
             >
               {category.label}
             </button>
           ))}
-        </div>
-      </header>
-
-      {feedback && <div className="catalog-feedback">{feedback}</div>}
-
-      <section className="catalog-section">
-        <div className="catalog-section__header">
-          <div>
-            <h2>{title}</h2>
-            <p>{description}</p>
-          </div>
-          <span className="catalog-section__count">
+          <span className="catalog__count">
             {filteredProducts.length} producto{filteredProducts.length !== 1 && 's'}
           </span>
         </div>
+      </header>
 
-        <div className="catalog-grid">
-          {loading ? (
-            <div className="catalog-empty">
-              <h3>Cargando catálogo…</h3>
-              <p>Estamos preparando tus productos.</p>
-            </div>
-          ) : loadError ? (
-            <div className="catalog-empty">
-              <h3>No pudimos cargar el catálogo</h3>
-              <p>{loadError}</p>
-              <Link to="/contacto" className="button button--accent">
-                Solicitar cotización
-              </Link>
-            </div>
-          ) : filteredProducts.length > 0 ? (
-            filteredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} onConfigure={handleConfigure} />
-            ))
-          ) : (
-            <div className="catalog-empty">
-              <h3>Aún estamos preparando esta colección</h3>
-              <p>Si no ves lo que buscas, escríbenos y te cotizamos rápido.</p>
-              <Link to="/contacto" className="button button--accent">
-                Solicitar cotización
-              </Link>
-            </div>
-          )}
-        </div>
-      </section>
+      {feedback && <div className="catalog__feedback">{feedback}</div>}
+
+      <div className="catalog__grid">
+        {loading ? (
+          <div className="catalog__empty">
+            <p>Cargando catálogo...</p>
+          </div>
+        ) : loadError ? (
+          <div className="catalog__empty">
+            <h3>No pudimos cargar el catálogo</h3>
+            <p>{loadError}</p>
+            <Link to="/contacto" className="button button--accent">
+              Solicitar cotización
+            </Link>
+          </div>
+        ) : filteredProducts.length > 0 ? (
+          filteredProducts.map((product) => (
+            <ProductCard key={product.id} product={product} onConfigure={handleConfigure} />
+          ))
+        ) : (
+          <div className="catalog__empty">
+            <h3>Colección en preparación</h3>
+            <p>Escríbenos y te cotizamos rápido.</p>
+            <Link to="/contacto" className="button button--accent">
+              Solicitar cotización
+            </Link>
+          </div>
+        )}
+      </div>
 
       {configuringProduct && (
         <ProductConfiguratorModal

@@ -12,8 +12,6 @@ const initialFormState = {
   message: '',
 }
 
-const progressSteps = ['Selección', 'Cotización final']
-
 const CartPage = () => {
   const { items, total, updateQuantity, removeItem, clearCart } = useCart()
   const [form, setForm] = useState(initialFormState)
@@ -134,7 +132,7 @@ const CartPage = () => {
         <header className="cart-header">
           <h1>Solicitud enviada</h1>
           <p>
-            Gracias por confiar en Gradumarketing. Responderemos dentro de 24 horas hábiles con tu
+            Gracias por confiar en Confecciones Juany Reyes. Responderemos dentro de 24 horas hábiles con tu
             cotización final.
           </p>
         </header>
@@ -158,11 +156,11 @@ const CartPage = () => {
             <span>Te enviaremos avances o prototipos según lo necesites.</span>
           </div>
           <div className="cart-success__actions">
-            <Link to="/catalogo" className="button button--primary">
-              Volver al catálogo
+            <Link to={`/cotizacion/${submitted.folio}`} className="button button--primary">
+              Ver estado de cotización
             </Link>
-            <Link to="/" className="button button--ghost">
-              Ir al inicio
+            <Link to="/catalogo" className="button button--ghost">
+              Volver al catálogo
             </Link>
           </div>
         </div>
@@ -177,17 +175,9 @@ const CartPage = () => {
         <p>Ajusta cantidades y completa tus datos. Los valores son "desde" y van + IVA.</p>
       </header>
 
-      <div className="cart-progress">
-        {progressSteps.map((step, index) => (
-          <div key={step} className="cart-progress__step" data-active={index === 0}>
-            <span>{`0${index + 1}`}</span>
-            <p>{step}</p>
-          </div>
-        ))}
-      </div>
-
       {!hasItems ? (
         <div className="cart-empty">
+          <span className="cart-empty__icon">🛍️</span>
           <h2>Tu carrito está vacío</h2>
           <p>Agrega productos y alterna entre modo Graduación o Corporativo según necesites.</p>
           <Link to="/catalogo" className="button button--primary">

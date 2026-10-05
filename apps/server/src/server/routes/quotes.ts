@@ -2,7 +2,7 @@ import { Router } from 'express'
 import rateLimit from 'express-rate-limit'
 import { z } from 'zod'
 import { prisma } from '../../lib/prisma.js'
-import { sendQuoteNotificationEmail } from '../lib/mailer.js'
+import { sendQuoteNotificationEmail, sendQuoteConfirmationToCustomer } from '../lib/mailer.js'
 import { formatAvailabilityLabel } from '../lib/product.js'
 import { formatQuoteFolio } from '../lib/quote-folio.js'
 
@@ -156,6 +156,17 @@ quotesRouter.post('/', async (req, res) => {
   }).catch((error) => {
     console.error('[mail] failed to send quote email', error)
     return false
+  })
+
+  // Send confirmation email to customer (non-blocking)
+  sendQuoteConfirmationToCustomer({
+    quoteId: quote.id,
+    customerName: quote.customerName,
+    customerEmail: quote.customerEmail,
+    subtotal: quote.subtotal,
+    itemCount: quote.items.length,
+  }).catch((error) => {
+    console.error('[mail] failed to send customer confirmation', error)
   })
 
   res.status(201).json({

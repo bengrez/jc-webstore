@@ -5,6 +5,22 @@ import './admin.css'
 
 type QuoteStatus = 'NEW' | 'IN_REVIEW' | 'QUOTED' | 'ACCEPTED' | 'REJECTED'
 
+const quoteStatusLabel = (s: QuoteStatus) => {
+  const map: Record<QuoteStatus, string> = {
+    NEW: 'Nueva', IN_REVIEW: 'En revisión', QUOTED: 'Cotizada',
+    ACCEPTED: 'Aceptada', REJECTED: 'Rechazada',
+  }
+  return map[s]
+}
+
+const quoteStatusVariant = (s: QuoteStatus) => {
+  const map: Record<QuoteStatus, string> = {
+    NEW: 'new', IN_REVIEW: 'review', QUOTED: 'quoted',
+    ACCEPTED: 'accepted', REJECTED: 'rejected',
+  }
+  return map[s]
+}
+
 type AdminQuoteListItem = {
   id: number
   folio: string
@@ -85,7 +101,11 @@ const AdminQuotesPage = () => {
                     {quote.customerEmail}
                   </div>
                 </td>
-                <td>{quote.status}</td>
+                <td>
+                  <span className={`admin-badge admin-badge--status-${quoteStatusVariant(quote.status)}`}>
+                    {quoteStatusLabel(quote.status)}
+                  </span>
+                </td>
                 <td>{quote.itemsCount}</td>
                 <td>{quote.subtotal}</td>
                 <td>{new Date(quote.createdAt).toLocaleString('es-CL')}</td>
