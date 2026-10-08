@@ -6,9 +6,12 @@ import { createApp } from './server/app.js'
 const app = createApp()
 const server = createServer(app)
 
-server.listen(env.PORT, () => {
-  console.log(`[server] listening on http://localhost:${env.PORT}`)
-})
+const onListening = () => {
+  console.log(`[server] listening on http://${env.HOST ?? 'localhost'}:${env.PORT}`)
+}
+
+if (env.HOST) server.listen(env.PORT, env.HOST, onListening)
+else server.listen(env.PORT, onListening)
 
 process.on('SIGTERM', () => {
   server.close(() => process.exit(0))

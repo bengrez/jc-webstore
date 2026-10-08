@@ -16,6 +16,8 @@ const envSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     PORT: z.coerce.number().int().positive().default(3001),
+    // Interfaz donde escucha; vacío = todas. En staging, 127.0.0.1: sólo se entra por `tailscale serve`
+    HOST: optionalString,
     DATABASE_URL: z.string().min(1).default('file:./dev.db'),
     JWT_SECRET: z.string().min(32),
     SMTP_USER: optionalEmail,

@@ -35,7 +35,8 @@ const TermsPage = () => {
       <section>
         <h2>1. Solicitud y cotización</h2>
         <p>
-          Los precios del catálogo y el resumen del carrito son referenciales. Al enviar el carrito nos pides una
+          Los precios del catálogo son precios base («desde»): el precio final depende de la cantidad y la
+          personalización y se fija en la cotización formal. Al enviar el carrito nos pides una
           cotización; no es una compra. La cotización formal es el documento PDF con folio que te enviamos por correo y
           que puedes descargar desde el enlace de tu cotización. Si emitimos una revisión, la última reemplaza a las
           anteriores.
@@ -46,7 +47,11 @@ const TermsPage = () => {
         <h2>2. Precios e IVA</h2>
         <p>
           Los precios se expresan en pesos chilenos y son netos: a cada cotización se le suma el IVA del{' '}
-          {info.ivaPercent}&nbsp;%. La cotización formal detalla el neto, el IVA y el total.
+          {info.ivaPercent}&nbsp;%. La cotización formal detalla el neto, el IVA y el total.{' '}
+          <Pending>
+            [REVISAR CON ABOGADO: a consumidores (no empresas) la Ley N° 19.496 exige informar el precio total con
+            impuestos incluidos]
+          </Pending>
         </p>
       </section>
 
@@ -54,8 +59,9 @@ const TermsPage = () => {
         <h2>3. Validez</h2>
         <p>
           Cada cotización formal es válida por {info.quoteValidityDays} días corridos desde su fecha de emisión, y el
-          PDF indica la fecha exacta en que vence. Pasado ese plazo, los precios y los plazos pueden cambiar y te
-          enviaremos una cotización nueva.
+          PDF indica la fecha exacta en que vence. Pasado ese plazo, los precios y los plazos pueden cambiar: si aceptas
+          una cotización vencida, confirmaremos contigo los precios y plazos antes de fabricar, o te enviaremos una
+          cotización nueva.
         </p>
       </section>
 
@@ -107,7 +113,11 @@ const TermsPage = () => {
             fallas]
           </Pending>{' '}
           Esto no limita los derechos que te da la Ley N° 19.496 sobre protección de los derechos de los consumidores,
-          incluida la garantía legal.
+          incluida la garantía legal si el producto tiene fallas o no corresponde a lo cotizado.{' '}
+          <Pending>
+            [REVISAR CON ABOGADO: plazo de la garantía legal, y si el derecho a retracto de las compras a distancia
+            excluye los productos confeccionados según tus indicaciones y aplica a los que no se personalizan]
+          </Pending>
         </p>
       </section>
 

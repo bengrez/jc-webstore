@@ -46,20 +46,23 @@ const PrivacyPage = () => (
       <h3>Logos y archivos que subes</h3>
       <p>
         Al personalizar un producto puedes subir un logo o una imagen (JPG, PNG, WEBP, GIF o PDF, de hasta 5 MB). El
-        archivo se guarda en nuestro servidor con un nombre aleatorio. No aparece publicado en el sitio, pero cualquier
-        persona que tenga el enlace exacto del archivo puede abrirlo.
+        archivo se sube a nuestro servidor en cuanto lo eliges, antes de que envíes la solicitud, y queda guardado
+        aunque no la envíes. Se guarda con un nombre aleatorio: no aparece publicado en el sitio, pero cualquier persona
+        que tenga el enlace exacto del archivo puede abrirlo.
       </p>
       <h3>Tu cotización</h3>
       <p>
         Guardamos la solicitud, los precios que te cotizamos, cada PDF de cotización formal que emitimos (no se
-        sobrescriben: cada revisión queda guardada), las notas internas del taller sobre tu pedido y tu respuesta
-        (aceptar o rechazar) en el portal de cotizaciones.
+        sobrescriben: cada revisión queda guardada), las notas del taller sobre tu pedido (algunas visibles para ti en el
+        portal) y tu respuesta (aceptar o rechazar) en el portal de cotizaciones.
       </p>
       <h3>Datos de nombres de estudiantes u otras personas</h3>
       <p>
         Si en la personalización incluyes nombres de otras personas (por ejemplo, de estudiantes para bordar en una
         estola), declaras que cuentas con su autorización o, si son menores de edad, con la de sus padres o
-        apoderados. Esos datos se usan sólo para fabricar tu pedido.
+        representantes legales cuando la ley la exija. Esos nombres aparecen en tu cotización, en su PDF y en nuestros
+        correos internos, y se usan sólo para cotizar, fabricar y entregar tu pedido. Si eres menor de 14 años, pide a
+        tu padre, madre o representante legal que haga la solicitud.
       </p>
     </section>
 
@@ -83,9 +86,11 @@ const PrivacyPage = () => (
       <h2>4. Base legal</h2>
       <p>
         Tratamos tus datos conforme a la Ley N° 19.628 sobre protección de la vida privada y, desde el 1 de diciembre
-        de 2026, a la Ley N° 21.719, que regula la protección y el tratamiento de los datos personales. La base del
-        tratamiento es tu consentimiento, que das al marcar la casilla de aceptación, y la necesidad de los datos para
-        preparar la cotización y, en su caso, cumplir el pedido que nos pides.
+        de 2026, a la Ley N° 21.719, que regula la protección y el tratamiento de los datos personales. Tratamos tus
+        datos porque son necesarios para preparar la cotización que nos pides y, si la aceptas, para cumplir el pedido;
+        y con tu consentimiento, que das al marcar la casilla de aceptación. Conservamos los documentos tributarios por
+        obligación legal. <Pending>[REVISAR CON ABOGADO: si conviene separar la casilla de privacidad de la de
+        términos]</Pending>
       </p>
     </section>
 
@@ -103,7 +108,10 @@ const PrivacyPage = () => (
           Logos y archivos subidos: <Pending>[POR DEFINIR CON LA CLIENTA: plazo]</Pending>.
         </li>
       </ul>
-      <p>Cumplido el plazo, o antes si lo pides y la ley lo permite, eliminamos los datos.</p>
+      <p>
+        Las copias de los correos de tu solicitud también quedan en nuestro buzón de correo y se eliminan en el mismo
+        plazo. Cumplido el plazo, o antes si lo pides y la ley lo permite, eliminamos los datos.
+      </p>
     </section>
 
     <section>
@@ -111,8 +119,8 @@ const PrivacyPage = () => (
       <ul>
         <li>Las personas de {COMPANY.tradeName} que atienden las cotizaciones, a través de un panel con contraseña.</li>
         <li>
-          Nuestro proveedor de correo electrónico (hoy Gmail, de Google), que transmite los correos de tu solicitud y
-          la copia que nos llega a nosotros.
+          Nuestro proveedor de correo electrónico (hoy Gmail, de Google LLC), que transmite los correos de tu solicitud
+          y la copia que nos llega a nosotros.
         </li>
         <li>
           El proveedor del servidor donde funciona el sitio: <Pending>[POR DEFINIR: hosting]</Pending>.
@@ -121,10 +129,15 @@ const PrivacyPage = () => (
           Google Fonts: el sitio descarga sus tipografías desde servidores de Google, que reciben tu dirección IP y los
           datos de tu navegador.
         </li>
+        <li>
+          WhatsApp (Meta Platforms), si nos comunicamos por esa vía: tus mensajes y la cotización pasan por WhatsApp
+          según sus propias condiciones.
+        </li>
       </ul>
       <p>
-        Algunos de estos proveedores pueden guardar datos fuera de Chile. No entregamos tus datos a otros terceros,
-        salvo que la ley o una autoridad competente lo exija.
+        Google LLC y Meta Platforms tratan datos en Estados Unidos u otros países fuera de Chile; el hosting, según
+        dónde funcione el sitio. Esa transferencia es necesaria para gestionar tu solicitud. No entregamos tus datos a
+        otros terceros, salvo que la ley o una autoridad competente lo exija.
       </p>
       <p>
         El enlace a tu cotización que te enviamos por correo incluye un código privado: quien tenga ese enlace puede ver
@@ -153,7 +166,8 @@ const PrivacyPage = () => (
       </ul>
       <p>
         Para limitar abusos, el servidor recuerda tu dirección IP durante 15 minutos como máximo y sólo en memoria. El
-        registro de solicitudes del servidor no guarda tu dirección IP.
+        registro de solicitudes de nuestra aplicación no guarda tu dirección IP; el proveedor del servidor puede
+        registrar datos técnicos de conexión según sus condiciones.
       </p>
     </section>
 
@@ -182,8 +196,10 @@ const PrivacyPage = () => (
       </ul>
       <p>
         Escríbenos a <Pending>{COMPANY.email}</Pending> desde el correo con que hiciste la solicitud, o indicando cómo
-        acreditar tu identidad. Responderemos dentro del plazo que fija la ley. Si no quedas conforme, puedes reclamar
-        ante la Agencia de Protección de Datos Personales o ante los tribunales.
+        acreditar tu identidad. Ejercer estos derechos es gratuito. Responderemos dentro del plazo que fija la ley{' '}
+        <Pending>[REVISAR CON ABOGADO: plazo de respuesta antes y después del 1 de diciembre de 2026]</Pending>. Si no
+        respondemos o no quedas conforme, puedes recurrir a los tribunales y, desde el 1 de diciembre de 2026, reclamar
+        ante la Agencia de Protección de Datos Personales.
       </p>
     </section>
 
@@ -192,7 +208,8 @@ const PrivacyPage = () => (
       <p>
         El panel de administración exige contraseña, que no se guarda en texto legible (sólo su hash). Los enlaces de las cotizaciones llevan un
         código privado difícil de adivinar y los archivos subidos tienen nombres aleatorios. Ningún sistema es
-        completamente seguro: si detectamos un incidente que afecte tus datos, te avisaremos según lo que exige la ley.
+        completamente seguro: si detectamos un incidente que afecte tus datos, lo notificaremos a la autoridad y, cuando
+        la ley lo exija, a ti.
       </p>
     </section>
 

@@ -5,7 +5,7 @@
 # Uso: scripts/staging.sh [--skip-build]
 #   1. build de la web y del server (salvo --skip-build)
 #   2. migraciones pendientes sobre la base de staging (siempre; no borra datos)
-#   3. seed (24 productos con fotos locales + admin) sólo si la base aún no existe
+#   3. seed (24 productos con fotos locales + admin) mientras la base no esté sembrada
 #   4. arranca el server en primer plano (pensado para la unidad systemd jcw-staging.service)
 #
 # STAGING_ENV_FILE permite usar otro archivo de variables (por defecto apps/server/.env.staging).
@@ -53,28 +53,25 @@ if [[ "${1:-}" != "--skip-build" ]]; then
   (cd "$ROOT" && npm run build)
 fi
 
-new_db=false
-if [[ ! -f "$db_file" ]]; then
-  new_db=true
+# La marca se escribe sólo cuando el seed termina: una base nueva interrumpida (corte, stop) se vuelve
+# a sembrar en el próximo arranque. El seed es idempotente (upsert).
+seeded_mark="$db_file.seeded"
+needs_seed=false
+if [[ ! -f "$db_file" || ! -f "$seeded_mark" ]]; then
+  needs_seed=true
   [[ -n "${ADMIN_EMAIL:-}" && -n "${ADMIN_PASSWORD:-}" ]] || fail "Faltan ADMIN_EMAIL y ADMIN_PASSWORD para el seed."
 fi
 
 echo "[staging] migraciones sobre $db_file"
-# Con SQLite, migrate deploy crea la base si no existe. Si una base nueva queda a medias, se borra
-# para que el próximo arranque la cree y la siembre de nuevo.
-if ! (cd "$SERVER" && npx prisma migrate deploy); then
-  [[ "$new_db" == true ]] && rm -f "$db_file" "$db_file-journal"
-  fail "Fallaron las migraciones."
+# Con SQLite, migrate deploy crea la base si no existe
+(cd "$SERVER" && npx prisma migrate deploy)
+
+if [[ "$needs_seed" == true ]]; then
+  echo "[staging] base sin sembrar: seed de productos y admin"
+  (cd "$SERVER" && npx tsx prisma/seed.ts)
+  touch "$seeded_mark"
 fi
 
-if [[ "$new_db" == true ]]; then
-  echo "[staging] base nueva: seed de productos y admin"
-  if ! (cd "$SERVER" && npx tsx prisma/seed.ts); then
-    rm -f "$db_file" "$db_file-journal"
-    fail "Falló el seed; se borró la base nueva para reintentar en el próximo arranque."
-  fi
-fi
-
-echo "[staging] server en http://localhost:${PORT} (sitio público: ${PUBLIC_SITE_URL})"
+echo "[staging] server en http://${HOST:-localhost}:${PORT:-3001} (sitio público: ${PUBLIC_SITE_URL:-sin definir})"
 cd "$SERVER"
 exec node dist/index.js

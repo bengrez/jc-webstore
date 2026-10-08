@@ -16,7 +16,7 @@ export default defineConfig({
   reporter: 'line',
   timeout: 90_000,
   use: {
-    baseURL: process.env.STAGING_URL ?? `http://localhost:${process.env.PORT ?? 3101}`,
+    baseURL: process.env.STAGING_URL ?? `http://${process.env.HOST ?? 'localhost'}:${process.env.PORT ?? 3101}`,
     trace: 'retain-on-failure',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],

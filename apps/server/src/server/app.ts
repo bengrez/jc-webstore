@@ -12,9 +12,13 @@ export const createApp = () => {
 
   app.disable('x-powered-by')
   // Detrás de `tailscale serve` u otro proxy, para que el rate limit vea la IP real del cliente
-  // (`loopback`, una lista de IPs o un número de saltos)
+  // (`loopback`, una lista de IPs, un número de saltos o true/false)
   if (env.TRUST_PROXY) {
-    app.set('trust proxy', /^\d+$/.test(env.TRUST_PROXY) ? Number(env.TRUST_PROXY) : env.TRUST_PROXY)
+    const value = env.TRUST_PROXY
+    app.set(
+      'trust proxy',
+      value === 'true' ? true : value === 'false' ? false : /^\d+$/.test(value) ? Number(value) : value
+    )
   }
   app.use(
     helmet({
