@@ -8,6 +8,7 @@ import HomePage from './pages/HomePage'
 import ModeLandingPage from './pages/ModeLandingPage'
 import AdminLayout from './pages/admin/AdminLayout'
 import AdminLoginPage from './pages/admin/AdminLoginPage'
+import AdminMessagesPage from './pages/admin/AdminMessagesPage'
 import AdminProductsPage from './pages/admin/AdminProductsPage'
 import AdminQuoteDetailPage from './pages/admin/AdminQuoteDetailPage'
 import AdminQuotesPage from './pages/admin/AdminQuotesPage'
@@ -21,6 +22,7 @@ const App = () => {
         <Route path="products" element={<AdminProductsPage />} />
         <Route path="quotes" element={<AdminQuotesPage />} />
         <Route path="quotes/:id" element={<AdminQuoteDetailPage />} />
+        <Route path="messages" element={<AdminMessagesPage />} />
       </Route>
       <Route index element={<ModeLandingPage />} />
       <Route element={<Layout />}>

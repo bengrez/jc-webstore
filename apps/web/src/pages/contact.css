@@ -166,3 +166,20 @@
     grid-column: 1 / -1;
   }
 }
+
+.contact-form__hp {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.contact-form__error {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  background: rgba(179, 32, 42, 0.08);
+  color: #8a1c24;
+  line-height: 1.5;
+}

@@ -8,6 +8,8 @@ type Props = {
   product: Product
   onClose: () => void
   onAdd: (product: Product, quantity: number, configuration: CartItemConfig[]) => void
+  /** Vista previa desde el admin: se ve igual, pero no sube archivos ni agrega al carrito. */
+  preview?: boolean
 }
 
 const parseMinOrder = (minOrder: string): number => {
@@ -22,6 +24,7 @@ const OptionField = ({
   uploading,
   onFileChange,
   uploadError,
+  disabled = false,
 }: {
   option: ProductOption
   value: string
@@ -29,6 +32,7 @@ const OptionField = ({
   uploading: boolean
   onFileChange: (file: File) => void
   uploadError: string | null
+  disabled?: boolean
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -85,7 +89,7 @@ const OptionField = ({
           type="button"
           className="button button--ghost"
           onClick={() => fileInputRef.current?.click()}
-          disabled={uploading}
+          disabled={uploading || disabled}
         >
           {uploading ? 'Subiendo…' : 'Elegir archivo'}
         </button>
@@ -102,7 +106,7 @@ const OptionField = ({
   return null
 }
 
-const ProductConfiguratorModal = ({ product, onClose, onAdd }: Props) => {
+const ProductConfiguratorModal = ({ product, onClose, onAdd, preview = false }: Props) => {
   const minQty = parseMinOrder(product.minOrder)
   const [quantity, setQuantity] = useState(minQty)
   const [activeImageIndex, setActiveImageIndex] = useState(0)
@@ -258,6 +262,7 @@ const ProductConfiguratorModal = ({ product, onClose, onAdd }: Props) => {
                       uploading={uploading[option.id] ?? false}
                       onFileChange={(file) => handleFileUpload(option, file)}
                       uploadError={uploadErrors[option.id] ?? null}
+                      disabled={preview}
                     />
                     {validationErrors[option.id] && (
                       <p className="pcm-option__error" role="alert">
@@ -307,9 +312,16 @@ const ProductConfiguratorModal = ({ product, onClose, onAdd }: Props) => {
               type="button"
               className="button button--accent pcm-config__add"
               onClick={handleAdd}
+              disabled={preview}
+              title={preview ? 'Vista previa: el botón funciona en el sitio publicado' : undefined}
             >
               Agregar al carrito
             </button>
+            {preview && (
+              <p className="pcm-config__preview-note">
+                Vista previa: así verá la ficha el cliente. Aquí no se agrega al carrito.
+              </p>
+            )}
           </div>
         </div>
       </div>

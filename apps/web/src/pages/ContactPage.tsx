@@ -8,21 +8,52 @@ const initialFormState = {
   phone: '',
   company: '',
   message: '',
+  website: '',
 }
 
 const ContactPage = () => {
   const [form, setForm] = useState(initialFormState)
   const [submitted, setSubmitted] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleInputChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = event.target
     setForm((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    setSubmitted(true)
-    setForm(initialFormState)
+    setSending(true)
+    setError(null)
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => ({}))) as { message?: string }
+        throw new Error(
+          response.status === 400
+            ? 'Revisa que el nombre, el correo y el mensaje estén completos.'
+            : payload.message ?? 'No pudimos enviar tu mensaje.'
+        )
+      }
+
+      setSubmitted(true)
+      setForm(initialFormState)
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? `${err.message} Si urge, escríbenos directamente a contacto@gradumarketing.cl.`
+          : 'No pudimos enviar tu mensaje.'
+      )
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
@@ -116,8 +147,28 @@ const ContactPage = () => {
             />
           </div>
 
-          <button type="submit" className="button button--primary">
-            Enviar mensaje
+          {/* Honeypot anti-spam: oculto para personas, los bots suelen completarlo. */}
+          <div className="contact-form__hp" aria-hidden="true">
+            <label htmlFor="website">Sitio web</label>
+            <input
+              id="website"
+              name="website"
+              type="text"
+              tabIndex={-1}
+              autoComplete="off"
+              value={form.website}
+              onChange={handleInputChange}
+            />
+          </div>
+
+          {error && (
+            <p className="contact-form__error contact-form__field--full" role="alert">
+              {error}
+            </p>
+          )}
+
+          <button type="submit" className="button button--primary" disabled={sending}>
+            {sending ? 'Enviando…' : 'Enviar mensaje'}
           </button>
         </form>
 

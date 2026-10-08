@@ -151,3 +151,144 @@
   }
 }
 
+
+/* ─── Productos: listado + formulario + vista previa en vivo ─── */
+.admin-products {
+  grid-template-areas: 'list' 'form' 'preview';
+}
+
+.admin-products__list {
+  grid-area: list;
+  overflow-x: auto;
+}
+
+.admin-products__form {
+  grid-area: form;
+}
+
+.admin-products__preview {
+  grid-area: preview;
+}
+
+.admin-form__upload {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.admin-form__upload .button {
+  cursor: pointer;
+}
+
+.admin-form__upload .button[aria-disabled='true'] {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.admin-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-preview__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-preview__state {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--color-divider);
+  color: var(--color-text-soft);
+}
+
+.admin-preview__state[data-state='published'] {
+  background: rgba(46, 125, 50, 0.14);
+  color: #2e6b31;
+}
+
+.admin-preview__state[data-state='unsaved'],
+.admin-preview__state[data-state='draft'] {
+  background: rgba(227, 181, 5, 0.18);
+  color: #7a5d00;
+}
+
+.admin-preview__state[data-state='inactive'] {
+  background: rgba(179, 32, 42, 0.1);
+  color: #8a1c24;
+}
+
+.admin-preview__hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  line-height: 1.5;
+}
+
+/* La tarjeta se muestra al ancho que tiene en el catálogo. */
+.admin-preview__card {
+  max-width: 360px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.admin-preview__full {
+  align-self: center;
+}
+
+.admin-preview__checklist {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(227, 181, 5, 0.12);
+}
+
+.admin-preview__checklist[data-variant='error'] {
+  background: rgba(179, 32, 42, 0.08);
+}
+
+.admin-preview__checklist ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+
+@media (min-width: 900px) {
+  .admin-products {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    grid-template-areas:
+      'list list'
+      'form preview';
+    align-items: start;
+  }
+
+  .admin-products__preview {
+    position: sticky;
+    top: 16px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .admin-main:has(.admin-products) {
+    max-width: 1440px;
+  }
+
+  .admin-products {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.1fr) minmax(0, 0.85fr);
+    grid-template-areas: 'list form preview';
+  }
+
+  /* En 3 columnas el listado es angosto: categoría y precio ya se ven en la vista previa. */
+  .admin-products__extra-col {
+    display: none;
+  }
+}
