@@ -1,7 +1,12 @@
+import crypto from 'node:crypto'
+import fs from 'node:fs/promises'
+import path from 'node:path'
 import nodemailer from 'nodemailer'
+import type { SendMailOptions } from 'nodemailer'
 import { env } from '../../lib/env.js'
 import { formatClp } from './currency.js'
 import { formatQuoteFolio } from './quote-folio.js'
+import { portalUrl } from './site.js'
 
 type ConfigEntry = { label: string; type: string; value: string }
 
@@ -24,7 +29,26 @@ type QuoteEmailInput = {
   subtotal: number
 }
 
-const getTransport = () => {
+type Mailer = { sendMail: (mail: SendMailOptions) => Promise<unknown> }
+
+// `outbox` (sólo dev/test, ver env.ts) guarda cada correo como JSON en MAIL_OUTBOX_DIR,
+// con adjuntos en base64, para probar el flujo sin un SMTP real.
+const createOutboxMailer = (): Mailer => {
+  const transporter = nodemailer.createTransport({ jsonTransport: true })
+  return {
+    sendMail: async (mail) => {
+      const info = (await transporter.sendMail(mail)) as { message: string }
+      const dir = path.resolve(process.cwd(), env.MAIL_OUTBOX_DIR)
+      await fs.mkdir(dir, { recursive: true })
+      const name = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}.json`
+      await fs.writeFile(path.join(dir, name), info.message)
+      return info
+    },
+  }
+}
+
+const getTransport = (): Mailer | null => {
+  if (env.MAIL_TRANSPORT === 'outbox') return createOutboxMailer()
   if (!env.SMTP_USER || !env.SMTP_PASS) return null
   return nodemailer.createTransport({
     service: 'gmail',
@@ -39,6 +63,15 @@ const getTransport = () => {
   })
 }
 
+const senderAddress = () => env.SMTP_FROM ?? env.SMTP_USER ?? 'Confecciones Juany Reyes <no-reply@localhost>'
+const adminInbox = () => env.QUOTES_TO_EMAIL ?? env.SMTP_USER
+
+export class MailNotConfiguredError extends Error {
+  constructor() {
+    super('El correo no está configurado (SMTP_USER/SMTP_PASS).')
+  }
+}
+
 export const sendQuoteNotificationEmail = async (input: QuoteEmailInput) => {
   const transporter = getTransport()
   if (!transporter) {
@@ -46,8 +79,8 @@ export const sendQuoteNotificationEmail = async (input: QuoteEmailInput) => {
     return false
   }
 
-  const to = env.QUOTES_TO_EMAIL ?? env.SMTP_USER
-  const from = env.SMTP_FROM ?? env.SMTP_USER
+  const to = adminInbox()
+  const from = senderAddress()
   const folio = formatQuoteFolio(input.quoteId)
 
   const lines = [
@@ -93,7 +126,7 @@ export const sendQuoteConfirmationToCustomer = async (input: {
   const transporter = getTransport()
   if (!transporter) return false
 
-  const from = env.SMTP_FROM ?? env.SMTP_USER
+  const from = senderAddress()
   const folio = formatQuoteFolio(input.quoteId)
 
   const text = [
@@ -105,7 +138,7 @@ export const sendQuoteConfirmationToCustomer = async (input: {
     'Nuestro equipo revisará tu pedido y te contactaremos dentro de 24 horas hábiles.',
     '',
     `Puedes consultar el estado de tu cotización en cualquier momento:`,
-    `https://confeccionesjuany.cl/cotizacion/${folio}`,
+    portalUrl(folio),
     '',
     'Gracias por confiar en Confecciones Juany Reyes.',
     '— Equipo Confecciones Juany Reyes',
@@ -121,31 +154,49 @@ export const sendQuoteConfirmationToCustomer = async (input: {
   return true
 }
 
+// Lanza MailNotConfiguredError si no hay transporte y propaga el error del SMTP:
+// quien llama decide qué hacer, nunca se da por enviado en silencio.
 export const sendFormalQuoteToCustomer = async (input: {
-  quoteId: number
+  folio: string
+  rev: number
   customerName: string
   customerEmail: string
   adminMessage?: string | null
-  quotedSubtotal: number
+  netAmount: number
+  ivaAmount: number
+  totalAmount: number
+  validUntil: Date
+  publicToken: string
   pdfBuffer: Buffer
+  pdfFileName: string
 }) => {
   const transporter = getTransport()
-  if (!transporter) return false
+  if (!transporter) throw new MailNotConfiguredError()
 
-  const from = env.SMTP_FROM ?? env.SMTP_USER
-  const folio = formatQuoteFolio(input.quoteId)
-  const portalUrl = `https://confeccionesjuany.cl/cotizacion/${folio}`
+  const link = portalUrl(input.folio, input.publicToken)
+  const validUntil = input.validUntil.toLocaleDateString('es-CL', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'America/Santiago',
+  })
+  const firstName = input.customerName.trim().split(/\s+/)[0] || input.customerName
 
   const lines = [
-    `Hola ${input.customerName.split(' ')[0]},`,
+    `Hola ${firstName},`,
     '',
-    `Te enviamos tu cotización oficial (${folio}).`,
+    input.rev > 0
+      ? `Te enviamos la revisión ${input.rev} de tu cotización ${input.folio}. Reemplaza a la versión anterior.`
+      : `Te enviamos tu cotización oficial (${input.folio}).`,
     '',
     ...(input.adminMessage ? [input.adminMessage, ''] : []),
-    `Subtotal neto: ${formatClp(input.quotedSubtotal)} + IVA`,
+    `Subtotal neto: ${formatClp(input.netAmount)}`,
+    `IVA (19 %): ${formatClp(input.ivaAmount)}`,
+    `Total: ${formatClp(input.totalAmount)}`,
+    `Válida hasta el ${validUntil}.`,
     '',
-    'Para aceptar o rechazar esta cotización, ingresa a:',
-    portalUrl,
+    'Adjuntamos el PDF. También puedes descargarlo y aceptar o rechazar la cotización en:',
+    link,
     '',
     'Gracias por confiar en Confecciones Juany Reyes.',
     '— Equipo Confecciones Juany Reyes',
@@ -153,19 +204,20 @@ export const sendFormalQuoteToCustomer = async (input: {
 
   await transporter.sendMail({
     to: input.customerEmail,
-    from,
-    subject: `Tu cotización ${folio} está lista`,
+    from: senderAddress(),
+    subject:
+      input.rev > 0
+        ? `Tu cotización ${input.folio} (revisión ${input.rev}) está lista`
+        : `Tu cotización ${input.folio} está lista`,
     text: lines.join('\n'),
     attachments: [
       {
-        filename: `${folio}.pdf`,
+        filename: input.pdfFileName,
         content: input.pdfBuffer,
         contentType: 'application/pdf',
       },
     ],
   })
-
-  return true
 }
 
 export const sendCustomerResponseNotification = async (input: {
@@ -176,8 +228,8 @@ export const sendCustomerResponseNotification = async (input: {
   const transporter = getTransport()
   if (!transporter) return false
 
-  const to = env.QUOTES_TO_EMAIL ?? env.SMTP_USER
-  const from = env.SMTP_FROM ?? env.SMTP_USER
+  const to = adminInbox()
+  const from = senderAddress()
   const folio = formatQuoteFolio(input.quoteId)
   const verb = input.action === 'ACCEPTED' ? 'ACEPTÓ' : 'RECHAZÓ'
 
@@ -207,8 +259,8 @@ export const sendContactNotificationEmail = async (input: ContactEmailInput) => 
     return false
   }
 
-  const to = env.QUOTES_TO_EMAIL ?? env.SMTP_USER
-  const from = env.SMTP_FROM ?? env.SMTP_USER
+  const to = adminInbox()
+  const from = senderAddress()
 
   const lines = [
     `Nuevo mensaje de contacto (#${input.messageId})`,

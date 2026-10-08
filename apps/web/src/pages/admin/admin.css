@@ -464,3 +464,15 @@
   background: rgba(201, 100, 40, 0.07);
 }
 
+
+.admin-form .admin-form__checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 400;
+}
+
+.admin-form .admin-form__checkbox input {
+  width: auto;
+  margin: 0;
+}

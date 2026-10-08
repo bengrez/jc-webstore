@@ -45,3 +45,6 @@ apps/server/uploads/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# PDFs de cotizaciones emitidas y bandeja de correo de pruebas (datos de clientes)
+apps/server/storage/

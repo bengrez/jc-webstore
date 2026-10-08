@@ -18,7 +18,9 @@ export const createApp = () => {
     const start = Date.now()
     res.on('finish', () => {
       const duration = Date.now() - start
-      console.log(`[${req.method}] ${req.originalUrl} -> ${res.statusCode} (${duration}ms)`)
+      // El token del portal (?t=) autoriza descargar el PDF: no se escribe en los logs
+      const url = req.originalUrl.replace(/([?&]t=)[^&]*/g, '$1***')
+      console.log(`[${req.method}] ${url} -> ${res.statusCode} (${duration}ms)`)
     })
     next()
   })
@@ -52,6 +54,7 @@ export const createApp = () => {
   if (process.env.NODE_ENV === 'production') {
     const distDir = path.resolve(process.cwd(), '../web/dist')
     app.use(express.static(distDir))
+    // Express 5 (path-to-regexp v8) no acepta '*' sin nombre
     app.get('/{*splat}', (req, res, next) => {
       if (req.path.startsWith('/api')) return next()
       res.sendFile(path.join(distDir, 'index.html'))

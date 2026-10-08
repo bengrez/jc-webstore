@@ -14,7 +14,9 @@
     "db:migrate": "npm -w @confeccionesjuany/server run db:migrate",
     "db:deploy": "npm -w @confeccionesjuany/server run db:deploy",
     "db:seed": "npm -w @confeccionesjuany/server run db:seed",
-    "db:studio": "npm -w @confeccionesjuany/server run db:studio"
+    "db:studio": "npm -w @confeccionesjuany/server run db:studio",
+    "test": "npm -w @confeccionesjuany/server run test",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",

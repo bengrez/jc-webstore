@@ -6,8 +6,9 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api': 'http://localhost:3001',
-      '/uploads': 'http://localhost:3001',
+      // API_PROXY_TARGET permite otro puerto (tests e2e, o si 3001 está ocupado)
+      '/api': process.env.API_PROXY_TARGET ?? 'http://localhost:3001',
+      '/uploads': process.env.API_PROXY_TARGET ?? 'http://localhost:3001',
     },
   },
 })

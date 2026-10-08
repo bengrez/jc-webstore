@@ -32,12 +32,13 @@ enum ProductOptionType {
 }
 
 model AdminUser {
-  id           Int        @id @default(autoincrement())
-  email        String     @unique
-  passwordHash String
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  notes        QuoteNote[]
+  id             Int             @id @default(autoincrement())
+  email          String          @unique
+  passwordHash   String
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  notes          QuoteNote[]
+  quoteRevisions QuoteRevision[]
 }
 
 model Product {
@@ -86,10 +87,13 @@ model Quote {
   subtotal        Int
   adminMessage    String?
   quotedAt        DateTime?
+  // Token no adivinable para descargar el PDF desde el portal (los folios son correlativos)
+  publicToken     String?     @unique
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   items           QuoteItem[]
   notes           QuoteNote[]
+  revisions       QuoteRevision[]
 }
 
 model QuoteItem {
@@ -121,6 +125,28 @@ model QuoteNote {
   adminUser AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
 
   @@index([quoteId])
+  @@index([adminUserId])
+}
+
+// Cada emisión formal del PDF. rev 0 = <folio>.pdf, rev N = <folio>-revN.pdf. Nunca se sobrescribe.
+model QuoteRevision {
+  id          Int       @id @default(autoincrement())
+  quoteId     Int
+  rev         Int
+  filePath    String
+  sha256      String
+  netAmount   Int
+  ivaAmount   Int
+  totalAmount Int
+  validUntil  DateTime
+  issuedAt    DateTime
+  sentAt      DateTime?
+  adminUserId Int
+
+  quote     Quote     @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  adminUser AdminUser @relation(fields: [adminUserId], references: [id])
+
+  @@unique([quoteId, rev])
   @@index([adminUserId])
 }
 
