@@ -14,6 +14,7 @@ const { createApp } = await import('../src/server/app.js')
 const { getQuotesStorageDir, sha256Hex } = await import('../src/server/lib/quote-storage.js')
 const { computeValidUntil } = await import('../src/server/lib/quote-totals.js')
 const { extractPdfText } = await import('./pdf-text.js')
+const { LEGAL_VERSION } = await import('../src/server/lib/legal.js')
 
 const ADMIN = { email: 'admin@example.com', password: 'clave-de-prueba-123' }
 let server: Server
@@ -48,6 +49,7 @@ const createQuote = async () => {
         },
         { productId: 'test-polera', quantity: 10, configuration: [] },
       ],
+      legal: { accepted: true, version: LEGAL_VERSION },
     },
   })
   expect(response.status).toBe(201)

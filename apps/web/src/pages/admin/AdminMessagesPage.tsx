@@ -10,6 +10,8 @@ type ContactMessage = {
   company?: string | null
   message: string
   handled: boolean
+  legalAcceptedAt?: string | null
+  legalVersion?: string | null
   createdAt: string
 }
 
@@ -91,6 +93,11 @@ const AdminMessagesPage = () => {
                       </a>
                       {message.phone && <div>{message.phone}</div>}
                       {message.company && <div>{message.company}</div>}
+                      <div style={{ fontSize: '0.8rem' }}>
+                        {message.legalAcceptedAt
+                          ? `Aceptó privacidad y términos (v. ${message.legalVersion})`
+                          : 'Sin registro de aceptación (mensaje anterior)'}
+                      </div>
                     </div>
                   </td>
                   <td style={{ whiteSpace: 'pre-wrap', maxWidth: 420 }}>{message.message}</td>

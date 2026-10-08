@@ -19,6 +19,7 @@ export default defineConfig({
       PUBLIC_SITE_URL: 'https://tienda.test',
       // Absoluta: no depende del cwd desde el que se corra vitest
       QUOTES_STORAGE_DIR: path.join(serverDir, 'storage/vitest/quotes'),
+      UPLOADS_DIR: path.join(serverDir, 'storage/vitest/uploads'),
       MAIL_TRANSPORT: 'smtp',
       SMTP_USER: 'taller@example.com',
       SMTP_PASS: 'app-password-de-prueba',

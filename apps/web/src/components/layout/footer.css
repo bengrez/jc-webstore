@@ -71,6 +71,25 @@
   padding-top: 20px;
   font-size: 0.8rem;
   color: var(--color-on-dark-muted);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 20px;
+}
+
+.site-footer__legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+
+.site-footer__legal a {
+  color: var(--color-on-dark-muted);
+  text-decoration: underline;
+}
+
+.site-footer__legal a:hover {
+  color: var(--color-on-dark);
 }
 
 @media (min-width: 768px) {

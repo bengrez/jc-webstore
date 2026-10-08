@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
+import LegalConsent from '../components/legal/LegalConsent'
+import { LEGAL_VERSION } from '../data/legal'
 import './contact.css'
 
 const initialFormState = {
@@ -16,6 +18,8 @@ const ContactPage = () => {
   const [submitted, setSubmitted] = useState(false)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [legalAccepted, setLegalAccepted] = useState(false)
+  const [legalError, setLegalError] = useState<string | null>(null)
 
   const handleInputChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = event.target
@@ -24,6 +28,10 @@ const ContactPage = () => {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!legalAccepted) {
+      setLegalError('Debes aceptar el aviso de privacidad y los términos para enviar el mensaje.')
+      return
+    }
     setSending(true)
     setError(null)
 
@@ -31,20 +39,23 @@ const ContactPage = () => {
       const response = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, legal: { accepted: legalAccepted, version: LEGAL_VERSION } }),
       })
 
       if (!response.ok) {
-        const payload = (await response.json().catch(() => ({}))) as { message?: string }
+        const payload = (await response.json().catch(() => ({}))) as { error?: string; message?: string }
         throw new Error(
-          response.status === 400
-            ? 'Revisa que el nombre, el correo y el mensaje estén completos.'
-            : payload.message ?? 'No pudimos enviar tu mensaje.'
+          payload.error?.startsWith('legal_')
+            ? payload.message
+            : response.status === 400
+              ? 'Revisa que el nombre, el correo y el mensaje estén completos.'
+              : payload.message ?? 'No pudimos enviar tu mensaje.'
         )
       }
 
       setSubmitted(true)
       setForm(initialFormState)
+      setLegalAccepted(false)
     } catch (err) {
       setError(
         err instanceof Error
@@ -144,6 +155,16 @@ const ContactPage = () => {
               onChange={handleInputChange}
             />
           </div>
+
+          <LegalConsent
+            id="contact-legal"
+            checked={legalAccepted}
+            onChange={(checked) => {
+              setLegalAccepted(checked)
+              if (checked) setLegalError(null)
+            }}
+            error={legalError}
+          />
 
           {error && (
             <p className="contact-form__error contact-form__field--full" role="alert">

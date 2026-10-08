@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { PRIVACY_PATH, TERMS_PATH } from '../../data/legal'
 import './footer.css'
 
 const Footer = () => {
@@ -26,6 +27,10 @@ const Footer = () => {
       </div>
       <div className="site-footer__bottom">
         <span>&copy; {new Date().getFullYear()} Confecciones Juany Reyes. Todos los derechos reservados.</span>
+        <nav className="site-footer__legal" aria-label="Documentos legales">
+          <Link to={PRIVACY_PATH}>Aviso de privacidad</Link>
+          <Link to={TERMS_PATH}>Términos de la cotización</Link>
+        </nav>
       </div>
     </footer>
   )

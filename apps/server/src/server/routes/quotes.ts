@@ -7,6 +7,7 @@ import { sendQuoteNotificationEmail, sendQuoteConfirmationToCustomer } from '../
 import { formatAvailabilityLabel } from '../lib/product.js'
 import { formatQuoteFolio } from '../lib/quote-folio.js'
 import { generatePublicToken } from '../lib/quote-token.js'
+import { checkLegalAcceptance } from '../lib/legal.js'
 
 export const quotesRouter = Router()
 
@@ -51,6 +52,11 @@ quotesRouter.post('/', async (req, res) => {
   const parsed = createQuoteSchema.safeParse(req.body)
   if (!parsed.success) {
     return res.status(400).json({ error: 'validation_error', details: parsed.error.flatten() })
+  }
+
+  const legal = checkLegalAcceptance(req.body?.legal)
+  if (!legal.ok) {
+    return res.status(legal.status).json(legal.body)
   }
 
   const productIds = Array.from(new Set(parsed.data.items.map((item) => item.productId)))
@@ -112,6 +118,8 @@ quotesRouter.post('/', async (req, res) => {
         referenceSubtotal: subtotal,
         status: 'NEW',
         publicToken: generatePublicToken(),
+        legalAcceptedAt: legal.acceptedAt,
+        legalVersion: legal.version,
         items: {
           create: quoteItems.map((item) => ({
             productId: item.productId,

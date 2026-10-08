@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { Link } from 'react-router-dom'
+import LegalConsent from '../components/legal/LegalConsent'
 import { useCart } from '../context/CartContext'
+import { LEGAL_VERSION } from '../data/legal'
 import { formatCurrency } from '../utils/format'
 import './cart.css'
 
@@ -21,6 +23,7 @@ const CartPage = () => {
     null
   )
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [legalAccepted, setLegalAccepted] = useState(false)
 
   const hasItems = items.length > 0
 
@@ -67,6 +70,10 @@ const CartPage = () => {
       nextErrors.phone = 'Ingresa un teléfono válido.'
     }
 
+    if (!legalAccepted) {
+      nextErrors.legal = 'Debes aceptar el aviso de privacidad y los términos para enviar la solicitud.'
+    }
+
     return nextErrors
   }
 
@@ -104,11 +111,18 @@ const CartPage = () => {
             quantity: item.quantity,
             configuration: item.configuration,
           })),
+          legal: { accepted: legalAccepted, version: LEGAL_VERSION },
         }),
       })
 
       if (!response.ok) {
-        setStatus({ type: 'error', message: 'No fue posible enviar tu solicitud. Intenta nuevamente.' })
+        const payload = (await response.json().catch(() => ({}))) as { error?: string; message?: string }
+        // La aceptación legal trae su propio motivo (p. ej. documentos actualizados: recargar)
+        const legalError = payload.error?.startsWith('legal_') ? payload.message : undefined
+        setStatus({
+          type: 'error',
+          message: legalError ?? 'No fue posible enviar tu solicitud. Intenta nuevamente.',
+        })
         return
       }
 
@@ -119,6 +133,7 @@ const CartPage = () => {
       clearCart()
       setForm(initialFormState)
       setErrors({})
+      setLegalAccepted(false)
     } catch {
       setStatus({ type: 'error', message: 'No fue posible enviar tu solicitud. Intenta nuevamente.' })
     } finally {
@@ -361,6 +376,24 @@ const CartPage = () => {
                 value={form.message}
                 onChange={handleInputChange}
                 placeholder="Incluye información sobre fechas, colores o personalización requerida."
+              />
+
+              <LegalConsent
+                id="cart-legal"
+                checked={legalAccepted}
+                onChange={(checked) => {
+                  setLegalAccepted(checked)
+                  if (checked) {
+                    setErrors((prev) => {
+                      if (!prev.legal) return prev
+                      const next = { ...prev }
+                      delete next.legal
+                      return next
+                    })
+                    setStatus((prev) => (prev?.type === 'error' ? null : prev))
+                  }
+                }}
+                error={errors.legal}
               />
 
               <button type="submit" className="button button--accent" disabled={submitting}>

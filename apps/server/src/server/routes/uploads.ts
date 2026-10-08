@@ -5,12 +5,13 @@ import multer from 'multer'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import crypto from 'node:crypto'
+import { env } from '../../lib/env.js'
 import { requireAdminAuth } from '../middleware/admin-auth.js'
 import { detectExtension, IMAGE_EXTENSIONS } from '../lib/file-type.js'
 
 export const uploadsRouter = Router()
 
-const UPLOADS_DIR = path.resolve(process.cwd(), 'uploads')
+const UPLOADS_DIR = path.resolve(process.cwd(), env.UPLOADS_DIR)
 const MAX_FILE_SIZE = 5 * 1024 * 1024
 
 

@@ -411,6 +411,8 @@ adminRouter.get('/quotes/:id', async (req, res) => {
     externallyQuotedAt: quote.externallyQuotedAt,
     subtotal: quote.subtotal,
     referenceSubtotal: quote.referenceSubtotal,
+    legalAcceptedAt: quote.legalAcceptedAt,
+    legalVersion: quote.legalVersion,
     createdAt: quote.createdAt,
     updatedAt: quote.updatedAt,
     // Link con token para compartir con el cliente; sólo existe tras la primera emisión

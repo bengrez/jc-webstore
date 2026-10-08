@@ -1,0 +1,25 @@
+# Propuesta de unidad systemd de usuario para el staging de jc-webstore (ver scripts/staging.sh).
+# Instalación: README de staging en el reporte del agente, o resumen:
+#   cp scripts/jcw-staging.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload && systemctl --user enable --now jcw-staging.service
+#   loginctl enable-linger "$USER"   # para que siga corriendo sin una sesión abierta
+# Ajusta WorkingDirectory/ExecStart si el staging vive en otro checkout (recomendado: un worktree propio).
+[Unit]
+Description=jc-webstore staging (Confecciones Juany Reyes) en el puerto 3101
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/jc-webstore-staging
+# Node de nvm (>= 20.19 para Vite 7); systemd no carga el PATH de la shell
+Environment=PATH=%h/.nvm/versions/node/v20.19.0/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=%h/jc-webstore-staging/scripts/staging.sh
+Restart=on-failure
+RestartSec=15
+# Detener: el server cierra las conexiones con SIGTERM
+KillSignal=SIGTERM
+TimeoutStopSec=20
+
+[Install]
+WantedBy=default.target

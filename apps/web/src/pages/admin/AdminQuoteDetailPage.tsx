@@ -40,6 +40,8 @@ type QuoteDetail = {
   adminMessage?: string | null
   quotedAt?: string | null
   externallyQuotedAt?: string | null
+  legalAcceptedAt?: string | null
+  legalVersion?: string | null
   subtotal: number
   referenceSubtotal: number
   createdAt: string
@@ -243,6 +245,11 @@ const AdminQuoteDetailPage = () => {
             <div>{quote.customerName}</div>
             <div>{quote.customerEmail}</div>
             {quote.customerPhone && <div>{quote.customerPhone}</div>}
+            <div style={{ color: 'var(--color-muted)', fontSize: '0.85rem', marginTop: 4 }}>
+              {quote.legalAcceptedAt
+                ? `Aceptó privacidad y términos (v. ${quote.legalVersion}) el ${formatDate(quote.legalAcceptedAt)}`
+                : 'Sin registro de aceptación de privacidad y términos (solicitud anterior)'}
+            </div>
           </div>
           <div>
             <strong>Estado</strong>

@@ -7,6 +7,8 @@ import ContactPage from './pages/ContactPage'
 import HomePage from './pages/HomePage'
 import ModeLandingPage from './pages/ModeLandingPage'
 import QuotePortalPage from './pages/QuotePortalPage'
+import PrivacyPage from './pages/legal/PrivacyPage'
+import TermsPage from './pages/legal/TermsPage'
 import AdminLayout from './pages/admin/AdminLayout'
 import AdminLoginPage from './pages/admin/AdminLoginPage'
 import AdminMessagesPage from './pages/admin/AdminMessagesPage'
@@ -34,6 +36,8 @@ const App = () => {
         <Route path="carrito" element={<CartPage />} />
         <Route path="cotizacion/:folio" element={<QuotePortalPage />} />
         <Route path="cotizacion" element={<QuotePortalPage />} />
+        <Route path="privacidad" element={<PrivacyPage />} />
+        <Route path="terminos" element={<TermsPage />} />
         <Route path="*" element={<Navigate to="/inicio" replace />} />
       </Route>
     </Routes>

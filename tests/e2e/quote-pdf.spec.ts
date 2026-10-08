@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
+import { LEGAL_VERSION } from '../../apps/web/src/data/legal';
 
 // Mismos valores que el webServer de playwright.config.ts
 const ADMIN = { email: 'admin@e2e.test', password: 'clave-e2e-123' };
@@ -53,6 +54,7 @@ const createAndSendOtherQuote = async (request: APIRequestContext) => {
     data: {
       customer: { name: 'Otro Cliente', email: 'otro@e2e.test' },
       items: [{ productId: 'e2e-estola', quantity: 10, configuration: [] }],
+      legal: { accepted: true, version: LEGAL_VERSION },
     },
   });
   expect(created.status()).toBe(201);
@@ -79,6 +81,7 @@ test('cliente cotiza, admin previsualiza y envía, cliente descarga el PDF con e
   await page.getByLabel('Nombre y apellido').fill(CUSTOMER.name);
   await page.getByLabel('Correo electrónico').fill(CUSTOMER.email);
   await page.getByLabel('Teléfono').fill(CUSTOMER.phone);
+  await page.getByRole('checkbox', { name: /acepto el aviso de privacidad/ }).check();
   await page.getByRole('button', { name: 'Enviar solicitud' }).click();
 
   const statusLink = page.getByRole('link', { name: 'Ver estado de cotización' });

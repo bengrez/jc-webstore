@@ -8,6 +8,9 @@ const emptyToUndefined = (value: unknown) => {
 
 const optionalString = z.preprocess(emptyToUndefined, z.string().min(1).optional())
 const optionalEmail = z.preprocess(emptyToUndefined, z.string().email().optional())
+const optionalBoolean = z.preprocess(emptyToUndefined, z.enum(['true', 'false']).optional()).transform((value) =>
+  value === undefined ? undefined : value === 'true'
+)
 
 const envSchema = z
   .object({
@@ -30,9 +33,17 @@ const envSchema = z
     // `outbox` escribe los correos como JSON en MAIL_OUTBOX_DIR en vez de enviarlos (sólo dev/test)
     MAIL_TRANSPORT: z.enum(['smtp', 'outbox']).default('smtp'),
     MAIL_OUTBOX_DIR: z.preprocess(emptyToUndefined, z.string().default('storage/outbox')),
+    // Archivos subidos (logos de clientes, imágenes de producto); relativa al cwd del server
+    UPLOADS_DIR: z.preprocess(emptyToUndefined, z.string().default('uploads')),
+    // Servir el build de la web (apps/web/dist) desde este server; por defecto sólo en producción
+    SERVE_WEB_DIST: optionalBoolean,
+    // Staging: build de producción con correo simulado (outbox). Ver .env.staging.example
+    STAGING: optionalBoolean,
+    // Detrás de un proxy (p. ej. `tailscale serve`): valor de `trust proxy` de Express, como `loopback`
+    TRUST_PROXY: optionalString,
   })
-  .refine((value) => !(value.NODE_ENV === 'production' && value.MAIL_TRANSPORT === 'outbox'), {
-    message: 'MAIL_TRANSPORT=outbox no se permite en producción.',
+  .refine((value) => !(value.NODE_ENV === 'production' && value.MAIL_TRANSPORT === 'outbox' && !value.STAGING), {
+    message: 'MAIL_TRANSPORT=outbox no se permite en producción (sí en staging, con STAGING=true).',
     path: ['MAIL_TRANSPORT'],
   })
 

@@ -93,6 +93,9 @@ model Quote {
   externallyQuotedAt DateTime?
   // Token no adivinable para descargar el PDF desde el portal (los folios son correlativos)
   publicToken     String?     @unique
+  // Aceptación del aviso de privacidad y los términos al enviar la solicitud (null en las anteriores)
+  legalAcceptedAt DateTime?
+  legalVersion    String?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   items           QuoteItem[]
@@ -162,6 +165,9 @@ model ContactMessage {
   company   String?
   message   String
   handled   Boolean  @default(false)
+  // Aceptación del aviso de privacidad y los términos al enviar el mensaje (null en los anteriores)
+  legalAcceptedAt DateTime?
+  legalVersion    String?
   createdAt DateTime @default(now())
 
   @@index([createdAt])

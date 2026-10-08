@@ -1,8 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// Puertos propios para no chocar con un `npm run dev` (5173/3001) ni reutilizar su base de datos.
-const E2E_API_PORT = 3101;
-const E2E_WEB_PORT = 5174;
+// Puertos propios para no chocar con un `npm run dev` (5173/3001), con el staging (3101) ni reutilizar su base.
+const E2E_API_PORT = 3201;
+const E2E_WEB_PORT = 5274;
 const E2E_WEB_URL = `http://localhost:${E2E_WEB_PORT}`;
 
 
@@ -95,6 +95,7 @@ export default defineConfig({
         QUOTES_STORAGE_DIR: 'storage/e2e/quotes',
         MAIL_TRANSPORT: 'outbox',
         MAIL_OUTBOX_DIR: 'storage/e2e/outbox',
+        UPLOADS_DIR: 'storage/e2e/uploads',
         SMTP_FROM: 'Confecciones Juany Reyes <taller@e2e.test>',
         QUOTES_TO_EMAIL: 'taller@e2e.test',
       },

@@ -15,7 +15,8 @@ import { detectExtension, IMAGE_EXTENSIONS } from '../src/server/lib/file-type.j
 import { isLocalImage } from '../src/server/lib/product-images.js'
 
 const APPLY = process.argv.includes('--apply')
-const UPLOADS_DIR = path.resolve(process.cwd(), 'uploads')
+// Misma carpeta que el server (UPLOADS_DIR); sin importar env.ts, que exige JWT_SECRET
+const UPLOADS_DIR = path.resolve(process.cwd(), process.env.UPLOADS_DIR?.trim() || 'uploads')
 const MAX_BYTES = 5 * 1024 * 1024
 
 const download = async (url: string): Promise<{ ext: string; buffer: Buffer } | { error: string }> => {

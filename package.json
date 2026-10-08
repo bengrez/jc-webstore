@@ -16,7 +16,9 @@
     "db:seed": "npm -w @confeccionesjuany/server run db:seed",
     "db:studio": "npm -w @confeccionesjuany/server run db:studio",
     "test": "npm -w @confeccionesjuany/server run test",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "staging": "bash scripts/staging.sh",
+    "test:staging": "playwright test -c playwright.staging.config.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",

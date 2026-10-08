@@ -3,6 +3,7 @@ import helmet from 'helmet'
 import cookieParser from 'cookie-parser'
 import path from 'node:path'
 import rateLimit from 'express-rate-limit'
+import { env } from '../lib/env.js'
 import { apiRouter } from './routes/api.js'
 import { errorHandler } from './middleware/error-handler.js'
 
@@ -10,6 +11,11 @@ export const createApp = () => {
   const app = express()
 
   app.disable('x-powered-by')
+  // Detrás de `tailscale serve` u otro proxy, para que el rate limit vea la IP real del cliente
+  // (`loopback`, una lista de IPs o un número de saltos)
+  if (env.TRUST_PROXY) {
+    app.set('trust proxy', /^\d+$/.test(env.TRUST_PROXY) ? Number(env.TRUST_PROXY) : env.TRUST_PROXY)
+  }
   app.use(
     helmet({
       contentSecurityPolicy: {
@@ -49,7 +55,7 @@ export const createApp = () => {
 
   // Serve uploaded files (logos, etc.). Solo tipos permitidos: si alguna vez llegó otro
   // archivo al disco, no se sirve como HTML/JS desde nuestro dominio.
-  const uploadsDir = path.resolve(process.cwd(), 'uploads')
+  const uploadsDir = path.resolve(process.cwd(), env.UPLOADS_DIR)
   const allowedUploadExtensions = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp', '.pdf'])
   app.use(
     '/uploads',
@@ -62,7 +68,7 @@ export const createApp = () => {
     express.static(uploadsDir, { dotfiles: 'deny', index: false })
   )
 
-  if (process.env.NODE_ENV === 'production') {
+  if (env.SERVE_WEB_DIST ?? env.NODE_ENV === 'production') {
     const distDir = path.resolve(process.cwd(), '../web/dist')
     app.use(express.static(distDir))
     // Express 5 (path-to-regexp v8) no acepta '*' sin nombre

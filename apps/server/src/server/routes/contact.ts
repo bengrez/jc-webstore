@@ -3,6 +3,7 @@ import rateLimit from 'express-rate-limit'
 import { z } from 'zod'
 import { prisma } from '../../lib/prisma.js'
 import { sendContactNotificationEmail } from '../lib/mailer.js'
+import { checkLegalAcceptance } from '../lib/legal.js'
 
 export const contactRouter = Router()
 
@@ -50,7 +51,14 @@ contactRouter.post('/', async (req, res) => {
     return res.status(201).json({ ok: true })
   }
 
-  const created = await prisma.contactMessage.create({ data })
+  const legal = checkLegalAcceptance(req.body?.legal)
+  if (!legal.ok) {
+    return res.status(legal.status).json(legal.body)
+  }
+
+  const created = await prisma.contactMessage.create({
+    data: { ...data, legalAcceptedAt: legal.acceptedAt, legalVersion: legal.version },
+  })
 
   // El mensaje ya quedó guardado (visible en /admin/messages): el correo es solo un aviso,
   // así que no hacemos esperar al cliente por el SMTP.
