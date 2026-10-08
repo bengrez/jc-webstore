@@ -23,9 +23,10 @@ export const createApp = () => {
       contentSecurityPolicy: {
         useDefaults: true,
         directives: {
-          // El catálogo demo sirve sus fotos desde /catalog; se mantiene Unsplash porque
-          // el admin puede agregar imágenes por URL y productos antiguos las usan.
-          'img-src': ["'self'", 'data:', 'https://images.unsplash.com'],
+          // El admin puede agregar imágenes de producto por URL desde cualquier sitio https:
+          // limitarlo a un dominio las dejaba rotas en producción sin aviso. Las imágenes
+          // no ejecutan código, así que se admite cualquier origen https.
+          'img-src': ["'self'", 'data:', 'https:'],
           'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
           'font-src': ["'self'", 'data:', 'https://fonts.gstatic.com'],
           'connect-src': ["'self'"],

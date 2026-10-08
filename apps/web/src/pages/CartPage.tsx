@@ -33,16 +33,27 @@ const CartPage = () => {
     return item ? parseMinOrder(item.minOrder) : 1
   }
 
+  // Lo que el cliente está escribiendo por ítem; se ajusta al mínimo al salir del campo
+  const [quantityDrafts, setQuantityDrafts] = useState<Record<string, string>>({})
+  const clearDraft = (cartItemKey: string) =>
+    setQuantityDrafts((prev) => {
+      const next = { ...prev }
+      delete next[cartItemKey]
+      return next
+    })
+
   const handleQuantityButton = (cartItemKey: string, delta: number) => {
+    clearDraft(cartItemKey)
     const current = items.find((item) => item.cartItemKey === cartItemKey)?.quantity ?? 0
     const next = Math.max(minQuantityFor(cartItemKey), current + delta)
     updateQuantity(cartItemKey, next)
   }
 
   const handleQuantityInput = (cartItemKey: string, event: ChangeEvent<HTMLInputElement>) => {
-    const value = Number(event.target.value)
-    if (Number.isNaN(value)) return
-    updateQuantity(cartItemKey, Math.max(minQuantityFor(cartItemKey), value))
+    const raw = event.target.value
+    setQuantityDrafts((prev) => ({ ...prev, [cartItemKey]: raw }))
+    const value = Number(raw)
+    if (Number.isInteger(value) && value >= minQuantityFor(cartItemKey)) updateQuantity(cartItemKey, value)
   }
 
   const handleInputChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -253,8 +264,9 @@ const CartPage = () => {
                       <input
                         type="number"
                         min={minQty}
-                        value={item.quantity}
+                        value={quantityDrafts[item.cartItemKey] ?? item.quantity}
                         onChange={(event) => handleQuantityInput(item.cartItemKey, event)}
+                        onBlur={() => clearDraft(item.cartItemKey)}
                         aria-label={`Cantidad de ${item.name}`}
                       />
                       <button
