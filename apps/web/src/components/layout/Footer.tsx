@@ -1,22 +1,31 @@
+import { Link } from 'react-router-dom'
 import './footer.css'
 
 const Footer = () => {
   return (
     <footer className="site-footer">
-      <div className="site-footer__content">
-        <div>
-          <h3>Gradumarketing</h3>
-          <p>Estolas, túnicas y artículos publicitarios hechos en Chile.</p>
+      <div className="site-footer__inner">
+        <div className="site-footer__brand">
+          <h3>Confecciones Juany Reyes</h3>
+          <p>Estolas, birretes, kits corporativos y regalos personalizados. Producción local en Santiago.</p>
+        </div>
+        <div className="site-footer__links">
+          <h4>Navegación</h4>
+          <ul>
+            <li><Link to="/catalogo">Catálogo</Link></li>
+            <li><Link to="/sobre-nosotros">Nosotros</Link></li>
+            <li><Link to="/contacto">Contacto</Link></li>
+            <li><Link to="/carrito">Carrito</Link></li>
+          </ul>
         </div>
         <div className="site-footer__contact">
           <h4>Contacto</h4>
-          <p>contacto@gradumarketing.cl</p>
-          <p>+56 9 1234 5678</p>
+          <p>contacto@confeccionesjuany.cl</p>
+          <p>Santiago, Chile</p>
         </div>
       </div>
       <div className="site-footer__bottom">
-        <span>© {new Date().getFullYear()} Gradumarketing. Todos los derechos reservados.</span>
-        <span>Diseño dual: Graduación & Corporativo</span>
+        <span>&copy; {new Date().getFullYear()} Confecciones Juany Reyes. Todos los derechos reservados.</span>
       </div>
     </footer>
   )

@@ -2,7 +2,7 @@
   position: fixed;
   inset: 0;
   z-index: 200;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(44, 36, 32, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -23,10 +23,11 @@
 
 .pcm-close {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 14px;
+  right: 14px;
   z-index: 10;
-  background: rgba(0, 0, 0, 0.08);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
   border: none;
   border-radius: 50%;
   width: 36px;
@@ -36,11 +37,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background var(--transition-soft);
+  color: var(--color-text-secondary);
+  transition: background var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .pcm-close:hover {
-  background: rgba(0, 0, 0, 0.15);
+  background: var(--color-border-subtle);
+  box-shadow: var(--shadow-md);
 }
 
 .pcm-layout {
@@ -61,7 +64,7 @@
   flex-direction: column;
   gap: 10px;
   padding: 24px;
-  background: rgba(0, 0, 0, 0.03);
+  background: var(--color-border-subtle);
   border-radius: var(--radius-lg) 0 0 var(--radius-lg);
 }
 
@@ -89,13 +92,13 @@
   top: 12px;
   left: 12px;
   padding: 4px 10px;
-  border-radius: 999px;
+  border-radius: var(--radius-sm);
   background: var(--color-accent);
   color: #fff;
   font-size: 0.7rem;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .pcm-gallery__thumbs {
@@ -113,11 +116,11 @@
   background: none;
   padding: 0;
   cursor: pointer;
-  transition: border-color var(--transition-soft);
+  transition: border-color var(--transition-fast);
 }
 
 .pcm-gallery__thumb.is-active {
-  border-color: var(--color-accent);
+  border-color: var(--color-primary);
 }
 
 .pcm-gallery__thumb img {
@@ -130,45 +133,52 @@
 .pcm-config {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 28px 28px 28px 24px;
+  gap: 20px;
+  padding: 32px;
   overflow-y: auto;
 }
 
 .pcm-config__header {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 12px;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pcm-config__header-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .pcm-config__name {
-  font-size: 1.3rem;
-  font-family: var(--heading-font);
+  font-size: 1.5rem;
   margin: 0;
 }
 
 .pcm-config__lead {
-  font-size: 0.75rem;
+  align-self: flex-start;
+  font-size: 0.72rem;
   font-weight: 600;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--color-muted);
-  background: rgba(0, 0, 0, 0.05);
+  color: var(--color-text-muted);
+  background: var(--color-border-subtle);
   padding: 4px 8px;
-  border-radius: 999px;
-  white-space: nowrap;
+  border-radius: var(--radius-sm);
 }
 
 .pcm-config__price {
   font-weight: 700;
-  font-size: 1.1rem;
-  color: var(--color-primary-strong);
+  font-size: 1.25rem;
+  color: var(--color-primary);
   margin: 0;
+  border-top: 1px solid var(--color-border);
+  padding-top: 16px;
 }
 
 .pcm-config__description {
-  color: var(--color-text-soft);
+  color: var(--color-text-secondary);
   font-size: 0.9rem;
   line-height: 1.6;
   margin: 0;
@@ -184,25 +194,29 @@
 }
 
 .pcm-config__specs li {
-  font-size: 0.85rem;
-  color: var(--color-muted);
-  padding-left: 14px;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  padding-left: 16px;
   position: relative;
 }
 
 .pcm-config__specs li::before {
-  content: '·';
+  content: '✓';
   position: absolute;
   left: 0;
+  color: var(--color-primary);
+  font-size: 0.75rem;
+  top: 2px;
 }
 
 /* Options */
 .pcm-options {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  border-top: 1px solid var(--color-divider);
-  padding-top: 16px;
+  gap: 20px;
+  background: var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  padding: 16px;
 }
 
 .pcm-option {
@@ -212,11 +226,11 @@
 }
 
 .pcm-option__label {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--color-text-soft);
+  color: var(--color-text-secondary);
 }
 
 .pcm-option__required {
@@ -235,33 +249,33 @@
   height: 32px;
   border-radius: 50%;
   border: 3px solid transparent;
-  outline: 2px solid rgba(0, 0, 0, 0.1);
+  outline: 2px solid rgba(44, 36, 32, 0.1);
   cursor: pointer;
-  transition: outline-color var(--transition-soft), transform var(--transition-soft);
+  transition: outline-color var(--transition-fast), transform var(--transition-fast);
   padding: 0;
 }
 
 .pcm-option__swatch.is-selected {
-  outline-color: var(--color-accent);
+  outline-color: var(--color-primary);
   transform: scale(1.15);
 }
 
 .pcm-option__color-label {
   font-size: 0.82rem;
-  color: var(--color-muted);
+  color: var(--color-text-muted);
 }
 
 .pcm-option__input {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid var(--color-divider);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  background: var(--color-surface-strong);
+  background: var(--color-surface);
   font-family: inherit;
   font-size: 0.9rem;
   color: var(--color-text);
   outline: none;
-  transition: border-color var(--transition-soft);
+  transition: border-color var(--transition-fast);
 }
 
 .pcm-option__input:focus {
@@ -277,7 +291,7 @@
 
 .pcm-option__file-link {
   font-size: 0.82rem;
-  color: var(--color-primary-strong);
+  color: var(--color-primary);
   text-decoration: underline;
   max-width: 180px;
   overflow: hidden;
@@ -296,28 +310,28 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  border-top: 1px solid var(--color-divider);
+  border-top: 1px solid var(--color-border);
   padding-top: 16px;
 }
 
 .pcm-config__qty-label {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--color-text-soft);
+  color: var(--color-text-secondary);
 }
 
 .pcm-config__moq {
   font-size: 0.78rem;
-  color: var(--color-muted);
+  color: var(--color-text-muted);
   margin-left: auto;
 }
 
 .pcm-qty-input {
   display: flex;
   align-items: center;
-  border: 1px solid var(--color-divider);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   overflow: hidden;
 }
@@ -329,11 +343,11 @@
   cursor: pointer;
   font-size: 1rem;
   color: var(--color-text);
-  transition: background var(--transition-soft);
+  transition: background var(--transition-fast);
 }
 
 .pcm-qty-input button:hover:not(:disabled) {
-  background: rgba(0, 0, 0, 0.06);
+  background: var(--color-border-subtle);
 }
 
 .pcm-qty-input button:disabled {
@@ -345,19 +359,85 @@
   width: 56px;
   text-align: center;
   border: none;
-  border-left: 1px solid var(--color-divider);
-  border-right: 1px solid var(--color-divider);
+  border-left: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-border);
   padding: 8px 0;
   font-family: inherit;
   font-size: 0.9rem;
-  background: var(--color-surface-strong);
+  background: var(--color-surface);
   color: var(--color-text);
   outline: none;
 }
 
 .pcm-config__add {
   width: 100%;
-  margin-top: auto;
+  margin-top: 8px;
+}
+
+/* Availability badge */
+.pcm-availability {
+  display: inline-block;
+  font-size: 0.67rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.6rem;
+  border-radius: 99px;
+}
+
+.pcm-availability--in  { background: #d1fae5; color: #065f46; }
+.pcm-availability--pre { background: #fef3c7; color: #92400e; }
+
+/* Tags */
+.pcm-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.pcm-tag {
+  font-size: 0.72rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 99px;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+/* Personalization block */
+.pcm-personalization {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+}
+
+.pcm-personalization__icon {
+  flex-shrink: 0;
+  color: var(--color-accent);
+  margin-top: 0.1rem;
+  font-size: 0.75rem;
+}
+
+/* Sample eligible notice */
+.pcm-sample-notice {
+  font-size: 0.8rem;
+  color: #065f46;
+  background: #d1fae5;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm);
+}
+
+/* Stock note */
+.pcm-stock-note {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-style: italic;
 }
 
 .pcm-config__preview-note {

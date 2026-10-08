@@ -31,5 +31,6 @@ export type Product = {
   personalization: string
   minOrder: string
   sampleEligible: boolean
+  stockNote?: string | null
   options: ProductOption[]
 }

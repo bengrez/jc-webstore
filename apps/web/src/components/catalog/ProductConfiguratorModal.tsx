@@ -227,10 +227,26 @@ const ProductConfiguratorModal = ({ product, onClose, onAdd, preview = false }: 
           <div className="pcm-config">
             <div className="pcm-config__header">
               <h2 className="pcm-config__name">{product.name}</h2>
-              <span className="pcm-config__lead">{product.leadTime}</span>
+              <div className="pcm-config__header-meta">
+                <span className="pcm-config__lead">{product.leadTime}</span>
+                <span className={`pcm-availability pcm-availability--${product.availability === 'Disponible' ? 'in' : 'pre'}`}>
+                  {product.availability}
+                </span>
+              </div>
+              {product.stockNote && (
+                <span className="pcm-stock-note">{product.stockNote}</span>
+              )}
             </div>
             <p className="pcm-config__price">{`Desde ${formatCurrency(product.price)} + IVA`}</p>
             <p className="pcm-config__description">{product.description}</p>
+
+            {product.tags.length > 0 && (
+              <div className="pcm-tags">
+                {product.tags.map((tag) => (
+                  <span key={tag} className="pcm-tag">{tag}</span>
+                ))}
+              </div>
+            )}
 
             {product.specs.length > 0 && (
               <ul className="pcm-config__specs">
@@ -238,6 +254,13 @@ const ProductConfiguratorModal = ({ product, onClose, onAdd, preview = false }: 
                   <li key={spec}>{spec}</li>
                 ))}
               </ul>
+            )}
+
+            {product.personalization && (
+              <div className="pcm-personalization">
+                <span className="pcm-personalization__icon">✦</span>
+                <p>{product.personalization}</p>
+              </div>
             )}
 
             {product.options.length > 0 && (
@@ -308,9 +331,15 @@ const ProductConfiguratorModal = ({ product, onClose, onAdd, preview = false }: 
               )}
             </div>
 
+            {product.sampleEligible && (
+              <p className="pcm-sample-notice">
+                Muestras disponibles — solicítalas antes de confirmar tu pedido.
+              </p>
+            )}
+
             <button
               type="button"
-              className="button button--accent pcm-config__add"
+              className="button button--accent button--large pcm-config__add"
               onClick={handleAdd}
               disabled={preview}
               title={preview ? 'Vista previa: el botón funciona en el sitio publicado' : undefined}

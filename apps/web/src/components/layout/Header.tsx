@@ -1,72 +1,37 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { useThemeMode } from '../../context/ThemeContext'
+import { useCart } from '../../context/CartContext'
 import ModeSwitch from '../shared/ModeSwitch'
 import './header.css'
 
 const NAV_LINKS = [
-  { to: '/inicio', label: 'Home' },
+  { to: '/inicio', label: 'Inicio' },
   { to: '/catalogo', label: 'Catálogo' },
-  { to: '/sobre-nosotros', label: 'Sobre nosotros' },
+  { to: '/sobre-nosotros', label: 'Nosotros' },
   { to: '/contacto', label: 'Contacto' },
-  { to: '/carrito', label: 'Carrito' },
 ]
 
 const Header = () => {
-  const { mode } = useThemeMode()
   const [open, setOpen] = useState(false)
+  const { items } = useCart()
+  const cartCount = items.reduce((sum, i) => sum + i.quantity, 0)
 
   const handleToggle = () => setOpen((prev) => !prev)
   const handleNavigate = () => setOpen(false)
 
   return (
     <header className="site-header">
-      <div className="site-header__upper">
+      <div className="site-header__inner">
         <NavLink to="/inicio" className="site-header__brand" onClick={handleNavigate}>
-          <img src="/logo.png" alt="Gradumarketing logo" className="site-header__logo" />
-          <div className="site-header__brand-text">
-            <span className="brand-label">Gradumarketing</span>
-            <span className="brand-tagline">Graduación y marketing en Chile</span>
-          </div>
+          <img
+            src="/brand/logo.jpeg"
+            alt="Confecciones Juany Reyes"
+            className="site-header__logo"
+          />
         </NavLink>
 
-        <div className="site-header__actions">
-          <div className="site-header__mode-context">
-            <span className="site-header__mode-label">Modo activo</span>
-            <span className="site-header__mode-value">
-              {mode === 'graduation' ? 'Graduación' : 'Corporativo'}
-            </span>
-          </div>
-          <div className="site-header__mode-switch">
-            <ModeSwitch />
-          </div>
-          <button
-            type="button"
-            className="site-header__menu-toggle"
-            aria-expanded={open}
-            aria-controls="mobile-nav"
-            onClick={handleToggle}
-          >
-            <span />
-            <span />
-            <span />
-          </button>
-        </div>
-      </div>
-
-      <nav
-        id="mobile-nav"
-        className={`site-header__nav ${open ? 'is-open' : ''}`}
-        aria-label="Navegación principal"
-      >
-        <div className="site-header__nav-panel">
-          <div className="site-header__nav-mode">
-            <p className="site-header__nav-mode-copy">Elige qué colección quieres ver.</p>
-            <NavLink to="/" className="button button--ghost" onClick={handleNavigate}>
-              Cambiar modo
-            </NavLink>
-          </div>
-          <ul>
+        <nav className={`site-header__nav ${open ? 'is-open' : ''}`}>
+          <ul className="site-header__links">
             {NAV_LINKS.map((link) => (
               <li key={link.to}>
                 <NavLink
@@ -82,8 +47,34 @@ const Header = () => {
               </li>
             ))}
           </ul>
+          <div className="site-header__nav-footer">
+            <NavLink to="/" className="button button--ghost" onClick={handleNavigate}>
+              Cambiar modo
+            </NavLink>
+          </div>
+        </nav>
+
+        <div className="site-header__actions">
+          <div className="site-header__mode-switch">
+            <ModeSwitch />
+          </div>
+          <NavLink to="/carrito" className="site-header__cart" onClick={handleNavigate}>
+            Carrito
+            {cartCount > 0 && <span className="site-header__cart-badge">{cartCount}</span>}
+          </NavLink>
+          <button
+            type="button"
+            className="site-header__menu-toggle"
+            aria-expanded={open}
+            aria-label="Menú"
+            onClick={handleToggle}
+          >
+            <span />
+            <span />
+            <span />
+          </button>
         </div>
-      </nav>
+      </div>
     </header>
   )
 }

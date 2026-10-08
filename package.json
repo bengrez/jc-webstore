@@ -17,6 +17,8 @@
     "db:studio": "npm -w @confeccionesjuany/server run db:studio"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@types/node": "^25.5.0",
     "concurrently": "^9.2.1"
   }
 }

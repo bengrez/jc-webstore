@@ -48,7 +48,7 @@ const ContactPage = () => {
     } catch (err) {
       setError(
         err instanceof Error
-          ? `${err.message} Si urge, escríbenos directamente a contacto@gradumarketing.cl.`
+          ? `${err.message} Si urge, escríbenos directamente a contacto@confeccionesjuany.cl.`
           : 'No pudimos enviar tu mensaje.'
       )
     } finally {
@@ -58,38 +58,26 @@ const ContactPage = () => {
 
   return (
     <div className="contact-page">
-      <header className="contact-hero">
-        <h1>Hablemos de tu pedido</h1>
+      <header className="contact-header">
+        <h1>Contacto</h1>
         <p>Completa el formulario y respondemos en menos de 24 horas hábiles.</p>
       </header>
 
       {submitted && (
         <div className="contact-success">
-          <div>
-            <h2>Mensaje recibido</h2>
-            <p>Te contactaremos pronto. Si urge, llámanos al +56 9 1234 5678.</p>
-          </div>
-          <div className="contact-success__card">
-            <div className="contact-success__avatar" aria-hidden="true">
-              J
-            </div>
-            <div>
-              <p>“Reviso cada solicitud personalmente.”</p>
-              <span>Juany · Diseñadora y dueña</span>
-            </div>
-          </div>
+          <h2>Mensaje recibido</h2>
+          <p>Te contactaremos pronto.</p>
         </div>
       )}
 
       <section className="contact-grid">
         <form className="contact-form" onSubmit={handleSubmit}>
           <div className="contact-form__field">
-            <label htmlFor="name">Nombre y apellido</label>
+            <label htmlFor="name">Nombre</label>
             <input
               id="name"
               name="name"
               type="text"
-              placeholder="Ej: Juana Pérez"
               value={form.name}
               onChange={handleInputChange}
               required
@@ -97,12 +85,11 @@ const ContactPage = () => {
           </div>
 
           <div className="contact-form__field">
-            <label htmlFor="email">Correo electrónico</label>
+            <label htmlFor="email">Email</label>
             <input
               id="email"
               name="email"
               type="email"
-              placeholder="correo@institucion.cl"
               value={form.email}
               onChange={handleInputChange}
               required
@@ -115,32 +102,29 @@ const ContactPage = () => {
               id="phone"
               name="phone"
               type="tel"
-              placeholder="+56 9 1234 5678"
-              inputMode="tel"
+              placeholder="+56 9 ..."
               value={form.phone}
               onChange={handleInputChange}
             />
           </div>
 
           <div className="contact-form__field">
-            <label htmlFor="company">Institución o empresa</label>
+            <label htmlFor="company">Empresa</label>
             <input
               id="company"
               name="company"
               type="text"
-              placeholder="Nombre de la organización"
               value={form.company}
               onChange={handleInputChange}
             />
           </div>
 
           <div className="contact-form__field contact-form__field--full">
-            <label htmlFor="message">Cuéntanos tu necesidad</label>
+            <label htmlFor="message">Mensaje</label>
             <textarea
               id="message"
               name="message"
-              placeholder="Describe tu ceremonia o campaña, cantidades y fecha estimada."
-              rows={5}
+              rows={4}
               value={form.message}
               onChange={handleInputChange}
               required
@@ -173,19 +157,14 @@ const ContactPage = () => {
         </form>
 
         <aside className="contact-sidebar">
-          <div>
-            <h2>Datos de contacto</h2>
-            <p>contacto@gradumarketing.cl</p>
-            <p>+56 9 1234 5678</p>
+          <div className="contact-sidebar__block">
+            <h3>Contacto directo</h3>
+            <p>contacto@confeccionesjuany.cl</p>
+            <p>Santiago, Chile</p>
           </div>
-          <div>
+          <div className="contact-sidebar__block">
             <h3>Horario</h3>
-            <p>Lunes a viernes · 09:00 a 18:30</p>
-            <p>Atención presencial o remota.</p>
-          </div>
-          <div>
-            <h3>Visítanos</h3>
-            <p>Taller en Santiago, Chile (con cita previa).</p>
+            <p>Lunes a viernes, 09:00 - 18:30</p>
           </div>
         </aside>
       </section>

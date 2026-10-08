@@ -1,0 +1,28 @@
+.floating-contact {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 90;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-lg);
+  transition: transform var(--transition-base), background var(--transition-fast);
+}
+
+.floating-contact:hover {
+  transform: scale(1.08);
+  background: var(--color-primary-hover);
+}
+
+@media (min-width: 768px) {
+  .floating-contact {
+    bottom: 32px;
+    right: 32px;
+  }
+}

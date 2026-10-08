@@ -76,6 +76,8 @@ const storeFile: RequestHandler = async (req, res) => {
 }
 
 uploadsRouter.post('/logo', requireAdminAuth, receiveFile, storeFile)
+// Imágenes de producto desde el admin (lo usa la ficha de productos del WIP)
+uploadsRouter.post('/product-image', requireAdminAuth, receiveFile, storeFile)
 
 // Subida pública desde el configurador: limitada por IP para evitar abuso del disco.
 uploadsRouter.post(

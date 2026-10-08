@@ -27,6 +27,7 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.1.1",
     "nodemailer": "^7.0.6",
+    "pdfkit": "^0.18.0",
     "zod": "^4.1.11"
   },
   "devDependencies": {
@@ -38,6 +39,7 @@
     "@types/multer": "^2.1.0",
     "@types/node": "^24.6.0",
     "@types/nodemailer": "^6.4.19",
+    "@types/pdfkit": "^0.17.5",
     "eslint": "^9.36.0",
     "globals": "^16.4.0",
     "prisma": "^6.18.0",

@@ -34,7 +34,7 @@ type CartContextValue = {
 
 const CartContext = createContext<CartContextValue | undefined>(undefined)
 
-const STORAGE_KEY = 'gradumarketing:cart'
+const STORAGE_KEY = 'confeccionesjuany:cart'
 
 const makeCartItemKey = (productId: string, configuration: CartItemConfig[]) => {
   const configKey = configuration.length > 0 ? JSON.stringify(configuration) : ''

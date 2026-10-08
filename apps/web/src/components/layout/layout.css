@@ -2,21 +2,13 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: radial-gradient(
-      circle at top left,
-      rgba(255, 255, 255, 0.6),
-      transparent 65%
-    ),
-    var(--color-background);
+  background: var(--color-background);
 }
 
 .layout__main {
   flex: 1;
-  padding: 32px 18px 40px;
-}
-
-@media (min-width: 768px) {
-  .layout__main {
-    padding: 48px 60px 64px;
-  }
+  width: 100%;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 32px var(--container-padding) 48px;
 }

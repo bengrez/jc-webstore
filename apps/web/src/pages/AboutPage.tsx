@@ -3,7 +3,7 @@ import './about.css'
 const milestones = [
   {
     year: '2012',
-    title: 'Nace Confecciones Juany',
+    title: 'Nace Confecciones Juany Reyes',
     description: 'Juany abre el taller familiar para vestir ceremonias escolares.',
   },
   {
@@ -37,7 +37,7 @@ const AboutPage = () => {
   return (
     <div className="about-page">
       <section className="about-hero">
-        <h1>Somos Confecciones Juany</h1>
+        <h1>Somos Confecciones Juany Reyes</h1>
         <p>
           Taller de estolas, túnicas y merchandising hecho en Chile. Trabajamos con instituciones y
           marcas con apoyo directo de la fundadora.
@@ -76,7 +76,7 @@ const AboutPage = () => {
           <h2>¿Coordinamos?</h2>
           <p>Escríbenos y preparamos una propuesta breve con tiempos y valores.</p>
         </div>
-        <a className="button button--primary" href="mailto:contacto@gradumarketing.cl">
+        <a className="button button--primary" href="mailto:contacto@confeccionesjuany.cl">
           Escríbenos
         </a>
       </section>

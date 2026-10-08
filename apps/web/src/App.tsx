@@ -6,6 +6,7 @@ import CatalogPage from './pages/CatalogPage'
 import ContactPage from './pages/ContactPage'
 import HomePage from './pages/HomePage'
 import ModeLandingPage from './pages/ModeLandingPage'
+import QuotePortalPage from './pages/QuotePortalPage'
 import AdminLayout from './pages/admin/AdminLayout'
 import AdminLoginPage from './pages/admin/AdminLoginPage'
 import AdminMessagesPage from './pages/admin/AdminMessagesPage'
@@ -31,6 +32,8 @@ const App = () => {
         <Route path="sobre-nosotros" element={<AboutPage />} />
         <Route path="contacto" element={<ContactPage />} />
         <Route path="carrito" element={<CartPage />} />
+        <Route path="cotizacion/:folio" element={<QuotePortalPage />} />
+        <Route path="cotizacion" element={<QuotePortalPage />} />
         <Route path="*" element={<Navigate to="/inicio" replace />} />
       </Route>
     </Routes>
