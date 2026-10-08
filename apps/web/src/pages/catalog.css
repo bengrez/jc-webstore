@@ -109,3 +109,63 @@
     radial-gradient(ellipse at 0% 100%, rgba(122, 184, 152, 0.32) 0%, transparent 55%),
     radial-gradient(ellipse at 90% 10%, rgba(200, 228, 210, 0.18) 0%, transparent 45%);
 }
+
+/* ── Búsqueda y filtro por tag (PR #7, con los tokens del diseño navy/oro) ── */
+.catalog__filters {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: -12px;
+}
+
+.catalog__search {
+  width: 100%;
+  max-width: 420px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--color-text);
+}
+
+.catalog__search:focus {
+  outline: 2px solid var(--color-primary-soft);
+  border-color: var(--color-primary);
+}
+
+.catalog__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.catalog__tag,
+.catalog__clear {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.catalog__tag:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.catalog__tag[aria-pressed='true'] {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-surface);
+}
+
+.catalog__clear {
+  border-style: dashed;
+  color: var(--color-text-muted);
+}

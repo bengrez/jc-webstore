@@ -80,11 +80,12 @@ uploadsRouter.post('/logo', requireAdminAuth, receiveFile, storeFile)
 uploadsRouter.post('/product-image', requireAdminAuth, receiveFile, storeFile)
 
 // Subida pública desde el configurador: limitada por IP para evitar abuso del disco.
+// Se toma el límite más estricto de los dos PR: 10 por hora (PR #7) en vez de 20 cada 15 min.
 uploadsRouter.post(
   '/customer-logo',
   rateLimit({
-    windowMs: 15 * 60 * 1000,
-    limit: 20,
+    windowMs: 60 * 60 * 1000,
+    limit: 10,
     standardHeaders: true,
     legacyHeaders: false,
     message: {

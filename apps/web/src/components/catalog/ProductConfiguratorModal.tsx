@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { Product, ProductOption } from '../../data/types'
 import type { CartItemConfig } from '../../context/CartContext'
 import { formatCurrency } from '../../utils/format'
+import { parseMinOrder } from '../../utils/product'
 import './product-configurator-modal.css'
 
 type Props = {
@@ -10,11 +11,6 @@ type Props = {
   onAdd: (product: Product, quantity: number, configuration: CartItemConfig[]) => void
   /** Vista previa desde el admin: se ve igual, pero no sube archivos ni agrega al carrito. */
   preview?: boolean
-}
-
-const parseMinOrder = (minOrder: string): number => {
-  const match = minOrder.match(/\d+/)
-  return match ? Number(match[0]) : 1
 }
 
 const OptionField = ({

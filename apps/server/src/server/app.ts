@@ -10,7 +10,29 @@ export const createApp = () => {
   const app = express()
 
   app.disable('x-powered-by')
-  app.use(helmet())
+
+  // Detrás de un reverse proxy (Nginx, Render, Railway) la IP del cliente llega en
+  // X-Forwarded-For. Sin esto los rate limiters agrupan a todos los visitantes bajo
+  // la IP del proxy. Solo en producción: en dev el header sería falsificable.
+  if (process.env.NODE_ENV === 'production') {
+    app.set('trust proxy', 1)
+  }
+
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        useDefaults: true,
+        directives: {
+          // El catálogo demo sirve sus fotos desde /catalog; se mantiene Unsplash porque
+          // el admin puede agregar imágenes por URL y productos antiguos las usan.
+          'img-src': ["'self'", 'data:', 'https://images.unsplash.com'],
+          'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+          'font-src': ["'self'", 'data:', 'https://fonts.gstatic.com'],
+          'connect-src': ["'self'"],
+        },
+      },
+    })
+  )
   app.use(express.json({ limit: '1mb' }))
   app.use(cookieParser())
 

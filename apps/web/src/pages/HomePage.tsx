@@ -3,7 +3,7 @@ import { useThemeMode } from '../context/ThemeContext'
 import './home.css'
 
 const HomePage = () => {
-  const { mode } = useThemeMode()
+  const { mode, setMode } = useThemeMode()
 
   const hero =
     mode === 'graduation'
@@ -44,12 +44,22 @@ const HomePage = () => {
       </section>
 
       <section className="home__modes">
-        <Link to="/catalogo" className="home__mode-card home__mode-card--graduation">
+        {/* Sin el selector de modo en "/" (PR #7), estas tarjetas son la vía para cruzar de
+            una colección a la otra: además de navegar, cambian el modo. */}
+        <Link
+          to="/catalogo"
+          className="home__mode-card home__mode-card--graduation"
+          onClick={() => setMode('graduation')}
+        >
           <span className="eyebrow">Graduaciones</span>
           <h2>Estolas, birretes y túnicas</h2>
           <span className="link">Explorar</span>
         </Link>
-        <Link to="/catalogo" className="home__mode-card home__mode-card--corporate">
+        <Link
+          to="/catalogo"
+          className="home__mode-card home__mode-card--corporate"
+          onClick={() => setMode('corporate')}
+        >
           <span className="eyebrow">Corporativo</span>
           <h2>Kits y regalos premium</h2>
           <span className="link">Explorar</span>

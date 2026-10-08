@@ -356,3 +356,10 @@
     align-items: flex-start;
   }
 }
+
+.cart-item__moq {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}

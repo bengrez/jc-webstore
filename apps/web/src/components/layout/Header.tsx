@@ -5,7 +5,7 @@ import ModeSwitch from '../shared/ModeSwitch'
 import './header.css'
 
 const NAV_LINKS = [
-  { to: '/inicio', label: 'Inicio' },
+  { to: '/', label: 'Inicio' },
   { to: '/catalogo', label: 'Catálogo' },
   { to: '/sobre-nosotros', label: 'Nosotros' },
   { to: '/contacto', label: 'Contacto' },
@@ -22,7 +22,7 @@ const Header = () => {
   return (
     <header className="site-header">
       <div className="site-header__inner">
-        <NavLink to="/inicio" className="site-header__brand" onClick={handleNavigate}>
+        <NavLink to="/" className="site-header__brand" onClick={handleNavigate}>
           <img
             src="/brand/logo.jpeg"
             alt="Confecciones Juany Reyes"
@@ -40,7 +40,7 @@ const Header = () => {
                     `site-header__link ${isActive ? 'is-active' : ''}`
                   }
                   onClick={handleNavigate}
-                  end={link.to === '/inicio'}
+                  end={link.to === '/'}
                 >
                   {link.label}
                 </NavLink>
@@ -48,7 +48,7 @@ const Header = () => {
             ))}
           </ul>
           <div className="site-header__nav-footer">
-            <NavLink to="/" className="button button--ghost" onClick={handleNavigate}>
+            <NavLink to="/modo" className="button button--ghost" onClick={handleNavigate}>
               Cambiar modo
             </NavLink>
           </div>
