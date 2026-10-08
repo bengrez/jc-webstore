@@ -6,35 +6,13 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import crypto from 'node:crypto'
 import { requireAdminAuth } from '../middleware/admin-auth.js'
+import { detectExtension, IMAGE_EXTENSIONS } from '../lib/file-type.js'
 
 export const uploadsRouter = Router()
 
 const UPLOADS_DIR = path.resolve(process.cwd(), 'uploads')
 const MAX_FILE_SIZE = 5 * 1024 * 1024
 
-// La extensión se decide por el tipo detectado, nunca por el nombre que manda el cliente:
-// así no se puede subir un .html o .js que después se sirva desde nuestro dominio.
-const FILE_TYPES: Array<{ ext: string; matches: (buf: Buffer) => boolean }> = [
-  { ext: '.jpg', matches: (buf) => buf.subarray(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff])) },
-  {
-    ext: '.png',
-    matches: (buf) =>
-      buf.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])),
-  },
-  {
-    ext: '.gif',
-    matches: (buf) => ['GIF87a', 'GIF89a'].includes(buf.subarray(0, 6).toString('latin1')),
-  },
-  {
-    ext: '.webp',
-    matches: (buf) =>
-      buf.subarray(0, 4).toString('latin1') === 'RIFF' &&
-      buf.subarray(8, 12).toString('latin1') === 'WEBP',
-  },
-  { ext: '.pdf', matches: (buf) => buf.subarray(0, 5).toString('latin1') === '%PDF-' },
-]
-
-const detectExtension = (buf: Buffer) => FILE_TYPES.find((type) => type.matches(buf))?.ext ?? null
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -55,16 +33,19 @@ const receiveFile: RequestHandler = (req, res, next) => {
   })
 }
 
-const storeFile: RequestHandler = async (req, res) => {
+// `imagesOnly`: las imágenes de producto no admiten PDF (no se pueden mostrar en el catálogo)
+const storeFileOf = ({ imagesOnly }: { imagesOnly: boolean }): RequestHandler => async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'no_file', message: 'No se recibió ningún archivo.' })
   }
 
   const ext = detectExtension(req.file.buffer)
-  if (!ext) {
+  if (!ext || (imagesOnly && !IMAGE_EXTENSIONS.has(ext))) {
     return res.status(400).json({
       error: 'invalid_file',
-      message: 'Solo se aceptan imágenes JPG, PNG, WEBP, GIF o archivos PDF.',
+      message: imagesOnly
+        ? 'Solo se aceptan imágenes JPG, PNG, WEBP o GIF.'
+        : 'Solo se aceptan imágenes JPG, PNG, WEBP, GIF o archivos PDF.',
     })
   }
 
@@ -75,9 +56,12 @@ const storeFile: RequestHandler = async (req, res) => {
   res.json({ url: `/uploads/${filename}`, originalName: req.file.originalname })
 }
 
+const storeFile = storeFileOf({ imagesOnly: false })
+const storeImage = storeFileOf({ imagesOnly: true })
+
 uploadsRouter.post('/logo', requireAdminAuth, receiveFile, storeFile)
-// Imágenes de producto desde el admin (lo usa la ficha de productos del WIP)
-uploadsRouter.post('/product-image', requireAdminAuth, receiveFile, storeFile)
+// Imágenes de producto desde el admin: sólo imágenes
+uploadsRouter.post('/product-image', requireAdminAuth, receiveFile, storeImage)
 
 // Subida pública desde el configurador: limitada por IP para evitar abuso del disco.
 uploadsRouter.post(

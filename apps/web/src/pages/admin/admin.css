@@ -212,22 +212,7 @@
   margin-top: 4px;
 }
 
-.admin-image-url-row {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  flex: 1;
-}
 
-.admin-image-url-row input {
-  flex: 1;
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid var(--color-divider);
-  background: rgba(255, 255, 255, 0.9);
-  font: inherit;
-  font-size: 0.85rem;
-}
 
 @media (min-width: 980px) {
   .admin-grid--2 {
@@ -479,3 +464,37 @@
 
 /* «Cotizada» a mano, enviada por fuera del sistema (WhatsApp u otro) */
 .admin-badge--external { background: rgba(201, 169, 97, 0.18); color: rgb(122, 92, 24); }
+
+/* Imagen externa heredada: no se muestra en la tienda (CSP) y hay que reemplazarla */
+.admin-image-row--external .admin-image-url {
+  color: #8a1c24;
+}
+
+.admin-image-thumb--external {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(179, 32, 42, 0.1);
+  color: #8a1c24;
+  font-weight: 700;
+}
+
+/* Los hijos de grilla y flex no se encogen por debajo de su contenido (min-width: auto):
+   en el layout de 3 columnas el formulario de productos se salía bajo la vista previa. */
+.admin-products__form,
+.admin-form > *,
+.admin-form-section > *,
+.admin-form__row > * {
+  min-width: 0;
+}
+
+.admin-form input,
+.admin-form select,
+.admin-form textarea {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.admin-image-url {
+  min-width: 0;
+}

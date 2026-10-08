@@ -47,6 +47,11 @@ const splitLines = (value: string) =>
 
 const joinLines = (values: string[]) => values.join('\n')
 
+// Mismo criterio que el server (lib/product-images.ts): sólo imágenes de nuestro dominio.
+// Las externas de productos antiguos no se ven en el sitio (CSP) y no se pueden guardar.
+const LOCAL_IMAGE_PATTERN = /^\/(uploads|catalog|brand)\/[A-Za-z0-9][A-Za-z0-9._-]*\.(jpe?g|png|webp|gif)$/i
+const isLocalImage = (url: string) => LOCAL_IMAGE_PATTERN.test(url)
+
 const emptyForm = {
   name: '',
   description: '',
@@ -134,8 +139,6 @@ const AdminProductsPage = () => {
 
   // Image manager state
   const [uploadingImage, setUploadingImage] = useState(false)
-  const [addUrlInput, setAddUrlInput] = useState('')
-  const [showAddUrl, setShowAddUrl] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Options state
@@ -172,8 +175,6 @@ const AdminProductsPage = () => {
     setShowOptionForm(false)
     setEditingOptionId(null)
     setOptionStatus(null)
-    setShowAddUrl(false)
-    setAddUrlInput('')
   }, [selected])
 
   const handleCreateNew = () => {
@@ -183,8 +184,6 @@ const AdminProductsPage = () => {
     setStatus(null)
     setConfirmDeactivate(false)
     setShowOptionForm(false)
-    setShowAddUrl(false)
-    setAddUrlInput('')
   }
 
   const handleSubmit = async (event: FormEvent) => {
@@ -295,13 +294,6 @@ const AdminProductsPage = () => {
       setUploadingImage(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
     }
-  }
-
-  const handleAddImageUrl = () => {
-    const url = addUrlInput.trim()
-    if (url) setForm((prev) => ({ ...prev, images: [...prev.images, url] }))
-    setAddUrlInput('')
-    setShowAddUrl(false)
   }
 
   const handleRemoveImage = (i: number) =>
@@ -418,7 +410,8 @@ const AdminProductsPage = () => {
   }, [selected, showOptionForm, optionForm, editingOptionId])
 
   const previewProduct = useMemo<Product>(() => {
-    const images = form.images
+    // Como en la tienda: las imágenes externas no se muestran
+    const images = form.images.filter(isLocalImage)
     return {
       id: selected?.id ?? 'preview',
       name: form.name.trim() || 'Nombre del producto',
@@ -622,13 +615,26 @@ const AdminProductsPage = () => {
 
             <div className="admin-image-manager">
               {form.images.length === 0 && (
-                <p className="admin-image-empty">Sin imágenes. Sube una o añade una URL.</p>
+                <p className="admin-image-empty">Sin imágenes. Sube al menos una.</p>
+              )}
+              {form.images.some((url) => !isLocalImage(url)) && (
+                <div className="admin-status" data-variant="error" role="alert">
+                  Este producto tiene imágenes externas (de otro sitio). No se muestran en la tienda y no se
+                  puede guardar con ellas: súbelas de nuevo con «Subir imagen» y elimina las marcadas.
+                </div>
               )}
               {form.images.map((url, i) => (
-                <div key={`${url}-${i}`} className="admin-image-row">
-                  <img src={url} alt="" className="admin-image-thumb" />
+                <div
+                  key={`${url}-${i}`}
+                  className={`admin-image-row${isLocalImage(url) ? '' : ' admin-image-row--external'}`}
+                >
+                  {isLocalImage(url) ? (
+                    <img src={url} alt="" className="admin-image-thumb" />
+                  ) : (
+                    <span className="admin-image-thumb admin-image-thumb--external" aria-hidden="true">!</span>
+                  )}
                   <span className="admin-image-url" title={url}>
-                    {url.startsWith('/uploads/') ? url.split('/').pop() : url}
+                    {isLocalImage(url) ? url.split('/').pop() : `Externa, no se muestra: ${url}`}
                   </span>
                   <div className="admin-image-controls">
                     <button
@@ -675,35 +681,6 @@ const AdminProductsPage = () => {
                   />
                 </label>
 
-                {!showAddUrl ? (
-                  <button
-                    type="button"
-                    className="button button--ghost"
-                    onClick={() => setShowAddUrl(true)}
-                  >
-                    + Añadir URL
-                  </button>
-                ) : (
-                  <div className="admin-image-url-row">
-                    <input
-                      value={addUrlInput}
-                      onChange={(e) => setAddUrlInput(e.target.value)}
-                      placeholder="https://…"
-                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddImageUrl() } }}
-                      autoFocus
-                    />
-                    <button type="button" className="button button--primary" onClick={handleAddImageUrl}>
-                      Añadir
-                    </button>
-                    <button
-                      type="button"
-                      className="button button--ghost"
-                      onClick={() => { setShowAddUrl(false); setAddUrlInput('') }}
-                    >
-                      ✕
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
           </div>

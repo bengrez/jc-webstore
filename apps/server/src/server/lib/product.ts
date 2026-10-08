@@ -1,5 +1,6 @@
 import type { Product, ProductAvailability, ProductOption } from '@prisma/client'
 import { parseStringArrayJson } from './json.js'
+import { isLocalImage, localImagesOrFallback } from './product-images.js'
 
 type ProductOptionChoice = { label: string; value: string }
 
@@ -35,7 +36,8 @@ export const availabilityLabelToEnum = (label: string): ProductAvailability | nu
 export const productToPublicResponse = (
   product: Product & { options?: ProductOption[] }
 ) => {
-  const images = parseStringArrayJson(product.images)
+  // Las imágenes externas de productos antiguos no se muestran (la CSP las bloquearía)
+  const images = localImagesOrFallback(parseStringArrayJson(product.images))
 
   return {
     id: product.id,
@@ -43,7 +45,7 @@ export const productToPublicResponse = (
     description: product.description,
     category: product.category,
     price: product.price,
-    image: images[0] ?? '',
+    image: images[0],
     images,
     tags: parseStringArrayJson(product.tags),
     specs: parseStringArrayJson(product.specs),
@@ -70,6 +72,8 @@ export const productToAdminResponse = (
     category: product.category,
     price: product.price,
     images,
+    // Imágenes externas heredadas: el admin las marca para que se reemplacen por subidas
+    externalImages: images.filter((url) => !isLocalImage(url)),
     tags: parseStringArrayJson(product.tags),
     specs: parseStringArrayJson(product.specs),
     personalization: product.personalization,

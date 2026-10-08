@@ -6,6 +6,8 @@ import { prisma } from '../../lib/prisma.js'
 import { formatQuoteFolio } from '../lib/quote-folio.js'
 import { sendCustomerResponseNotification } from '../lib/mailer.js'
 import { resolveRevisionPath } from '../lib/quote-storage.js'
+import { parseStringArrayJson } from '../lib/json.js'
+import { localImagesOrFallback } from '../lib/product-images.js'
 import { tokensMatch } from '../lib/quote-token.js'
 
 export const quotePortalRouter = Router()
@@ -75,7 +77,7 @@ quotePortalRouter.get('/quotes/:folio', async (req, res) => {
       quantity: item.quantity,
       unitPrice: item.unitPrice,
       quotedUnitPrice: item.quotedUnitPrice ?? null,
-      image: JSON.parse(item.product.images)[0] ?? null,
+      image: localImagesOrFallback(parseStringArrayJson(item.product.images))[0],
       configuration,
     }
   })

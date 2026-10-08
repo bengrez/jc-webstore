@@ -11,6 +11,7 @@ import {
 } from '../lib/product.js'
 import { env } from '../../lib/env.js'
 import { formatQuoteFolio } from '../lib/quote-folio.js'
+import { LOCAL_IMAGE_MESSAGE, LOCAL_IMAGE_PATTERN } from '../lib/product-images.js'
 import { renderQuotePdf } from '../lib/pdf.js'
 import { MailNotConfiguredError, sendFormalQuoteToCustomer } from '../lib/mailer.js'
 import { buildQuoteDocument, quoteDocumentInclude } from '../lib/quote-document.js'
@@ -112,7 +113,8 @@ const productInputSchema = z.object({
   description: z.string().trim().min(1),
   category: z.enum(['graduaciones', 'marketing']),
   price: z.number().int().positive(),
-  images: z.array(z.string().trim().min(1)).min(1),
+  // Sólo imágenes de nuestro dominio: subidas, catálogo o marca (ver lib/product-images.ts)
+  images: z.array(z.string().trim().regex(LOCAL_IMAGE_PATTERN, LOCAL_IMAGE_MESSAGE)).min(1),
   tags: z.array(z.string().trim().min(1)).min(1),
   specs: z.array(z.string().trim().min(1)).min(1),
   personalization: z.string().trim().min(1),

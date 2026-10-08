@@ -481,3 +481,77 @@ describe('detalle de admin y notas', () => {
     expect(portal.notes.map((n: { body: string }) => n.body)).toEqual(['Ya estamos bordando'])
   })
 })
+
+describe('imágenes de producto estrictas', () => {
+  const productPayload = (images: string[]) => ({
+    name: 'Producto imágenes',
+    description: 'Prueba',
+    category: 'graduaciones',
+    price: 1000,
+    images,
+    tags: ['t'],
+    specs: ['s'],
+    personalization: 'p',
+    minOrder: 'MOQ 1',
+    leadTime: '1 día',
+    availability: 'Disponible',
+    sampleEligible: false,
+  })
+
+  it('el admin no puede guardar imágenes externas', async () => {
+    const response = await api('/api/admin/products', {
+      method: 'POST',
+      admin: true,
+      json: productPayload(['/uploads/a.png', 'https://images.unsplash.com/photo-1.jpg']),
+    })
+    expect(response.status).toBe(400)
+    expect(JSON.stringify(await response.json())).toContain('Las imágenes deben subirse')
+  })
+
+  it('acepta imágenes subidas o del catálogo', async () => {
+    const response = await api('/api/admin/products', {
+      method: 'POST',
+      admin: true,
+      json: productPayload(['/uploads/a.png', '/catalog/grad-stole-magna-1.jpg']),
+    })
+    expect(response.status).toBe(201)
+  })
+
+  it('las externas heredadas no salen en la tienda ni en el portal, y el admin las ve marcadas', async () => {
+    await prisma.product.update({
+      where: { id: 'test-polera' },
+      data: { images: JSON.stringify(['https://images.unsplash.com/photo-1.jpg']) },
+    })
+    try {
+      const products = (await (await api('/api/products')).json()) as Array<{ id: string; image: string; images: string[] }>
+      const polera = products.find((p) => p.id === 'test-polera')!
+      expect(polera.images).toEqual(['/brand/logo.jpeg'])
+      expect(polera.image).toBe('/brand/logo.jpeg')
+
+      const quote = await createQuote()
+      const portal = await (await api(`/api/portal/quotes/${quote.folio}?t=${quote.token}`)).json()
+      expect(portal.items.map((i: { image: string }) => i.image)).not.toContain('https://images.unsplash.com/photo-1.jpg')
+
+      const admin = (await (await api('/api/admin/products?includeInactive=true', { admin: true })).json()) as Array<{
+        id: string
+        externalImages: string[]
+      }>
+      expect(admin.find((p) => p.id === 'test-polera')!.externalImages).toEqual(['https://images.unsplash.com/photo-1.jpg'])
+    } finally {
+      await prisma.product.update({ where: { id: 'test-polera' }, data: { images: '["/img.jpg"]' } })
+    }
+  })
+
+  it('la CSP sólo admite imágenes propias', async () => {
+    const csp = (await api('/api/health')).headers.get('content-security-policy') ?? ''
+    expect(csp).toMatch(/img-src 'self' data:(;|$)/)
+  })
+
+  it('la subida de imágenes de producto rechaza PDF', async () => {
+    const body = new FormData()
+    body.append('file', new Blob([Buffer.from('%PDF-1.4 prueba')], { type: 'application/pdf' }), 'doc.pdf')
+    const response = await api('/api/uploads/product-image', { method: 'POST', admin: true, body })
+    expect(response.status).toBe(400)
+  })
+})
+

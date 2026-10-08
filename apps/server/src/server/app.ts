@@ -10,7 +10,18 @@ export const createApp = () => {
   const app = express()
 
   app.disable('x-powered-by')
-  app.use(helmet())
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        useDefaults: true,
+        directives: {
+          // Imágenes sólo de nuestro dominio (productos subidos, catálogo, marca). `data:` lo usa el
+          // placeholder SVG de la vista previa de productos del admin. Nada de URLs externas.
+          'img-src': ["'self'", 'data:'],
+        },
+      },
+    })
+  )
   app.use(express.json({ limit: '1mb' }))
   app.use(cookieParser())
 
