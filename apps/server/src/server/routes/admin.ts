@@ -412,7 +412,8 @@ adminRouter.get('/quotes/:id', async (req, res) => {
     createdAt: quote.createdAt,
     updatedAt: quote.updatedAt,
     // Link con token para compartir con el cliente; sólo existe tras la primera emisión
-    customerPortalUrl: quote.publicToken && quote.revisions.length > 0 ? portalUrl(folio, quote.publicToken) : null,
+    // Link personal del cliente (con token): el admin puede reenviarlo aunque aún no haya emisión formal
+    customerPortalUrl: quote.publicToken ? portalUrl(folio, quote.publicToken) : null,
     revisions: quote.revisions.map((revision) => ({
       rev: revision.rev,
       fileName: revision.filePath,
@@ -643,7 +644,8 @@ adminRouter.get('/quotes/:id/pdf-preview', async (req, res) => {
   })
   const pdf = await renderQuotePdf(document, {
     siteUrl: env.PUBLIC_SITE_URL,
-    portalUrl: portalUrl(document.folio),
+    // El PDF lo lee el cliente: su link al portal lleva el token, que el portal exige
+    portalUrl: portalUrl(document.folio, quote.publicToken),
     preview: true,
   })
 
@@ -709,7 +711,7 @@ adminRouter.post('/quotes/:id/send-quote', async (req, res) => {
 
   const pdfBuffer = await renderQuotePdf(document, {
     siteUrl: env.PUBLIC_SITE_URL,
-    portalUrl: portalUrl(document.folio),
+    portalUrl: portalUrl(document.folio, publicToken),
   })
   const fileName = revisionFileName(document.folio, rev)
 
@@ -782,7 +784,8 @@ adminRouter.post('/quotes/:id/send-quote', async (req, res) => {
       })
       const row = await tx.quote.update({
         where: { id },
-        data: { adminMessage, quotedAt: issuedAt, subtotal: document.totals.netAmount },
+        // Con una emisión formal la cotización deja de ser «enviada por fuera»
+        data: { adminMessage, quotedAt: issuedAt, subtotal: document.totals.netAmount, externallyQuotedAt: null },
       })
       return { ...row, statusKept: moved.count === 0 }
     })

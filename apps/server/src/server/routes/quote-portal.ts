@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import rateLimit from 'express-rate-limit'
 import { z } from 'zod'
+import { env } from '../../lib/env.js'
 import { prisma } from '../../lib/prisma.js'
 import { formatQuoteFolio } from '../lib/quote-folio.js'
 import { sendCustomerResponseNotification } from '../lib/mailer.js'
@@ -15,6 +16,8 @@ quotePortalRouter.use(
     limit: 30,
     standardHeaders: true,
     legacyHeaders: false,
+    // Los tests (vitest y e2e) consultan el portal muchas veces desde la misma IP
+    skip: () => env.NODE_ENV === 'test',
   })
 )
 

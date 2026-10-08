@@ -418,7 +418,7 @@ const AdminQuoteDetailPage = () => {
 
         {quote.customerPortalUrl && (
           <p style={{ fontSize: '0.85rem', marginTop: 4, overflowWrap: 'anywhere' }}>
-            <strong>Link del cliente (descarga el PDF):</strong>{' '}
+            <strong>Link personal del cliente (ver, responder y descargar):</strong>{' '}
             <a href={quote.customerPortalUrl} target="_blank" rel="noopener noreferrer" className="link">
               {quote.customerPortalUrl}
             </a>

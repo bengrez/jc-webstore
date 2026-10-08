@@ -1,4 +1,10 @@
 :root {
+  /* Alias de tokens que el admin y el configurador todavía usan (venían del tema anterior) */
+  --color-divider: var(--color-border);
+  --color-muted: var(--color-text-muted);
+  --color-text-soft: var(--color-text-secondary);
+  --color-primary-strong: var(--color-primary-hover);
+
   color-scheme: only light;
 
   /* Typography */

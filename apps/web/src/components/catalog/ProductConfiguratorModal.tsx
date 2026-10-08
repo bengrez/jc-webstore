@@ -105,6 +105,8 @@ const OptionField = ({
 const ProductConfiguratorModal = ({ product, onClose, onAdd, preview = false }: Props) => {
   const minQty = parseMinOrder(product.minOrder)
   const [quantity, setQuantity] = useState(minQty)
+  // Lo que el cliente está escribiendo; se ajusta al mínimo al salir del campo, no en cada tecla
+  const [quantityDraft, setQuantityDraft] = useState<string | null>(null)
   const [activeImageIndex, setActiveImageIndex] = useState(0)
   const [selections, setSelections] = useState<Record<number, string>>({})
   const [uploading, setUploading] = useState<Record<number, boolean>>({})
@@ -298,7 +300,10 @@ const ProductConfiguratorModal = ({ product, onClose, onAdd, preview = false }: 
               <div className="pcm-qty-input">
                 <button
                   type="button"
-                  onClick={() => setQuantity((q) => Math.max(minQty, q - 1))}
+                  onClick={() => {
+                    setQuantityDraft(null)
+                    setQuantity((q) => Math.max(minQty, q - 1))
+                  }}
                   disabled={quantity <= minQty}
                   aria-label="Disminuir cantidad"
                 >
@@ -307,16 +312,21 @@ const ProductConfiguratorModal = ({ product, onClose, onAdd, preview = false }: 
                 <input
                   type="number"
                   min={minQty}
-                  value={quantity}
+                  value={quantityDraft ?? quantity}
                   onChange={(e) => {
+                    setQuantityDraft(e.target.value)
                     const val = Number(e.target.value)
-                    if (!Number.isNaN(val)) setQuantity(Math.max(minQty, val))
+                    if (Number.isInteger(val) && val >= minQty) setQuantity(val)
                   }}
+                  onBlur={() => setQuantityDraft(null)}
                   aria-label="Cantidad"
                 />
                 <button
                   type="button"
-                  onClick={() => setQuantity((q) => q + 1)}
+                  onClick={() => {
+                    setQuantityDraft(null)
+                    setQuantity((q) => q + 1)
+                  }}
                   aria-label="Aumentar cantidad"
                 >
                   +

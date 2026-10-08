@@ -161,8 +161,12 @@ const AdminProductsPage = () => {
     })
   }, [])
 
+  // Se carga el formulario sólo al cambiar de producto: guardar una opción reemplaza el objeto
+  // del producto y no debe borrar lo que el admin está editando ni el aviso de la opción.
+  const loadedProductIdRef = useRef<string | null>(null)
   useEffect(() => {
-    if (!selected) return
+    if (!selected || loadedProductIdRef.current === selected.id) return
+    loadedProductIdRef.current = selected.id
     setConfirmDeactivate(false)
     setForm(productToForm(selected))
     setShowOptionForm(false)
@@ -173,6 +177,7 @@ const AdminProductsPage = () => {
   }, [selected])
 
   const handleCreateNew = () => {
+    loadedProductIdRef.current = null
     setSelectedId(null)
     setForm(emptyForm)
     setStatus(null)
@@ -276,11 +281,16 @@ const AdminProductsPage = () => {
         body: fd,
         credentials: 'include',
       })
-      if (!res.ok) throw new Error('upload failed')
-      const data = (await res.json()) as { url: string }
-      setForm((prev) => ({ ...prev, images: [...prev.images, data.url] }))
-    } catch {
-      setStatus({ type: 'error', message: 'No se pudo subir la imagen. Intenta de nuevo.' })
+      const data = (await res.json().catch(() => ({}))) as { url?: string; message?: string }
+      // El server explica el motivo (tipo no permitido, más de 5 MB): se muestra tal cual
+      if (!res.ok || !data.url) throw new Error(data.message ?? 'No se pudo subir la imagen. Intenta de nuevo.')
+      const url = data.url
+      setForm((prev) => ({ ...prev, images: [...prev.images, url] }))
+    } catch (error) {
+      setStatus({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'No se pudo subir la imagen. Intenta de nuevo.',
+      })
     } finally {
       setUploadingImage(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
@@ -480,12 +490,12 @@ const AdminProductsPage = () => {
                 }}
               >
                 <td>{p.name}</td>
-                <td>
+                <td className="admin-products__extra-col">
                   <span className={`admin-badge ${p.category === 'graduaciones' ? 'admin-badge--grad' : 'admin-badge--mkt'}`}>
                     {p.category === 'graduaciones' ? 'Graduaciones' : 'Marketing'}
                   </span>
                 </td>
-                <td>{p.price.toLocaleString('es-CL')}</td>
+                <td className="admin-products__extra-col">{p.price.toLocaleString('es-CL')}</td>
                 <td>
                   <span className={`admin-badge ${p.isActive ? 'admin-badge--active' : 'admin-badge--inactive'}`}>
                     {p.isActive ? 'Activo' : 'Inactivo'}
@@ -655,7 +665,7 @@ const AdminProductsPage = () => {
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
                     style={{ display: 'none' }}
                     disabled={uploadingImage}
                     onChange={(e) => {
