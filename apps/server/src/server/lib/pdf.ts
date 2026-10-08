@@ -231,11 +231,13 @@ const drawDocument = (doc: Doc, quote: QuoteDocument, options: RenderQuotePdfOpt
   }
 
   // ── Condiciones ──
+  // Se muestra la URL sin el token (es largo y ensucia el texto); el enlace clicable sí lo lleva
+  const portalLabel = options.portalUrl.split('?')[0]
   const conditions = [
     `Valores en pesos chilenos (CLP). Los precios unitarios son netos; el IVA (${Math.round(IVA_RATE * 100)} %) se suma al total.`,
     `Esta cotización es válida por ${quote.validityDays} días desde su emisión, hasta el ${formatDate(quote.validUntil)}.`,
     'No incluye despacho salvo que se indique en el mensaje. Plazos de producción sujetos a confirmación del diseño.',
-    `Para aceptar o rechazar esta cotización, ingresa a ${options.portalUrl}`,
+    `Para aceptar o rechazar esta cotización, ingresa a ${portalLabel}`,
   ]
   doc.font(F.regular).fontSize(8.5)
   const condHeight = conditions.reduce((sum, c) => sum + doc.heightOfString(`•  ${c}`, { width: CONTENT_WIDTH }) + 3, 0) + 14
@@ -247,7 +249,7 @@ const drawDocument = (doc: Doc, quote: QuoteDocument, options: RenderQuotePdfOpt
   eyebrow(doc, 'Condiciones', PAGE.marginX, y, CONTENT_WIDTH)
   doc.y = y + 14
   for (const condition of conditions) {
-    const isPortal = condition.includes(options.portalUrl)
+    const isPortal = condition.includes(portalLabel)
     doc
       .font(F.regular)
       .fontSize(8.5)

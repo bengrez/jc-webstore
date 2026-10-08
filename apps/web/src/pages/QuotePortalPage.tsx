@@ -94,6 +94,12 @@ const QuotePortalPage = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, token }),
       })
+      if (response.status === 409) {
+        // Ya se respondió (otra pestaña) o el taller cambió el estado: se muestra el estado real
+        await fetchQuote(quote.folio, token)
+        setError('Esta cotización ya no admite respuesta; te mostramos su estado actual.')
+        return
+      }
       if (!response.ok) throw new Error()
       const newStatus = action === 'ACCEPT' ? 'ACCEPTED' : 'REJECTED'
       setResponded(newStatus)
@@ -251,7 +257,16 @@ const QuotePortalPage = () => {
           )}
 
           {/* Accept / Reject — only when status is QUOTED and not yet responded */}
-          {quote.status === 'QUOTED' && !responded && (
+          {/* Sólo con una emisión formal hay montos que aceptar; si se cotizó por fuera
+              (WhatsApp, marcada a mano) la respuesta va por ese mismo canal */}
+          {quote.status === 'QUOTED' && !quote.formal && (
+            <div className="portal__access" role="note">
+              <strong>Te enviamos esta cotización por otro canal.</strong>
+              <p>Respóndenos por ese mismo medio o escríbenos desde Contacto para confirmarla.</p>
+            </div>
+          )}
+
+          {quote.status === 'QUOTED' && quote.formal && !responded && (
             <div className="portal__respond">
               <p>¿Deseas aceptar esta cotización?</p>
               <div className="portal__respond-actions">

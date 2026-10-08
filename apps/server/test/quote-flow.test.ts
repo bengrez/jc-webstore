@@ -236,6 +236,11 @@ describe('envío de la cotización formal', () => {
       `${quote.folio}-rev2.pdf`,
       `${quote.folio}.pdf`,
     ])
+    // El link del portal impreso en el PDF lleva el token (el portal lo exige)
+    const rev0Text = await extractPdfText(fs.readFileSync(rev0Path))
+    expect(rev0Text.links).toContain(`https://tienda.test/cotizacion/${quote.folio}?t=${token}`)
+    expect(rev0Text.text).not.toContain(token)
+
     // La emisión original no se tocó
     expect(sha256Hex(fs.readFileSync(rev0Path))).toBe(rev0Sha)
 
@@ -421,6 +426,14 @@ describe('«Cotizada» a mano', () => {
     expect(list.find((q: { id: number }) => q.id === quote.id).externallyQuotedAt).toBeTruthy()
   })
 
+  it('la marca se limpia al emitir formalmente desde el sistema', async () => {
+    const quote = await createQuote()
+    await patchStatus(quote.id, 'QUOTED')
+    expect((await sendQuote(quote.id, quote.items)).status).toBe(200)
+    const row = await prisma.quote.findUniqueOrThrow({ where: { id: quote.id } })
+    expect(row.externallyQuotedAt).toBeNull()
+  })
+
   it('con una emisión ya enviada no se marca', async () => {
     const quote = await createQuote()
     expect((await sendQuote(quote.id, quote.items)).status).toBe(200)
@@ -442,6 +455,12 @@ describe('detalle de admin y notas', () => {
     expect(body.items.map((item: { quotedUnitPrice: number }) => item.quotedUnitPrice)).toEqual([19990, 19990])
     expect(body.revisions).toHaveLength(1)
     expect(body.customerPortalUrl).toMatch(new RegExp(`/cotizacion/${quote.folio}\\?t=`))
+  })
+
+  it('el link personal del cliente está disponible antes de la emisión formal', async () => {
+    const quote = await createQuote()
+    const body = await (await api(`/api/admin/quotes/${quote.id}`, { admin: true })).json()
+    expect(body.customerPortalUrl).toBe(`https://tienda.test/cotizacion/${quote.folio}?t=${quote.token}`)
   })
 
   it('las notas públicas llegan al portal y las privadas no', async () => {

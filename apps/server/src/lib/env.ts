@@ -23,9 +23,9 @@ const envSchema = z
     PUBLIC_SITE_URL: z
       .preprocess(emptyToUndefined, z.string().url().default('http://localhost:5173'))
       .transform((value) => value.replace(/\/+$/, '')),
+    // Días corridos de validez de cada cotización formal (desde quotedAt); vacío = 30
+    QUOTE_VALIDITY_DAYS: z.preprocess(emptyToUndefined, z.coerce.number().int().min(1).max(365).default(30)),
     // Carpeta de PDFs emitidos; relativa al cwd del server, igual que `uploads`
-    // Días corridos de validez de cada cotización formal (desde quotedAt)
-    QUOTE_VALIDITY_DAYS: z.coerce.number().int().min(1).max(365).default(30),
     QUOTES_STORAGE_DIR: z.preprocess(emptyToUndefined, z.string().default('storage/quotes')),
     // `outbox` escribe los correos como JSON en MAIL_OUTBOX_DIR en vez de enviarlos (sólo dev/test)
     MAIL_TRANSPORT: z.enum(['smtp', 'outbox']).default('smtp'),
