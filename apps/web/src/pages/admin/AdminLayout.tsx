@@ -79,6 +79,10 @@ const AdminLayout = () => {
         </div>
       </header>
       <main className="admin-main">
+        {/* Decisión del dueño (2026-10-08): el admin es sólo para computador */}
+        <p className="admin-desktop-notice" role="note">
+          El panel de administración está pensado para computador.
+        </p>
         <Outlet />
       </main>
     </div>
