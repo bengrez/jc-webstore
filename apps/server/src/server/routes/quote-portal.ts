@@ -4,6 +4,8 @@ import { z } from 'zod'
 import { prisma } from '../../lib/prisma.js'
 import { formatQuoteFolio } from '../lib/quote-folio.js'
 import { sendCustomerResponseNotification } from '../lib/mailer.js'
+import { resolveRevisionPath } from '../lib/quote-storage.js'
+import { tokensMatch } from '../lib/quote-token.js'
 
 export const quotePortalRouter = Router()
 
@@ -38,12 +40,19 @@ quotePortalRouter.get('/quotes/:folio', async (req, res) => {
         where: { isPublic: true },
         orderBy: { createdAt: 'desc' },
       },
+      revisions: {
+        where: { sentAt: { not: null } },
+        orderBy: { rev: 'desc' },
+        take: 1,
+      },
     },
   })
 
   if (!quote) {
     return res.status(404).json({ error: 'not_found', message: 'Cotización no encontrada.' })
   }
+
+  const latest = quote.revisions[0]
 
   const items = quote.items.map((item) => {
     let configuration: Array<{ label: string; type: string; value: string }> = []
@@ -70,6 +79,18 @@ quotePortalRouter.get('/quotes/:folio', async (req, res) => {
     customerName: quote.customerName.split(' ')[0],
     subtotal: quote.subtotal,
     adminMessage: quote.adminMessage ?? null,
+    // El PDF se descarga con el token del correo; aquí sólo se informa que existe
+    pdfAvailable: Boolean(latest),
+    formal: latest
+      ? {
+          rev: latest.rev,
+          issuedAt: latest.issuedAt.toISOString(),
+          validUntil: latest.validUntil.toISOString(),
+          netAmount: latest.netAmount,
+          ivaAmount: latest.ivaAmount,
+          totalAmount: latest.totalAmount,
+        }
+      : null,
     createdAt: quote.createdAt.toISOString(),
     updatedAt: quote.updatedAt.toISOString(),
     items,
@@ -77,6 +98,35 @@ quotePortalRouter.get('/quotes/:folio', async (req, res) => {
       body: note.body,
       createdAt: note.createdAt.toISOString(),
     })),
+  })
+})
+
+// Descarga del PDF vigente. Exige el token del correo: sin token, con uno ajeno o sin
+// emisión, responde 404 igual que un folio inexistente para no revelar nada.
+quotePortalRouter.get('/quotes/:folio/pdf', async (req, res) => {
+  const notFound = () => res.status(404).json({ error: 'not_found', message: 'Documento no encontrado.' })
+  const quoteId = parseFolio(req.params.folio)
+  if (!quoteId) return notFound()
+
+  const quote = await prisma.quote.findUnique({
+    where: { id: quoteId },
+    select: {
+      publicToken: true,
+      revisions: { where: { sentAt: { not: null } }, orderBy: { rev: 'desc' }, take: 1 },
+    },
+  })
+  if (!quote || !tokensMatch(quote.publicToken, req.query.t)) return notFound()
+
+  const latest = quote.revisions[0]
+  const fullPath = latest ? resolveRevisionPath(latest.filePath) : null
+  if (!latest || !fullPath) return notFound()
+
+  res.setHeader('Cache-Control', 'private, no-store')
+  res.download(fullPath, latest.filePath, (error) => {
+    if (error) {
+      console.error(`[portal] no se pudo servir ${latest.filePath}`, error)
+      if (!res.headersSent) notFound()
+    }
   })
 })
 

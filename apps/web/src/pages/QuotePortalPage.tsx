@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, useSearchParams, Link } from 'react-router-dom'
 import { formatCurrency } from '../utils/format'
 import './quote-portal.css'
 
@@ -11,6 +11,15 @@ type PortalQuote = {
   customerName: string
   subtotal: number
   adminMessage?: string | null
+  pdfAvailable: boolean
+  formal: {
+    rev: number
+    issuedAt: string
+    validUntil: string
+    netAmount: number
+    ivaAmount: number
+    totalAmount: number
+  } | null
   createdAt: string
   updatedAt: string
   items: Array<{
@@ -37,6 +46,9 @@ const STATUS_LABELS: Record<string, { label: string; className: string }> = {
 
 const QuotePortalPage = () => {
   const { folio } = useParams<{ folio?: string }>()
+  // Token del link del correo: autoriza descargar el PDF (el folio solo no basta)
+  const [searchParams] = useSearchParams()
+  const token = searchParams.get('t')
   const [inputFolio, setInputFolio] = useState(folio ?? '')
   const [quote, setQuote] = useState<PortalQuote | null>(null)
   const [loading, setLoading] = useState(false)
@@ -91,6 +103,9 @@ const QuotePortalPage = () => {
   }
 
   const statusInfo = quote ? STATUS_LABELS[quote.status] ?? { label: quote.status, className: '' } : null
+  const canDownload = Boolean(quote?.pdfAvailable && token && folio && quote.folio.toUpperCase() === folio.toUpperCase())
+  const formatDay = (value: string) =>
+    new Date(value).toLocaleDateString('es-CL', { year: 'numeric', month: 'long', day: 'numeric' })
 
   return (
     <div className="portal">
@@ -146,6 +161,49 @@ const QuotePortalPage = () => {
               </div>
             </div>
           </div>
+
+          {quote.formal && (
+            <div className="portal__formal">
+              <div className="portal__formal-header">
+                <div>
+                  <span className="eyebrow">
+                    Cotización formal{quote.formal.rev > 0 ? ` · revisión ${quote.formal.rev}` : ''}
+                  </span>
+                  <p>
+                    Emitida el {formatDay(quote.formal.issuedAt)} · válida hasta el{' '}
+                    <strong>{formatDay(quote.formal.validUntil)}</strong>
+                  </p>
+                </div>
+                {canDownload ? (
+                  <a
+                    className="button button--primary"
+                    href={`/api/portal/quotes/${encodeURIComponent(quote.folio)}/pdf?t=${encodeURIComponent(token ?? '')}`}
+                    download
+                  >
+                    Descargar PDF
+                  </a>
+                ) : (
+                  <p className="portal__formal-hint">
+                    El PDF llegó adjunto a tu correo. Para descargarlo aquí, abre el link de ese correo.
+                  </p>
+                )}
+              </div>
+              <dl className="portal__formal-totals">
+                <div>
+                  <dt>Neto</dt>
+                  <dd>{formatCurrency(quote.formal.netAmount)}</dd>
+                </div>
+                <div>
+                  <dt>IVA (19 %)</dt>
+                  <dd>{formatCurrency(quote.formal.ivaAmount)}</dd>
+                </div>
+                <div className="portal__formal-total">
+                  <dt>Total</dt>
+                  <dd>{formatCurrency(quote.formal.totalAmount)}</dd>
+                </div>
+              </dl>
+            </div>
+          )}
 
           {/* Admin message when quote has been formally sent */}
           {quote.adminMessage && quote.status === 'QUOTED' && (

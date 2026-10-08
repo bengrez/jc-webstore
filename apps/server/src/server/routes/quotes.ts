@@ -5,6 +5,7 @@ import { prisma } from '../../lib/prisma.js'
 import { sendQuoteNotificationEmail, sendQuoteConfirmationToCustomer } from '../lib/mailer.js'
 import { formatAvailabilityLabel } from '../lib/product.js'
 import { formatQuoteFolio } from '../lib/quote-folio.js'
+import { generatePublicToken } from '../lib/quote-token.js'
 
 export const quotesRouter = Router()
 
@@ -105,6 +106,7 @@ quotesRouter.post('/', async (req, res) => {
         customerMessage: parsed.data.customer.message || null,
         subtotal,
         status: 'NEW',
+        publicToken: generatePublicToken(),
         items: {
           create: quoteItems.map((item) => ({
             productId: item.productId,
