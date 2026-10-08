@@ -476,3 +476,6 @@
   width: auto;
   margin: 0;
 }
+
+/* «Cotizada» a mano, enviada por fuera del sistema (WhatsApp u otro) */
+.admin-badge--external { background: rgba(201, 169, 97, 0.18); color: rgb(122, 92, 24); }

@@ -354,6 +354,7 @@ adminRouter.get('/quotes', async (req, res) => {
       customerEmail: quote.customerEmail,
       customerPhone: quote.customerPhone,
       subtotal: quote.subtotal,
+      externallyQuotedAt: quote.externallyQuotedAt,
       itemsCount: quote._count.items,
       createdAt: quote.createdAt,
       updatedAt: quote.updatedAt,
@@ -405,7 +406,9 @@ adminRouter.get('/quotes/:id', async (req, res) => {
     customerMessage: quote.customerMessage,
     adminMessage: quote.adminMessage,
     quotedAt: quote.quotedAt,
+    externallyQuotedAt: quote.externallyQuotedAt,
     subtotal: quote.subtotal,
+    referenceSubtotal: quote.referenceSubtotal,
     createdAt: quote.createdAt,
     updatedAt: quote.updatedAt,
     // Link con token para compartir con el cliente; sólo existe tras la primera emisión
@@ -472,15 +475,38 @@ adminRouter.patch('/quotes/:id', async (req, res) => {
     return res.status(400).json({ error: 'validation_error', details: parsed.error.flatten() })
   }
 
-  const updated = await prisma.quote.update({
-    where: { id },
-    data: { status: parsed.data.status },
+  // «Cotizada» a mano sin emisión enviada desde el sistema (p. ej. por WhatsApp): se permite,
+  // pero queda marcada y con una nota interna para que el admin lo distinga.
+  const updated = await prisma.$transaction(async (tx) => {
+    const current = await tx.quote.findUniqueOrThrow({
+      where: { id },
+      select: { status: true, externallyQuotedAt: true, _count: { select: { revisions: { where: { sentAt: { not: null } } } } } },
+    })
+    const markExternal =
+      parsed.data.status === 'QUOTED' &&
+      current.status !== 'QUOTED' &&
+      current._count.revisions === 0 &&
+      !current.externallyQuotedAt
+    if (markExternal) {
+      await tx.quoteNote.create({
+        data: {
+          quoteId: id,
+          adminUserId: req.adminUserId!,
+          body: 'Marcada como «Cotizada» a mano: la cotización se envió por fuera del sistema (sin PDF emitido aquí).',
+        },
+      })
+    }
+    return tx.quote.update({
+      where: { id },
+      data: { status: parsed.data.status, ...(markExternal && { externallyQuotedAt: new Date() }) },
+    })
   })
 
   res.json({
     id: updated.id,
     folio: formatQuoteFolio(updated.id),
     status: updated.status,
+    externallyQuotedAt: updated.externallyQuotedAt,
     updatedAt: updated.updatedAt,
   })
 })

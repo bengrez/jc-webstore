@@ -39,7 +39,9 @@ type QuoteDetail = {
   customerMessage?: string | null
   adminMessage?: string | null
   quotedAt?: string | null
+  externallyQuotedAt?: string | null
   subtotal: number
+  referenceSubtotal: number
   createdAt: string
   items: Array<{
     id: number
@@ -121,11 +123,14 @@ const AdminQuoteDetailPage = () => {
     if (!quote) return
     setSaving(true)
     try {
-      const updated = await adminFetch<{ status: QuoteStatus }>(`/api/admin/quotes/${quote.id}`, {
+      await adminFetch<{ status: QuoteStatus }>(`/api/admin/quotes/${quote.id}`, {
         method: 'PATCH',
         json: { status: next },
       })
-      setQuote((prev) => (prev ? { ...prev, status: updated.status } : prev))
+      // Marcar «Cotizada» a mano agrega una marca y una nota interna: se relee el detalle
+      // sin tocar los precios ni el mensaje que el admin pueda estar editando.
+      const fresh = await adminFetch<QuoteDetail>(`/api/admin/quotes/${quote.id}`)
+      setQuote(fresh)
     } finally {
       setSaving(false)
     }
@@ -241,10 +246,18 @@ const AdminQuoteDetailPage = () => {
           </div>
           <div>
             <strong>Estado</strong>
-            <div style={{ marginBottom: 8, marginTop: 4 }}>
+            <div style={{ marginBottom: 8, marginTop: 4, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               <span className={`admin-badge admin-badge--status-${quoteStatusVariant(quote.status)}`}>
                 {quoteStatusLabel(quote.status)}
               </span>
+              {quote.externallyQuotedAt && (
+                <span
+                  className="admin-badge admin-badge--external"
+                  title={`Marcada a mano el ${formatDate(quote.externallyQuotedAt)}`}
+                >
+                  Enviada por fuera
+                </span>
+              )}
             </div>
             <select
               value={quote.status}
@@ -338,6 +351,8 @@ const AdminQuoteDetailPage = () => {
         </table>
 
         <p>
+          <strong>Subtotal de la solicitud (catálogo):</strong> {quote.referenceSubtotal.toLocaleString('es-CL')} + IVA
+          <br />
           <strong>Neto:</strong> {screenNet.toLocaleString('es-CL')} · <strong>IVA 19 %:</strong>{' '}
           {screenIva.toLocaleString('es-CL')} · <strong>Total:</strong> {(screenNet + screenIva).toLocaleString('es-CL')}
         </p>

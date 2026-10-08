@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url'
 import PDFDocument from 'pdfkit'
 import { formatClp } from './currency.js'
 import type { DocumentConfigEntry, QuoteDocument, QuoteDocumentLine } from './quote-document.js'
-import { IVA_RATE, QUOTE_VALIDITY_DAYS } from './quote-totals.js'
+import { IVA_RATE } from './quote-totals.js'
 
 // Paleta de marca (CONTEXT.md del proyecto)
 const COLORS = {
@@ -233,7 +233,7 @@ const drawDocument = (doc: Doc, quote: QuoteDocument, options: RenderQuotePdfOpt
   // ── Condiciones ──
   const conditions = [
     `Valores en pesos chilenos (CLP). Los precios unitarios son netos; el IVA (${Math.round(IVA_RATE * 100)} %) se suma al total.`,
-    `Esta cotización es válida por ${QUOTE_VALIDITY_DAYS} días desde su emisión, hasta el ${formatDate(quote.validUntil)}.`,
+    `Esta cotización es válida por ${quote.validityDays} días desde su emisión, hasta el ${formatDate(quote.validUntil)}.`,
     'No incluye despacho salvo que se indique en el mensaje. Plazos de producción sujetos a confirmación del diseño.',
     `Para aceptar o rechazar esta cotización, ingresa a ${options.portalUrl}`,
   ]

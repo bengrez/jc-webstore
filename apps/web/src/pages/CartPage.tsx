@@ -15,7 +15,7 @@ const initialFormState = {
 const CartPage = () => {
   const { items, total, updateQuantity, removeItem, clearCart } = useCart()
   const [form, setForm] = useState(initialFormState)
-  const [submitted, setSubmitted] = useState<null | { folio: string; emailSent: boolean }>(null)
+  const [submitted, setSubmitted] = useState<null | { folio: string; token: string; emailSent: boolean }>(null)
   const [submitting, setSubmitting] = useState(false)
   const [status, setStatus] = useState<null | { type: 'success' | 'error'; message: string }>(
     null
@@ -112,9 +112,9 @@ const CartPage = () => {
         return
       }
 
-      const payload = (await response.json()) as { folio: string; emailSent: boolean }
+      const payload = (await response.json()) as { folio: string; token: string; emailSent: boolean }
 
-      setSubmitted({ folio: payload.folio, emailSent: payload.emailSent })
+      setSubmitted({ folio: payload.folio, token: payload.token, emailSent: payload.emailSent })
       setStatus({ type: 'success', message: '¡Solicitud enviada!' })
       clearCart()
       setForm(initialFormState)
@@ -156,7 +156,10 @@ const CartPage = () => {
             <span>Te enviaremos avances o prototipos según lo necesites.</span>
           </div>
           <div className="cart-success__actions">
-            <Link to={`/cotizacion/${submitted.folio}`} className="button button--primary">
+            <Link
+              to={`/cotizacion/${submitted.folio}?t=${encodeURIComponent(submitted.token)}`}
+              className="button button--primary"
+            >
               Ver estado de cotización
             </Link>
             <Link to="/catalogo" className="button button--ghost">

@@ -51,7 +51,7 @@ const createQuote = async () => {
     },
   })
   expect(response.status).toBe(201)
-  const body = (await response.json()) as { id: number; folio: string }
+  const body = (await response.json()) as { id: number; folio: string; token: string }
   const items = await prisma.quoteItem.findMany({ where: { quoteId: body.id }, orderBy: { id: 'asc' } })
   return { ...body, items }
 }
@@ -125,10 +125,43 @@ const storedFiles = (folio: string) =>
   fs.existsSync(getQuotesStorageDir()) ? fs.readdirSync(getQuotesStorageDir()).filter((f) => f.startsWith(folio)) : []
 
 describe('envío de la cotización formal', () => {
-  it('genera un token no adivinable al crear la cotización', async () => {
+  it('genera un token no adivinable al crear la cotización y se lo entrega a quien la crea', async () => {
     const quote = await createQuote()
     const row = await prisma.quote.findUniqueOrThrow({ where: { id: quote.id } })
     expect(row.publicToken).toMatch(/^[A-Za-z0-9_-]{43}$/)
+    expect(quote.token).toBe(row.publicToken)
+    // El correo de confirmación al cliente trae el link con su token
+    const confirmation = sendMail.mock.calls
+      .map((call) => call[0])
+      .find((mail) => mail.to === 'ana@example.com' && String(mail.subject).includes(quote.folio))
+    expect(confirmation.text).toContain(`/cotizacion/${quote.folio}?t=${row.publicToken}`)
+  })
+
+  it('guarda el subtotal referencial de la solicitud y lo conserva al enviar', async () => {
+    const quote = await createQuote()
+    // 30 × 15.000 + 10 × 8.000 = 530.000 (precios de catálogo)
+    expect((await prisma.quote.findUniqueOrThrow({ where: { id: quote.id } })).referenceSubtotal).toBe(530000)
+    expect((await sendQuote(quote.id, quote.items, 20000)).status).toBe(200)
+    const row = await prisma.quote.findUniqueOrThrow({ where: { id: quote.id } })
+    expect(row.subtotal).toBe(800000)
+    expect(row.referenceSubtotal).toBe(530000)
+    const detail = await (await api(`/api/admin/quotes/${quote.id}`, { admin: true })).json()
+    expect(detail).toMatchObject({ subtotal: 800000, referenceSubtotal: 530000 })
+  })
+
+  it('la validez usa QUOTE_VALIDITY_DAYS', async () => {
+    const quote = await createQuote()
+    const previous = env.QUOTE_VALIDITY_DAYS
+    env.QUOTE_VALIDITY_DAYS = 45
+    try {
+      expect((await sendQuote(quote.id, quote.items)).status).toBe(200)
+    } finally {
+      env.QUOTE_VALIDITY_DAYS = previous
+    }
+    const revision = await prisma.quoteRevision.findFirstOrThrow({ where: { quoteId: quote.id } })
+    expect(revision.validUntil.toISOString()).toBe(computeValidUntil(revision.issuedAt, 45).toISOString())
+    const pdf = fs.readFileSync(path.join(getQuotesStorageDir(), revision.filePath))
+    expect((await extractPdfText(pdf)).text).toContain('válida por 45 días')
   })
 
   it('si el SMTP falla, no queda como enviada, no guarda revisión y el admin recibe el error', async () => {
@@ -215,7 +248,9 @@ describe('envío de la cotización formal', () => {
     for (const revision of revisions) {
       expect(revision.sentAt).not.toBeNull()
       expect(revision.adminUserId).toBeGreaterThan(0)
-      expect(revision.validUntil.toISOString()).toBe(computeValidUntil(revision.issuedAt).toISOString())
+      expect(revision.validUntil.toISOString()).toBe(
+        computeValidUntil(revision.issuedAt, env.QUOTE_VALIDITY_DAYS).toISOString()
+      )
       expect(sha256Hex(fs.readFileSync(path.join(getQuotesStorageDir(), revision.filePath)))).toBe(revision.sha256)
     }
   })
@@ -330,10 +365,68 @@ describe('descarga desde el portal', () => {
     const quote = await createQuote()
     await sendQuote(quote.id, quote.items)
     const token = (await prisma.quote.findUniqueOrThrow({ where: { id: quote.id } })).publicToken!
-    const response = await api(`/api/portal/quotes/${quote.folio}`)
+    const response = await api(`/api/portal/quotes/${quote.folio}?t=${token}`)
     const raw = await response.text()
     expect(raw).not.toContain(token)
     expect(JSON.parse(raw)).toMatchObject({ pdfAvailable: true, formal: { rev: 0, totalAmount: 952000 } })
+  })
+})
+
+describe('portal con token', () => {
+  it('ver la cotización exige el token: sin token, inválido o ajeno da 404', async () => {
+    const mine = await createQuote()
+    const other = await createQuote()
+    expect((await api(`/api/portal/quotes/${mine.folio}`)).status).toBe(404)
+    expect((await api(`/api/portal/quotes/${mine.folio}?t=inventado`)).status).toBe(404)
+    expect((await api(`/api/portal/quotes/${mine.folio}?t=${other.token}`)).status).toBe(404)
+    const ok = await api(`/api/portal/quotes/${mine.folio}?t=${mine.token}`)
+    expect(ok.status).toBe(200)
+    expect(await ok.json()).toMatchObject({ folio: mine.folio, status: 'NEW' })
+  })
+
+  it('aceptar o rechazar exige el token y sólo una vez', async () => {
+    const quote = await createQuote()
+    const other = await createQuote()
+    expect((await sendQuote(quote.id, quote.items)).status).toBe(200)
+    const respond = (body: object) =>
+      api(`/api/portal/quotes/${quote.folio}/respond`, { method: 'POST', json: body })
+
+    expect((await respond({ action: 'ACCEPT' })).status).toBe(404)
+    expect((await respond({ action: 'ACCEPT', token: other.token })).status).toBe(404)
+    expect((await prisma.quote.findUniqueOrThrow({ where: { id: quote.id } })).status).toBe('QUOTED')
+
+    const ok = await respond({ action: 'ACCEPT', token: quote.token })
+    expect(ok.status).toBe(200)
+    expect(await ok.json()).toMatchObject({ status: 'ACCEPTED' })
+    expect((await respond({ action: 'REJECT', token: quote.token })).status).toBe(409)
+    expect((await prisma.quote.findUniqueOrThrow({ where: { id: quote.id } })).status).toBe('ACCEPTED')
+  })
+})
+
+describe('«Cotizada» a mano', () => {
+  const patchStatus = (id: number, status: string) =>
+    api(`/api/admin/quotes/${id}`, { method: 'PATCH', admin: true, json: { status } })
+
+  it('sin emisión enviada queda marcada como enviada por fuera, con nota interna', async () => {
+    const quote = await createQuote()
+    const response = await patchStatus(quote.id, 'QUOTED')
+    expect(response.status).toBe(200)
+    expect((await response.json()).externallyQuotedAt).toBeTruthy()
+
+    const detail = await (await api(`/api/admin/quotes/${quote.id}`, { admin: true })).json()
+    expect(detail.status).toBe('QUOTED')
+    expect(detail.externallyQuotedAt).toBeTruthy()
+    expect(detail.notes.map((n: { body: string }) => n.body).join(' ')).toContain('por fuera')
+    const list = await (await api('/api/admin/quotes', { admin: true })).json()
+    expect(list.find((q: { id: number }) => q.id === quote.id).externallyQuotedAt).toBeTruthy()
+  })
+
+  it('con una emisión ya enviada no se marca', async () => {
+    const quote = await createQuote()
+    expect((await sendQuote(quote.id, quote.items)).status).toBe(200)
+    await patchStatus(quote.id, 'IN_REVIEW')
+    const response = await patchStatus(quote.id, 'QUOTED')
+    expect((await response.json()).externallyQuotedAt).toBeNull()
   })
 })
 
@@ -365,7 +458,7 @@ describe('detalle de admin y notas', () => {
       json: { body: 'Nota interna' },
     })
 
-    const portal = await (await api(`/api/portal/quotes/${quote.folio}`)).json()
+    const portal = await (await api(`/api/portal/quotes/${quote.folio}?t=${quote.token}`)).json()
     expect(portal.notes.map((n: { body: string }) => n.body)).toEqual(['Ya estamos bordando'])
   })
 })

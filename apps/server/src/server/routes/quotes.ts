@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import rateLimit from 'express-rate-limit'
 import { z } from 'zod'
+import { env } from '../../lib/env.js'
 import { prisma } from '../../lib/prisma.js'
 import { sendQuoteNotificationEmail, sendQuoteConfirmationToCustomer } from '../lib/mailer.js'
 import { formatAvailabilityLabel } from '../lib/product.js'
@@ -15,6 +16,8 @@ quotesRouter.use(
     limit: 20,
     standardHeaders: true,
     legacyHeaders: false,
+    // Los tests (vitest y e2e) crean más de 20 cotizaciones seguidas
+    skip: () => env.NODE_ENV === 'test',
   })
 )
 
@@ -106,6 +109,7 @@ quotesRouter.post('/', async (req, res) => {
         customerPhone: parsed.data.customer.phone || null,
         customerMessage: parsed.data.customer.message || null,
         subtotal,
+        referenceSubtotal: subtotal,
         status: 'NEW',
         publicToken: generatePublicToken(),
         items: {
@@ -166,6 +170,7 @@ quotesRouter.post('/', async (req, res) => {
     quoteId: quote.id,
     customerName: quote.customerName,
     customerEmail: quote.customerEmail,
+    publicToken: quote.publicToken!,
     subtotal: quote.subtotal,
     itemCount: quote.items.length,
   }).catch((error) => {
@@ -175,6 +180,8 @@ quotesRouter.post('/', async (req, res) => {
   res.status(201).json({
     id: quote.id,
     folio: formatQuoteFolio(quote.id),
+    // Quien crea la cotización recibe su token: el portal lo exige para verla
+    token: quote.publicToken,
     status: quote.status,
     emailSent,
   })

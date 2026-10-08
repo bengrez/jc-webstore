@@ -18,6 +18,10 @@ quotePortalRouter.use(
   })
 )
 
+// El portal es público y los folios son correlativos: ver, descargar y responder exigen el
+// token del link del correo. Sin token, con uno inválido o ajeno, 404 como si no existiera.
+const NOT_FOUND = { error: 'not_found', message: 'Cotización no encontrada.' }
+
 const parseFolio = (folio: string): number | null => {
   const match = folio.match(/^COT-(\d+)$/i)
   if (!match) return null
@@ -48,8 +52,8 @@ quotePortalRouter.get('/quotes/:folio', async (req, res) => {
     },
   })
 
-  if (!quote) {
-    return res.status(404).json({ error: 'not_found', message: 'Cotización no encontrada.' })
+  if (!quote || !tokensMatch(quote.publicToken, req.query.t)) {
+    return res.status(404).json(NOT_FOUND)
   }
 
   const latest = quote.revisions[0]
@@ -137,7 +141,7 @@ quotePortalRouter.post('/quotes/:folio/respond', async (req, res) => {
   }
 
   const parsed = z
-    .object({ action: z.enum(['ACCEPT', 'REJECT']) })
+    .object({ action: z.enum(['ACCEPT', 'REJECT']), token: z.string().optional() })
     .safeParse(req.body)
 
   if (!parsed.success) {
@@ -145,17 +149,20 @@ quotePortalRouter.post('/quotes/:folio/respond', async (req, res) => {
   }
 
   const quote = await prisma.quote.findUnique({ where: { id: quoteId } })
-  if (!quote) return res.status(404).json({ error: 'not_found' })
+  if (!quote || !tokensMatch(quote.publicToken, parsed.data.token)) return res.status(404).json(NOT_FOUND)
 
-  if (quote.status !== 'QUOTED') {
+  const newStatus = parsed.data.action === 'ACCEPT' ? 'ACCEPTED' : 'REJECTED'
+  // Condicionado al estado: dos respuestas simultáneas no se pisan
+  const { count } = await prisma.quote.updateMany({
+    where: { id: quoteId, status: 'QUOTED' },
+    data: { status: newStatus },
+  })
+  if (count === 0) {
     return res.status(409).json({
       error: 'invalid_status',
       message: 'Solo se puede responder a cotizaciones en estado Cotizada.',
     })
   }
-
-  const newStatus = parsed.data.action === 'ACCEPT' ? 'ACCEPTED' : 'REJECTED'
-  await prisma.quote.update({ where: { id: quoteId }, data: { status: newStatus } })
 
   sendCustomerResponseNotification({
     quoteId,

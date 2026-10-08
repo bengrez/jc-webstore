@@ -1,5 +1,4 @@
 export const IVA_RATE = 0.19
-export const QUOTE_VALIDITY_DAYS = 30
 
 export type QuoteTotals = {
   netAmount: number
@@ -21,7 +20,7 @@ const TIME_ZONE = 'America/Santiago'
 // Días corridos en el calendario de Chile, no 30 × 24 h: con el cambio de horario una suma
 // en milisegundos puede caer en el día 29 o 31. Devuelve ese día a las 12:00 UTC
 // (mañana en Chile), que se muestra con la misma fecha en America/Santiago.
-export const computeValidUntil = (quotedAt: Date, days = QUOTE_VALIDITY_DAYS) => {
+export const computeValidUntil = (quotedAt: Date, days: number) => {
   const parts = Object.fromEntries(
     new Intl.DateTimeFormat('en-US', { timeZone: TIME_ZONE, year: 'numeric', month: 'numeric', day: 'numeric' })
       .formatToParts(quotedAt)

@@ -46,27 +46,28 @@ const STATUS_LABELS: Record<string, { label: string; className: string }> = {
 
 const QuotePortalPage = () => {
   const { folio } = useParams<{ folio?: string }>()
-  // Token del link del correo: autoriza descargar el PDF (el folio solo no basta)
+  // Token del link del correo: autoriza ver, responder y descargar (el folio solo no basta)
   const [searchParams] = useSearchParams()
   const token = searchParams.get('t')
-  const [inputFolio, setInputFolio] = useState(folio ?? '')
   const [quote, setQuote] = useState<PortalQuote | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [responding, setResponding] = useState(false)
   const [responded, setResponded] = useState<'ACCEPTED' | 'REJECTED' | null>(null)
 
-  const fetchQuote = async (f: string) => {
-    if (!f.trim()) return
+  // El portal exige el token del link del correo: sin él no se consulta nada
+  const fetchQuote = async (f: string, t: string) => {
     setLoading(true)
     setError(null)
     setQuote(null)
     setResponded(null)
 
     try {
-      const response = await fetch(`/api/portal/quotes/${encodeURIComponent(f.trim())}`)
-      if (response.status === 404) {
-        setError('No encontramos una cotización con ese folio.')
+      const response = await fetch(
+        `/api/portal/quotes/${encodeURIComponent(f.trim())}?t=${encodeURIComponent(t)}`
+      )
+      if (response.status === 404 || response.status === 400) {
+        setError('No encontramos la cotización o el link está incompleto. Ábrelo tal cual desde el correo.')
         return
       }
       if (!response.ok) throw new Error()
@@ -80,61 +81,56 @@ const QuotePortalPage = () => {
   }
 
   useEffect(() => {
-    if (folio) fetchQuote(folio)
-  }, [folio])
+    if (folio && token) fetchQuote(folio, token)
+  }, [folio, token])
 
   const handleRespond = async (action: 'ACCEPT' | 'REJECT') => {
-    if (!quote) return
+    if (!quote || !token) return
     setResponding(true)
+    setError(null)
     try {
-      await fetch(`/api/portal/quotes/${quote.folio}/respond`, {
+      const response = await fetch(`/api/portal/quotes/${quote.folio}/respond`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({ action, token }),
       })
+      if (!response.ok) throw new Error()
       const newStatus = action === 'ACCEPT' ? 'ACCEPTED' : 'REJECTED'
       setResponded(newStatus)
       setQuote((prev) => (prev ? { ...prev, status: newStatus } : prev))
     } catch {
-      // user can retry
+      setError('No pudimos registrar tu respuesta. Intenta nuevamente.')
     } finally {
       setResponding(false)
     }
   }
 
   const statusInfo = quote ? STATUS_LABELS[quote.status] ?? { label: quote.status, className: '' } : null
-  const canDownload = Boolean(quote?.pdfAvailable && token && folio && quote.folio.toUpperCase() === folio.toUpperCase())
+  const canDownload = Boolean(quote?.pdfAvailable && token)
   const formatDay = (value: string) =>
     new Date(value).toLocaleDateString('es-CL', { year: 'numeric', month: 'long', day: 'numeric' })
 
   return (
     <div className="portal">
       <header className="portal__header">
-        <h1>Consultar cotización</h1>
-        <p>Ingresa tu folio para ver el estado de tu solicitud.</p>
+        <h1>{folio ? `Cotización ${folio.toUpperCase()}` : 'Consultar cotización'}</h1>
+        <p>Revisa el estado de tu solicitud, descarga el PDF y responde la cotización formal.</p>
       </header>
 
-      <div className="portal__search">
-        <input
-          type="text"
-          value={inputFolio}
-          onChange={(e) => setInputFolio(e.target.value)}
-          placeholder="COT-000001"
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') fetchQuote(inputFolio)
-          }}
-        />
-        <button
-          type="button"
-          className="button button--primary"
-          onClick={() => fetchQuote(inputFolio)}
-          disabled={loading}
-        >
-          {loading ? 'Buscando...' : 'Buscar'}
-        </button>
-      </div>
+      {!token && (
+        <div className="portal__access" role="note">
+          <strong>Abre el link que te enviamos por correo.</strong>
+          <p>
+            Por seguridad, cada cotización se abre con el link personal del correo de confirmación o de la
+            cotización formal{folio ? ` (${folio.toUpperCase()})` : ''}. Si no lo encuentras, escríbenos y te lo
+            reenviamos.
+          </p>
+          <Link to="/contacto" className="link">Ir a contacto</Link>
+        </div>
+      )}
 
-      {error && <p className="portal__error">{error}</p>}
+      {loading && <p className="portal__loading">Cargando tu cotización…</p>}
+      {error && <p className="portal__error" role="alert">{error}</p>}
 
       {quote && statusInfo && (
         <div className="portal__result">

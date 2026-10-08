@@ -62,6 +62,16 @@ describe('renderQuotePdf', () => {
     expect(pages[0]).toContain('…')
   })
 
+  it('muestra los días de validez configurados', async () => {
+    const pdf = await renderQuotePdf(
+      makeDocument([configuredLine], { validityDays: 45, validUntil: new Date('2025-04-28T12:00:00Z') }),
+      renderOptions
+    )
+    const { text } = await extractPdfText(pdf)
+    expect(text).toContain('válida por 45 días')
+    expect(text).toContain('28 de abril de 2025')
+  })
+
   it('muestra la revisión y el mensaje del admin', async () => {
     const pdf = await renderQuotePdf(
       makeDocument([configuredLine], { rev: 2, adminMessage: 'Incluye bordado del logo.' }),

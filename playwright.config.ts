@@ -18,8 +18,7 @@ const E2E_WEB_URL = `http://localhost:${E2E_WEB_PORT}`;
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-  // Los specs de ./tests (example, landing-hover, modal) son plantillas que apuntan a
-  // playwright.dev o a un dev server ya levantado; el e2e real vive en ./tests/e2e.
+  // Specs e2e con servidores propios (ver webServer)
   testDir: './tests/e2e',
   /* Run tests in files in parallel */
   fullyParallel: true,

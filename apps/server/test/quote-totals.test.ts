@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { computeQuoteTotals, computeValidUntil, IVA_RATE, QUOTE_VALIDITY_DAYS } from '../src/server/lib/quote-totals.js'
+import { computeQuoteTotals, computeValidUntil, IVA_RATE } from '../src/server/lib/quote-totals.js'
 import { revisionFileName } from '../src/server/lib/quote-storage.js'
 
 describe('computeQuoteTotals', () => {
@@ -30,15 +30,18 @@ describe('computeQuoteTotals', () => {
 
 describe('computeValidUntil', () => {
   it('da 30 días corridos desde quotedAt en el calendario de Chile', () => {
-    expect(QUOTE_VALIDITY_DAYS).toBe(30)
-    expect(computeValidUntil(new Date('2026-10-08T15:00:00Z')).toISOString()).toBe('2026-11-07T12:00:00.000Z')
+    expect(computeValidUntil(new Date('2026-10-08T15:00:00Z'), 30).toISOString()).toBe('2026-11-07T12:00:00.000Z')
+  })
+
+  it('usa los días que se le indiquen (QUOTE_VALIDITY_DAYS)', () => {
+    expect(computeValidUntil(new Date('2026-10-08T15:00:00Z'), 45).toISOString()).toBe('2026-11-22T12:00:00.000Z')
   })
 
   it('no se corre un día con el cambio de horario ni cerca de medianoche', () => {
     // 20 ago 2026 23:30 en Chile (UTC-4); el 6 sep empieza el horario de verano
-    expect(computeValidUntil(new Date('2026-08-21T03:30:00Z')).toISOString()).toBe('2026-09-19T12:00:00.000Z')
+    expect(computeValidUntil(new Date('2026-08-21T03:30:00Z'), 30).toISOString()).toBe('2026-09-19T12:00:00.000Z')
     // 14 mar 2025 00:15 en Chile (UTC-3); el 6 abr termina el horario de verano
-    expect(computeValidUntil(new Date('2025-03-14T03:15:00Z')).toISOString()).toBe('2025-04-13T12:00:00.000Z')
+    expect(computeValidUntil(new Date('2025-03-14T03:15:00Z'), 30).toISOString()).toBe('2025-04-13T12:00:00.000Z')
   })
 })
 

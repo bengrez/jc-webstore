@@ -1,4 +1,5 @@
 import type { Prisma } from '@prisma/client'
+import { env } from '../../lib/env.js'
 import { formatQuoteFolio } from './quote-folio.js'
 import { computeQuoteTotals, computeValidUntil, type QuoteTotals } from './quote-totals.js'
 
@@ -31,6 +32,7 @@ export type QuoteDocument = {
   folio: string
   rev: number
   quotedAt: Date
+  validityDays: number
   validUntil: Date
   customerName: string
   customerEmail: string
@@ -107,7 +109,8 @@ export const buildQuoteDocument = (
     folio: formatQuoteFolio(quote.id),
     rev: params.rev,
     quotedAt: params.quotedAt,
-    validUntil: computeValidUntil(params.quotedAt),
+    validityDays: env.QUOTE_VALIDITY_DAYS,
+    validUntil: computeValidUntil(params.quotedAt, env.QUOTE_VALIDITY_DAYS),
     customerName: quote.customerName,
     customerEmail: quote.customerEmail,
     customerPhone: quote.customerPhone,

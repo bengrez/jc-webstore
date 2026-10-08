@@ -120,6 +120,7 @@ export const sendQuoteConfirmationToCustomer = async (input: {
   quoteId: number
   customerName: string
   customerEmail: string
+  publicToken: string
   subtotal: number
   itemCount: number
 }) => {
@@ -138,7 +139,7 @@ export const sendQuoteConfirmationToCustomer = async (input: {
     'Nuestro equipo revisará tu pedido y te contactaremos dentro de 24 horas hábiles.',
     '',
     `Puedes consultar el estado de tu cotización en cualquier momento:`,
-    portalUrl(folio),
+    portalUrl(folio, input.publicToken),
     '',
     'Gracias por confiar en Confecciones Juany Reyes.',
     '— Equipo Confecciones Juany Reyes',

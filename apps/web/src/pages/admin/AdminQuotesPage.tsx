@@ -29,6 +29,7 @@ type AdminQuoteListItem = {
   customerEmail: string
   customerPhone?: string | null
   subtotal: number
+  externallyQuotedAt?: string | null
   itemsCount: number
   createdAt: string
 }
@@ -105,6 +106,11 @@ const AdminQuotesPage = () => {
                   <span className={`admin-badge admin-badge--status-${quoteStatusVariant(quote.status)}`}>
                     {quoteStatusLabel(quote.status)}
                   </span>
+                  {quote.externallyQuotedAt && (
+                    <span className="admin-badge admin-badge--external" style={{ marginLeft: 6 }}>
+                      Enviada por fuera
+                    </span>
+                  )}
                 </td>
                 <td>{quote.itemsCount}</td>
                 <td>{quote.subtotal}</td>

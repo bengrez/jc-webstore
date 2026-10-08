@@ -83,14 +83,20 @@ test('cliente cotiza, admin previsualiza y envía, cliente descarga el PDF con e
 
   const statusLink = page.getByRole('link', { name: 'Ver estado de cotización' });
   await expect(statusLink).toBeVisible();
-  const folio = (await statusLink.getAttribute('href'))!.split('/').pop()!;
+  // El link del carrito ya trae el token: quien crea la cotización puede verla
+  const statusHref = new URL((await statusLink.getAttribute('href'))!, 'http://e2e');
+  const folio = statusHref.pathname.split('/').pop()!;
   expect(folio).toMatch(/^COT-\d{6}$/);
+  expect(statusHref.searchParams.get('t')).toMatch(/^[A-Za-z0-9_-]{43}$/);
   const quoteId = Number(folio.slice(4));
+  await statusLink.click();
+  await expect(page.getByRole('heading', { name: folio, exact: true })).toBeVisible();
+  await expect(page.getByText('Recibida')).toBeVisible();
 
   // ── Admin revisa, previsualiza y envía ──
   await loginAdmin(page);
   await page.goto(`/admin/quotes/${quoteId}`);
-  await expect(page.getByRole('heading', { name: folio })).toBeVisible();
+  await expect(page.getByRole('heading', { name: folio, exact: true })).toBeVisible();
   await page.getByRole('table', { name: 'Items de la cotización' }).getByRole('spinbutton').fill('17990');
   await page.getByLabel('Mensaje al cliente (opcional)').fill('Incluye el bordado del texto.');
 
@@ -130,7 +136,7 @@ test('cliente cotiza, admin previsualiza y envía, cliente descarga el PDF con e
 
   // ── Cliente descarga desde el portal con el link del correo ──
   await page.goto(portalLink);
-  await expect(page.getByRole('heading', { name: folio })).toBeVisible();
+  await expect(page.getByRole('heading', { name: folio, exact: true })).toBeVisible();
   await expect(page.getByText('válida hasta el')).toBeVisible();
   const [download] = await Promise.all([
     page.waitForEvent('download'),
@@ -142,11 +148,11 @@ test('cliente cotiza, admin previsualiza y envía, cliente descarga el PDF con e
   await testInfo.attach(`${folio}.pdf`, { body: downloaded, contentType: 'application/pdf' });
   await page.screenshot({ path: testInfo.outputPath('portal-con-token.png'), fullPage: true });
 
-  // Sin token el portal no ofrece la descarga
+  // Sin token el portal no muestra la cotización: pide abrir el link del correo
   await page.goto(`/cotizacion/${folio}`);
-  await expect(page.getByRole('heading', { name: folio })).toBeVisible();
+  await expect(page.getByText('Abre el link que te enviamos por correo.')).toBeVisible();
+  await expect(page.getByRole('heading', { name: folio, exact: true })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Descargar PDF' })).toHaveCount(0);
-  await expect(page.getByText('El PDF llegó adjunto a tu correo')).toBeVisible();
 
   // ── Sin token, con uno inválido o con el de otra cotización: 404 ──
   const token = new URL(portalLink).searchParams.get('t')!;
@@ -157,4 +163,14 @@ test('cliente cotiza, admin previsualiza y envía, cliente descarga el PDF con e
   expect((await page.request.get(`${pdfUrl}?t=token-inventado`)).status()).toBe(404);
   expect((await page.request.get(`${pdfUrl}?t=${otherToken}`)).status()).toBe(404);
   expect((await page.request.get(`${pdfUrl}?t=${token}`)).status()).toBe(200);
+  for (const t of ['', '?t=token-inventado', `?t=${otherToken}`]) {
+    expect((await page.request.get(`/api/portal/quotes/${folio}${t}`)).status()).toBe(404);
+  }
+
+  // ── El cliente acepta con el link del correo ──
+  await page.goto(portalLink);
+  await page.getByRole('button', { name: 'Aceptar cotización' }).click();
+  await expect(page.getByText('¡Cotización aceptada!')).toBeVisible();
+  const accepted = await (await page.request.get(`/api/admin/quotes/${quoteId}`)).json();
+  expect(accepted.status).toBe('ACCEPTED');
 });

@@ -85,8 +85,12 @@ model Quote {
   customerPhone   String?
   customerMessage String?
   subtotal        Int
+  // Subtotal de la solicitud original (precios de catálogo); `subtotal` pasa a ser el neto cotizado
+  referenceSubtotal Int     @default(0)
   adminMessage    String?
   quotedAt        DateTime?
+  // Marcada como «Cotizada» a mano sin emisión desde el sistema (p. ej. enviada por WhatsApp)
+  externallyQuotedAt DateTime?
   // Token no adivinable para descargar el PDF desde el portal (los folios son correlativos)
   publicToken     String?     @unique
   createdAt       DateTime    @default(now())
