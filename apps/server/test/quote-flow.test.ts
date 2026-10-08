@@ -12,6 +12,7 @@ const { env } = await import('../src/lib/env.js')
 const { prisma } = await import('../src/lib/prisma.js')
 const { createApp } = await import('../src/server/app.js')
 const { getQuotesStorageDir, sha256Hex } = await import('../src/server/lib/quote-storage.js')
+const { computeValidUntil } = await import('../src/server/lib/quote-totals.js')
 const { extractPdfText } = await import('./pdf-text.js')
 
 const ADMIN = { email: 'admin@example.com', password: 'clave-de-prueba-123' }
@@ -214,9 +215,21 @@ describe('envío de la cotización formal', () => {
     for (const revision of revisions) {
       expect(revision.sentAt).not.toBeNull()
       expect(revision.adminUserId).toBeGreaterThan(0)
-      expect(revision.validUntil.getTime() - revision.issuedAt.getTime()).toBe(30 * 24 * 60 * 60 * 1000)
+      expect(revision.validUntil.toISOString()).toBe(computeValidUntil(revision.issuedAt).toISOString())
       expect(sha256Hex(fs.readFileSync(path.join(getQuotesStorageDir(), revision.filePath)))).toBe(revision.sha256)
     }
+  })
+
+  it('si quedó un PDF sin registrar (correo enviado, base caída), emite la revisión siguiente', async () => {
+    const quote = await createQuote()
+    fs.mkdirSync(getQuotesStorageDir(), { recursive: true })
+    const orphan = path.join(getQuotesStorageDir(), `${quote.folio}.pdf`)
+    fs.writeFileSync(orphan, 'huérfano')
+
+    const response = await sendQuote(quote.id, quote.items)
+    expect(response.status).toBe(200)
+    expect(await response.json()).toMatchObject({ rev: 1, fileName: `${quote.folio}-rev1.pdf` })
+    expect(fs.readFileSync(orphan, 'utf8')).toBe('huérfano')
   })
 
   it('no re-emite cotizaciones aceptadas o rechazadas', async () => {

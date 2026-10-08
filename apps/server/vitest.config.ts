@@ -1,4 +1,8 @@
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitest/config'
+
+const serverDir = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
   test: {
@@ -13,7 +17,8 @@ export default defineConfig({
       // Relativo a prisma/schema.prisma; *.db está en .gitignore
       DATABASE_URL: 'file:./vitest.db',
       PUBLIC_SITE_URL: 'https://tienda.test',
-      QUOTES_STORAGE_DIR: 'storage/vitest/quotes',
+      // Absoluta: no depende del cwd desde el que se corra vitest
+      QUOTES_STORAGE_DIR: path.join(serverDir, 'storage/vitest/quotes'),
       MAIL_TRANSPORT: 'smtp',
       SMTP_USER: 'taller@example.com',
       SMTP_PASS: 'app-password-de-prueba',

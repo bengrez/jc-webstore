@@ -18,7 +18,9 @@ export const createApp = () => {
     const start = Date.now()
     res.on('finish', () => {
       const duration = Date.now() - start
-      console.log(`[${req.method}] ${req.originalUrl} -> ${res.statusCode} (${duration}ms)`)
+      // El token del portal (?t=) autoriza descargar el PDF: no se escribe en los logs
+      const url = req.originalUrl.replace(/([?&]t=)[^&]*/g, '$1***')
+      console.log(`[${req.method}] ${url} -> ${res.statusCode} (${duration}ms)`)
     })
     next()
   })

@@ -12,9 +12,9 @@ describe('renderQuotePdf', () => {
     expect(numPages).toBe(1)
     expect(text).toContain('COT-000042')
     expect(text).toContain('Emisión original')
-    // La fecha es quotedAt (8 oct 2026), no la de hoy; la validez, 30 días después
-    expect(text).toContain('8 de octubre de 2026')
-    expect(text).toContain('7 de noviembre de 2026')
+    // La fecha es quotedAt (14 mar 2025), no la de hoy; la validez, 30 días corridos después
+    expect(text).toContain('14 de marzo de 2025')
+    expect(text).toContain('13 de abril de 2025')
     expect(text).toContain('Estola bordada Magna')
     // 40 × 18.990 = 759.600; IVA 144.324; total 903.924
     expect(compact).toContain('$759.600')
@@ -51,6 +51,15 @@ describe('renderQuotePdf', () => {
     expect(numPages).toBeGreaterThan(1)
     pages.forEach((page, i) => expect(page).toContain(`Página ${i + 1} de ${numPages}`))
     expect(pages.join(' ')).toContain('Producto 30')
+  })
+
+  it('una opción de texto enorme no deja páginas vacías ni corta los montos', async () => {
+    const huge = { ...configuredLine, configuration: [{ label: 'Texto', type: 'TEXT' as const, value: 'x'.repeat(5000) }] }
+    const pdf = await renderQuotePdf(makeDocument([huge]), renderOptions)
+    const { pages, numPages } = await extractPdfText(pdf)
+    expect(numPages).toBe(1)
+    expect(pages[0]).toContain('Estola bordada Magna')
+    expect(pages[0]).toContain('…')
   })
 
   it('muestra la revisión y el mensaje del admin', async () => {

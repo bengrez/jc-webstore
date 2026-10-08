@@ -18,11 +18,12 @@ quotesRouter.use(
   })
 )
 
+// Límites para que una opción no rompa el correo ni el PDF de la cotización
 const configEntrySchema = z.object({
   optionId: z.number().int(),
-  label: z.string(),
+  label: z.string().max(120),
   type: z.enum(['COLOR', 'TEXT', 'FILE']),
-  value: z.string(),
+  value: z.string().max(500),
 })
 
 const createQuoteSchema = z.object({
@@ -37,7 +38,7 @@ const createQuoteSchema = z.object({
       z.object({
         productId: z.string().trim().min(1),
         quantity: z.number().int().positive().max(10_000),
-        configuration: z.array(configEntrySchema).default([]),
+        configuration: z.array(configEntrySchema).max(30).default([]),
       })
     )
     .min(1),

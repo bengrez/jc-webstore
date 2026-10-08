@@ -1,7 +1,8 @@
 import type { QuoteDocument, QuoteDocumentLine } from '../src/server/lib/quote-document.js'
 import { computeQuoteTotals, computeValidUntil } from '../src/server/lib/quote-totals.js'
 
-export const QUOTED_AT = new Date('2026-10-08T15:00:00Z')
+// Fecha lejana a la de hoy, para que el test detecte si el PDF usara `new Date()`
+export const QUOTED_AT = new Date('2025-03-14T15:00:00Z')
 
 export const configuredLine: QuoteDocumentLine = {
   itemId: 1,

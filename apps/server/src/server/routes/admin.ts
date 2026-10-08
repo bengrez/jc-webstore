@@ -2,6 +2,7 @@ import { Router } from 'express'
 import rateLimit from 'express-rate-limit'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
+import type { QuoteStatus } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 import {
   availabilityLabelToEnum,
@@ -15,6 +16,7 @@ import { MailNotConfiguredError, sendFormalQuoteToCustomer } from '../lib/mailer
 import { buildQuoteDocument, quoteDocumentInclude } from '../lib/quote-document.js'
 import {
   RevisionFileExistsError,
+  nextFreeRev,
   removeRevisionPdf,
   resolveRevisionPath,
   revisionFileName,
@@ -527,7 +529,7 @@ const parseQuoteId = (raw: string) => {
   return Number.isInteger(id) && id > 0 ? id : null
 }
 
-const ISSUABLE_STATUSES = new Set(['NEW', 'IN_REVIEW', 'QUOTED'])
+const ISSUABLE_STATUSES = new Set<QuoteStatus>(['NEW', 'IN_REVIEW', 'QUOTED'])
 
 // Precios en la query de la vista previa: `prices=12:15000,13:2000` (itemId:precioNeto)
 const parsePriceOverrides = (raw: unknown): Map<number, number> | null => {
@@ -572,7 +574,8 @@ adminRouter.get('/quotes/:id/pdf-preview', async (req, res) => {
     return res.status(400).json({ error: 'validation_error', message: 'Hay ítems que no pertenecen a esta cotización.' })
   }
 
-  const nextRev = quote.revisions[0] ? quote.revisions[0].rev + 1 : 0
+  const folio = formatQuoteFolio(quote.id)
+  const nextRev = await nextFreeRev(folio, quote.revisions[0] ? quote.revisions[0].rev + 1 : 0)
   const document = buildQuoteDocument(quote, {
     rev: nextRev,
     // Fecha que tendría si se envía ahora; la emitida usa quotedAt
@@ -631,15 +634,19 @@ adminRouter.post('/quotes/:id/send-quote', async (req, res) => {
 
   const priceOverrides = new Map(parsed.data.items.map((item) => [item.itemId, item.quotedUnitPrice]))
   const adminMessage = parsed.data.adminMessage?.trim() || null
-  const rev = quote.revisions[0] ? quote.revisions[0].rev + 1 : 0
+  // Salta números cuyo archivo ya existe (un envío que no se pudo registrar deja su PDF)
+  const folio = formatQuoteFolio(quote.id)
+  const rev = await nextFreeRev(folio, quote.revisions[0] ? quote.revisions[0].rev + 1 : 0)
   const issuedAt = new Date()
   const document = buildQuoteDocument(quote, { rev, quotedAt: issuedAt, priceOverrides, adminMessage })
 
   // El token se persiste antes de enviar para que el link del correo siempre funcione.
+  // Cotizaciones anteriores a la migración no tienen token: se asigna sólo si sigue vacío
+  // y se relee, para que dos envíos simultáneos usen el mismo.
   let publicToken = quote.publicToken
   if (!publicToken) {
-    publicToken = generatePublicToken()
-    await prisma.quote.update({ where: { id }, data: { publicToken } })
+    await prisma.quote.updateMany({ where: { id, publicToken: null }, data: { publicToken: generatePublicToken() } })
+    publicToken = (await prisma.quote.findUniqueOrThrow({ where: { id }, select: { publicToken: true } })).publicToken!
   }
 
   const pdfBuffer = await renderQuotePdf(document, {
@@ -710,15 +717,16 @@ adminRouter.post('/quotes/:id/send-quote', async (req, res) => {
           adminUserId: req.adminUserId!,
         },
       })
-      return tx.quote.update({
-        where: { id },
-        data: {
-          status: 'QUOTED',
-          adminMessage,
-          quotedAt: issuedAt,
-          subtotal: document.totals.netAmount,
-        },
+      // El cliente pudo aceptar o rechazar mientras salía el correo: no se pisa su respuesta.
+      const moved = await tx.quote.updateMany({
+        where: { id, status: { in: [...ISSUABLE_STATUSES] } },
+        data: { status: 'QUOTED' },
       })
+      const row = await tx.quote.update({
+        where: { id },
+        data: { adminMessage, quotedAt: issuedAt, subtotal: document.totals.netAmount },
+      })
+      return { ...row, statusKept: moved.count === 0 }
     })
 
     res.json({
@@ -726,6 +734,9 @@ adminRouter.post('/quotes/:id/send-quote', async (req, res) => {
       folio: document.folio,
       status: updated.status,
       quotedAt: updated.quotedAt,
+      ...(updated.statusKept && {
+        warning: `El cliente respondió mientras se enviaba: el estado sigue en ${updated.status}.`,
+      }),
       rev,
       fileName,
       quotedSubtotal: document.totals.netAmount,
@@ -738,7 +749,7 @@ adminRouter.post('/quotes/:id/send-quote', async (req, res) => {
     console.error(`[quotes] ${fileName} se envió pero no se pudo registrar`, error)
     res.status(500).json({
       error: 'record_failed',
-      message: `El correo con ${fileName} se envió, pero no se pudo registrar la emisión. Revisa antes de reenviar.`,
+      message: `El correo con ${fileName} se envió, pero no se pudo registrar la emisión. El archivo se conserva; si vuelves a emitir, saldrá como la revisión siguiente.`,
     })
   }
 })

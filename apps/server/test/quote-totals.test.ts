@@ -29,10 +29,16 @@ describe('computeQuoteTotals', () => {
 })
 
 describe('computeValidUntil', () => {
-  it('da 30 días desde quotedAt', () => {
+  it('da 30 días corridos desde quotedAt en el calendario de Chile', () => {
     expect(QUOTE_VALIDITY_DAYS).toBe(30)
-    const quotedAt = new Date('2026-10-08T15:00:00Z')
-    expect(computeValidUntil(quotedAt).toISOString()).toBe('2026-11-07T15:00:00.000Z')
+    expect(computeValidUntil(new Date('2026-10-08T15:00:00Z')).toISOString()).toBe('2026-11-07T12:00:00.000Z')
+  })
+
+  it('no se corre un día con el cambio de horario ni cerca de medianoche', () => {
+    // 20 ago 2026 23:30 en Chile (UTC-4); el 6 sep empieza el horario de verano
+    expect(computeValidUntil(new Date('2026-08-21T03:30:00Z')).toISOString()).toBe('2026-09-19T12:00:00.000Z')
+    // 14 mar 2025 00:15 en Chile (UTC-3); el 6 abr termina el horario de verano
+    expect(computeValidUntil(new Date('2025-03-14T03:15:00Z')).toISOString()).toBe('2025-04-13T12:00:00.000Z')
   })
 })
 

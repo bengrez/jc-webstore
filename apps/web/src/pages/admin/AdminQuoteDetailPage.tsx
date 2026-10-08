@@ -95,7 +95,8 @@ const AdminQuoteDetailPage = () => {
   const [sending, setSending] = useState(false)
   const [sendStatus, setSendStatus] = useState<null | { variant: 'success' | 'error'; message: string }>(null)
 
-  const loadQuote = useCallback(async () => {
+  // `refresh`: recarga tras enviar; si falla se conserva la vista actual en vez de taparla con un error
+  const loadQuote = useCallback(async (refresh = false) => {
     if (!id) return
     try {
       const data = await adminFetch<QuoteDetail>(`/api/admin/quotes/${id}`)
@@ -108,7 +109,7 @@ const AdminQuoteDetailPage = () => {
       setQuotedPrices(initialPrices)
       setAdminMessage(data.adminMessage ?? '')
     } catch {
-      setError('No fue posible cargar la cotización.')
+      if (!refresh) setError('No fue posible cargar la cotización.')
     }
   }, [id])
 
@@ -175,7 +176,7 @@ const AdminQuoteDetailPage = () => {
     setSending(true)
     setSendStatus(null)
     try {
-      const result = await adminFetch<{ fileName: string; totalAmount: number }>(
+      const result = await adminFetch<{ fileName: string; totalAmount: number; warning?: string }>(
         `/api/admin/quotes/${quote.id}/send-quote`,
         {
           method: 'POST',
@@ -188,10 +189,10 @@ const AdminQuoteDetailPage = () => {
           },
         }
       )
-      await loadQuote()
+      await loadQuote(true)
       setSendStatus({
         variant: 'success',
-        message: `Enviada a ${quote.customerEmail} con ${result.fileName} adjunto (total ${result.totalAmount.toLocaleString('es-CL')} con IVA).`,
+        message: `Enviada a ${quote.customerEmail} con ${result.fileName} adjunto (total ${result.totalAmount.toLocaleString('es-CL')} con IVA).${result.warning ? ` ${result.warning}` : ''}`,
       })
     } catch (err) {
       setSendStatus({
@@ -457,7 +458,7 @@ const AdminQuoteDetailPage = () => {
             onChange={(event) => setNoteBody(event.target.value)}
             required
           />
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 400 }}>
+          <label className="admin-form__checkbox">
             <input
               type="checkbox"
               checked={notePublic}

@@ -9,6 +9,19 @@ export const getQuotesStorageDir = () => path.resolve(process.cwd(), env.QUOTES_
 export const revisionFileName = (folio: string, rev: number) =>
   rev === 0 ? `${folio}.pdf` : `${folio}-rev${rev}.pdf`
 
+// Primera revisión >= `from` cuyo archivo no existe todavía.
+export const nextFreeRev = async (folio: string, from: number) => {
+  let rev = from
+  while (await fileExists(path.join(getQuotesStorageDir(), revisionFileName(folio, rev)))) rev++
+  return rev
+}
+
+const fileExists = (fullPath: string) =>
+  fs.access(fullPath).then(
+    () => true,
+    () => false
+  )
+
 export const sha256Hex = (buffer: Buffer) => crypto.createHash('sha256').update(buffer).digest('hex')
 
 export class RevisionFileExistsError extends Error {

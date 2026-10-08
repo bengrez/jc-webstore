@@ -187,12 +187,15 @@ const drawDocument = (doc: Doc, quote: QuoteDocument, options: RenderQuotePdfOpt
   // ── Tabla de ítems ──
   y = doc.y + 16
   y = drawTableHeader(doc, y)
+  let pageTableTop = y
   quote.lines.forEach((line, index) => {
     const height = measureRow(doc, line)
-    if (y + height > pageBottom()) {
+    // Si la fila no cabe ni en una página nueva, se dibuja donde está en vez de dejar una vacía
+    if (y + height > pageBottom() && y > pageTableTop) {
       doc.addPage()
       y = drawContinuationHeader(doc, quote)
       y = drawTableHeader(doc, y)
+      pageTableTop = y
     }
     drawRow(doc, line, y, height, index)
     y += height
@@ -278,7 +281,10 @@ const drawTableHeader = (doc: Doc, y: number) => {
   return y + h
 }
 
-const configText = (entry: DocumentConfigEntry) => `${entry.label}: ${describeConfigEntry(entry)}`
+const truncate = (text: string, max: number) => (text.length > max ? `${text.slice(0, max - 1)}…` : text)
+// Acotado para que una sola fila nunca supere una página
+const configText = (entry: DocumentConfigEntry) =>
+  `${truncate(entry.label, 60)}: ${truncate(describeConfigEntry(entry), 240)}`
 const descTextWidth = COLS.desc.w - CELL_PAD * 2
 
 const measureRow = (doc: Doc, line: QuoteDocumentLine) => {
