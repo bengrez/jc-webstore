@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Product, ProductOption } from '../../data/types'
 import type { CartItemConfig } from '../../context/CartContext'
+import { costura } from '../../design/costura'
 import { formatCurrency } from '../../utils/format'
 import '../../design/pages/configurator.css'
 
@@ -10,6 +11,8 @@ type Props = {
   onAdd: (product: Product, quantity: number, configuration: CartItemConfig[]) => void
   /** Vista previa desde el admin: se ve igual, pero no sube archivos ni agrega al carrito. */
   preview?: boolean
+  /** Edición desde el carrito: carga las opciones y la cantidad del ítem y el botón guarda en vez de agregar. */
+  initial?: { quantity: number; configuration: CartItemConfig[] }
 }
 
 const parseMinOrder = (minOrder: string): number => {
@@ -189,13 +192,15 @@ const OptionField = ({
   return null
 }
 
-const ProductConfiguratorModal = ({ product, onClose, onAdd, preview = false }: Props) => {
+const ProductConfiguratorModal = ({ product, onClose, onAdd, preview = false, initial }: Props) => {
   const minQty = parseMinOrder(product.minOrder)
-  const [quantity, setQuantity] = useState(minQty)
+  const [quantity, setQuantity] = useState(initial ? Math.max(minQty, initial.quantity) : minQty)
   // Lo que el cliente está escribiendo; se ajusta al mínimo al salir del campo, no en cada tecla
   const [quantityDraft, setQuantityDraft] = useState<string | null>(null)
   const [activeImageIndex, setActiveImageIndex] = useState(0)
-  const [selections, setSelections] = useState<Record<number, string>>({})
+  const [selections, setSelections] = useState<Record<number, string>>(() =>
+    Object.fromEntries((initial?.configuration ?? []).map((entry) => [entry.optionId, entry.value]))
+  )
   const [uploading, setUploading] = useState<Record<number, boolean>>({})
   const [uploadErrors, setUploadErrors] = useState<Record<number, string>>({})
   const [validationErrors, setValidationErrors] = useState<Record<number, string>>({})
@@ -243,6 +248,16 @@ const ProductConfiguratorModal = ({ product, onClose, onAdd, preview = false }: 
     const opener = document.activeElement as HTMLElement | null
     dialogRef.current?.focus()
     return () => opener?.focus?.()
+  }, [])
+
+  // La cinta de costura del header sigue el scroll del panel mientras el configurador está abierto
+  useEffect(() => {
+    costura.refresh()
+    const later = window.setTimeout(costura.refresh, 400) // tras cargar fuentes e imágenes
+    return () => {
+      window.clearTimeout(later)
+      costura.refresh()
+    }
   }, [])
 
   // Lock body scroll
@@ -515,7 +530,7 @@ const ProductConfiguratorModal = ({ product, onClose, onAdd, preview = false }: 
             disabled={preview}
             title={preview ? 'Vista previa: el botón funciona en el sitio publicado' : undefined}
           >
-            Agregar al carrito
+            {initial ? 'Guardar cambios' : 'Agregar al carrito'}
           </button>
         </div>
       </div>

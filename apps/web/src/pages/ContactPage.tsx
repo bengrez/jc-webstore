@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import LegalConsent from '../components/legal/LegalConsent'
+import { CONTACT_EMAIL, HOURS, LOCATION, RESPONSE_TIME, WHATSAPP } from '../data/content'
 import { LEGAL_VERSION } from '../data/legal'
 import { Link } from 'react-router-dom'
 import '../design/pages/contact.css'
@@ -14,23 +15,55 @@ const initialFormState = {
   website: '',
 }
 
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const phonePattern = /^\+?\d[\d .-]{7,}$/
+
+type FieldErrors = Partial<Record<'name' | 'email' | 'phone' | 'message' | 'legal', string>>
+
+const FieldError = ({ id, message }: { id: string; message?: string }) =>
+  message ? (
+    <p id={id} className="err" role="alert">
+      <svg className="ic" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M12 4l9 16H3L12 4z" />
+        <path d="M12 10v4M12 17v.01" />
+      </svg>
+      <span>{message}</span>
+    </p>
+  ) : null
+
 const ContactPage = () => {
   const [form, setForm] = useState(initialFormState)
   const [submitted, setSubmitted] = useState(false)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [legalAccepted, setLegalAccepted] = useState(false)
-  const [legalError, setLegalError] = useState<string | null>(null)
+  const [errors, setErrors] = useState<FieldErrors>({})
 
   const handleInputChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = event.target
     setForm((prev) => ({ ...prev, [name]: value }))
+    setErrors((prev) => (name in prev ? { ...prev, [name]: undefined } : prev))
+  }
+
+  const validate = () => {
+    const next: FieldErrors = {}
+    if (!form.name.trim()) next.name = 'El nombre es obligatorio.'
+    if (!form.email.trim()) next.email = 'El correo electrónico es obligatorio.'
+    else if (!emailPattern.test(form.email.trim())) next.email = 'Ingresa un correo electrónico válido.'
+    if (form.phone.trim() && !phonePattern.test(form.phone.trim())) next.phone = 'Ingresa un teléfono válido.'
+    if (!form.message.trim()) next.message = 'Cuéntanos qué necesitas.'
+    if (!legalAccepted) next.legal = 'Debes aceptar el aviso de privacidad y los términos para enviar el mensaje.'
+    return next
   }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!legalAccepted) {
-      setLegalError('Debes aceptar el aviso de privacidad y los términos para enviar el mensaje.')
+    const found = validate()
+    setErrors(found)
+    const first = (['name', 'email', 'phone', 'message', 'legal'] as const).find((key) => found[key])
+    if (first) {
+      const target = first === 'legal' ? 'contact-legal' : first
+      window.setTimeout(() => document.getElementById(target)?.focus(), 0)
       return
     }
     setSending(true)
@@ -60,7 +93,7 @@ const ContactPage = () => {
     } catch (err) {
       setError(
         err instanceof Error
-          ? `${err.message} Si urge, escríbenos directamente a contacto@confeccionesjuany.cl.`
+          ? `${err.message} Si urge, escríbenos directamente a ${CONTACT_EMAIL}.`
           : 'No pudimos enviar tu mensaje.'
       )
     } finally {
@@ -80,7 +113,7 @@ const ContactPage = () => {
       <div className="wrap" style={{ paddingTop: 'clamp(28px,4vw,48px)' }}>
         <h1 className="t-h1">Contacto</h1>
         <p className="t-lead" style={{ marginTop: 12, maxWidth: '44em' }}>
-          Completa el formulario y respondemos en menos de 24 horas hábiles.
+          Completa el formulario y respondemos en menos de {RESPONSE_TIME}.
         </p>
       </div>
 
@@ -112,22 +145,28 @@ const ContactPage = () => {
                     <span>{error}</span>
                   </div>
                 )}
-                <form className="form-grid" onSubmit={handleSubmit}>
+                <form className="form-grid" noValidate onSubmit={handleSubmit}>
                   <div className="fgrid2">
                     <div className="field">
                       <label htmlFor="name"><span>Nombre</span><span className="lbl-tag">Obligatorio</span></label>
-                      <input id="name" name="name" className="input" type="text" autoComplete="name"
-                        value={form.name} onChange={handleInputChange} required />
+                      <input id="name" name="name" className={`input${errors.name ? ' is-err' : ''}`} type="text" autoComplete="name"
+                        value={form.name} onChange={handleInputChange} required
+                        aria-invalid={errors.name ? true : undefined} aria-describedby={errors.name ? 'name-error' : undefined} />
+                      <FieldError id="name-error" message={errors.name} />
                     </div>
                     <div className="field">
                       <label htmlFor="email"><span>Email</span><span className="lbl-tag">Obligatorio</span></label>
-                      <input id="email" name="email" className="input" type="email" autoComplete="email"
-                        inputMode="email" value={form.email} onChange={handleInputChange} required />
+                      <input id="email" name="email" className={`input${errors.email ? ' is-err' : ''}`} type="email" autoComplete="email"
+                        inputMode="email" value={form.email} onChange={handleInputChange} required
+                        aria-invalid={errors.email ? true : undefined} aria-describedby={errors.email ? 'email-error' : undefined} />
+                      <FieldError id="email-error" message={errors.email} />
                     </div>
                     <div className="field">
                       <label htmlFor="phone"><span>Teléfono</span><span className="lbl-tag">Opcional</span></label>
-                      <input id="phone" name="phone" className="input" type="tel" autoComplete="tel"
-                        inputMode="tel" placeholder="+56 9 ..." value={form.phone} onChange={handleInputChange} />
+                      <input id="phone" name="phone" className={`input${errors.phone ? ' is-err' : ''}`} type="tel" autoComplete="tel"
+                        inputMode="tel" placeholder="+56 9 ..." value={form.phone} onChange={handleInputChange}
+                        aria-invalid={errors.phone ? true : undefined} aria-describedby={errors.phone ? 'phone-error' : undefined} />
+                      <FieldError id="phone-error" message={errors.phone} />
                     </div>
                     <div className="field">
                       <label htmlFor="company"><span>Empresa</span><span className="lbl-tag">Opcional</span></label>
@@ -137,9 +176,11 @@ const ContactPage = () => {
                   </div>
                   <div className="field">
                     <label htmlFor="message"><span>Mensaje</span><span className="lbl-tag">Obligatorio</span></label>
-                    <textarea id="message" name="message" className="input" rows={5}
+                    <textarea id="message" name="message" className={`input${errors.message ? ' is-err' : ''}`} rows={5}
                       placeholder="Cuéntanos qué necesitas, para cuándo y cuántas unidades."
-                      value={form.message} onChange={handleInputChange} required />
+                      value={form.message} onChange={handleInputChange} required
+                      aria-invalid={errors.message ? true : undefined} aria-describedby={errors.message ? 'message-error' : undefined} />
+                    <FieldError id="message-error" message={errors.message} />
                   </div>
 
                   {/* Honeypot anti-spam: oculto para personas, los bots suelen completarlo. */}
@@ -154,9 +195,9 @@ const ContactPage = () => {
                     checked={legalAccepted}
                     onChange={(checked) => {
                       setLegalAccepted(checked)
-                      if (checked) setLegalError(null)
+                      if (checked) setErrors((prev) => ({ ...prev, legal: undefined }))
                     }}
-                    error={legalError}
+                    error={errors.legal}
                   />
 
                   <div>
@@ -180,8 +221,8 @@ const ContactPage = () => {
                   </span>
                   <div>
                     <h2>Contacto directo</h2>
-                    <p><a href="mailto:contacto@confeccionesjuany.cl">contacto@confeccionesjuany.cl</a></p>
-                    <p>Santiago, Chile</p>
+                    <p><a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></p>
+                    <p>{LOCATION}</p>
                   </div>
                 </div>
                 <div className="cinfo-item">
@@ -192,7 +233,7 @@ const ContactPage = () => {
                   </span>
                   <div>
                     <h2>Horario</h2>
-                    <p>Lunes a viernes, 09:00 a 18:30</p>
+                    <p>{HOURS}</p>
                   </div>
                 </div>
                 <div className="cinfo-item">
@@ -203,7 +244,7 @@ const ContactPage = () => {
                   </span>
                   <div>
                     <h2>WhatsApp y teléfono</h2>
-                    <p><span className="ph">por confirmar</span></p>
+                    <p>{WHATSAPP ? <a href={`https://wa.me/${WHATSAPP}`}>{WHATSAPP}</a> : <span className="ph">por confirmar</span>}</p>
                   </div>
                 </div>
               </div>

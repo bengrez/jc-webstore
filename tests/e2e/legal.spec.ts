@@ -24,6 +24,24 @@ test('el footer enlaza los borradores legales y los términos muestran la valide
   await expect(page.getByText('[POR DEFINIR CON LA CLIENTA: porcentaje del anticipo', { exact: false })).toBeVisible();
 });
 
+test('el formulario de contacto muestra un error por campo y enfoca el primero', async ({ page }) => {
+  await page.goto('/contacto');
+  await page.getByRole('button', { name: 'Enviar mensaje' }).click();
+  const name = page.getByLabel('Nombre');
+  await expect(name).toBeFocused();
+  await expect(name).toHaveAttribute('aria-invalid', 'true');
+  await expect(name).toHaveAttribute('aria-describedby', 'name-error');
+  await expect(page.locator('#name-error')).toHaveText('El nombre es obligatorio.');
+  await expect(page.locator('#email-error')).toHaveText('El correo electrónico es obligatorio.');
+  await expect(page.locator('#message-error')).toBeVisible();
+  await name.fill('Ana');
+  await expect(page.locator('#name-error')).toHaveCount(0);
+  await page.getByLabel('Email').fill('no-es-correo');
+  await page.getByRole('button', { name: 'Enviar mensaje' }).click();
+  await expect(page.locator('#email-error')).toHaveText('Ingresa un correo electrónico válido.');
+  await expect(page.getByLabel('Email')).toBeFocused();
+});
+
 test('el mensaje de contacto exige aceptar los documentos y el admin ve la aceptación', async ({ page }) => {
   await page.goto('/contacto');
   await page.getByLabel('Nombre').fill('Contacto E2E');
@@ -35,9 +53,12 @@ test('el mensaje de contacto exige aceptar los documentos y el admin ve la acept
   await expect(form.getByRole('link', { name: 'aviso de privacidad' })).toHaveAttribute('target', '_blank');
   await expect(form.getByRole('link', { name: 'términos de la cotización' })).toHaveAttribute('href', '/terminos');
 
-  // Sin marcar la casilla el navegador no envía el formulario
+  // Sin marcar la casilla se muestra el error del campo, con foco en la casilla
   await page.getByRole('button', { name: 'Enviar mensaje' }).click();
-  await expect(consent).toHaveJSProperty('validity.valueMissing', true);
+  await expect(page.getByText('Debes aceptar el aviso de privacidad y los términos para enviar el mensaje.')).toBeVisible();
+  await expect(consent).toBeFocused();
+  await expect(consent).toHaveAttribute('aria-invalid', 'true');
+  await expect(consent).toHaveAttribute('aria-describedby', 'contact-legal-error');
   await expect(page.getByText('Mensaje recibido')).toHaveCount(0);
 
   await consent.check();

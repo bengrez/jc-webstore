@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import ProductCard from '../components/catalog/ProductCard'
+import { MILESTONES, RESPONSE_TIME } from '../data/content'
 import type { Product } from '../data/types'
 import { useThemeMode } from '../context/ThemeContext'
 import type { ThemeMode } from '../context/ThemeContext'
@@ -208,7 +209,7 @@ const HomePage = () => {
                 Estolas, túnicas, birretes, polerones de generación y recuerdos para colegios y
                 universidades.
               </p>
-              <Link className="lnk stretch" to="/catalogo" onClick={() => setMode('graduation')}>
+              <Link className="lnk stretch" to="/catalogo?linea=graduaciones" onClick={() => setMode('graduation')}>
                 Ver graduación{countLabel(gradCount)}
                 <Arrow />
               </Link>
@@ -226,7 +227,7 @@ const HomePage = () => {
               <p className="t-body c-ink2">
                 Poleras, polerones, jockeys, botellas, tazas y kits con el logo de tu empresa.
               </p>
-              <Link className="lnk stretch" to="/catalogo" onClick={() => setMode('corporate')}>
+              <Link className="lnk stretch" to="/catalogo?linea=marketing" onClick={() => setMode('corporate')}>
                 Ver publicitarios{countLabel(mktCount)}
                 <Arrow />
               </Link>
@@ -284,7 +285,7 @@ const HomePage = () => {
             <span className="step-n">3</span>
             <h3>Recibe tu cotización</h3>
             <p>
-              Respondemos dentro de 24 horas hábiles, con personalización y despacho incluidos.
+              Respondemos dentro de {RESPONSE_TIME}, con personalización y despacho incluidos.
             </p>
           </li>
           <li className="step">
@@ -313,27 +314,15 @@ const HomePage = () => {
             </Link>
           </div>
           <ol className="tl">
-            <li>
-              <b>2012</b>
-              <div>
-                <h3>Nace Confecciones Juany Reyes</h3>
-                <p>Juany abre el taller familiar para vestir ceremonias escolares.</p>
-              </div>
-            </li>
-            <li>
-              <b>2016</b>
-              <div>
-                <h3>Sumamos artículos corporativos</h3>
-                <p>Empresas piden regalos y kits corporativos hechos a pedido.</p>
-              </div>
-            </li>
-            <li>
-              <b>2021</b>
-              <div>
-                <h3>Expansión nacional</h3>
-                <p>Despachos a todo Chile con control de calidad en origen.</p>
-              </div>
-            </li>
+            {MILESTONES.map((m) => (
+              <li key={m.year}>
+                <b>{m.year}</b>
+                <div>
+                  <h3>{m.title}</h3>
+                  <p>{m.description}</p>
+                </div>
+              </li>
+            ))}
           </ol>
         </div>
       </section>

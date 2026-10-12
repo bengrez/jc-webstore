@@ -108,6 +108,14 @@ export const costura = (() => {
   let tPrev = 0, tMove = 0, yLast: number | null = null, tgtLast = 0, dir = 1, ud = K.PARK, vel = 0, vs = 0, parked = true, parkU = K.PARK, kmax = 0, spin = 0, gLast: number | null = null;
 
   const scroller = () => {
+    // Con el configurador abierto la página queda fija: la aguja sigue el scroll interno del panel de opciones
+    // (en celular, el cuerpo del diálogo). Si ninguno tiene scroll, la máquina queda en reposo.
+    const dlg = document.querySelector('.dlg');
+    if (dlg) {
+      const cands = [dlg.querySelector('.dlg-cfg'), dlg.querySelector('.dlg-body')] as (HTMLElement | null)[];
+      for (const c of cands) if (c && c.scrollHeight - c.clientHeight >= 24 && /(auto|scroll)/.test(getComputedStyle(c).overflowY)) return c;
+      return (cands[0] ?? root()) as HTMLElement;
+    }
     const r = root();
     if (r.scrollHeight - window.innerHeight >= Math.max(200, r.scrollHeight * 0.12)) return r;
     let a: HTMLElement | null = ov()?.parentElement ?? null;
@@ -173,8 +181,10 @@ export const costura = (() => {
   }
   const kick = () => { if (!raf) raf = requestAnimationFrame(frame); };
   const resize = () => { const e = ov(); if (e) e._L = null; measure(); kick(); };
+  // Al abrir o cerrar el configurador cambia el elemento que se sigue: la aguja salta a la posición del nuevo
+  const refresh = () => { const prev = sc, e = ov(); if (e) e._L = null; measure(); if (sc !== prev) yLast = null; kick(); };
   return {
-    K, pose, measure,
+    K, pose, measure, refresh,
     start() {
       if (on) return; on = true; measure();
       window.addEventListener('scroll', kick, { passive: true, capture: true });

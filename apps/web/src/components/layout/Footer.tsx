@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { CONTACT_EMAIL, HOURS, LOCATION } from '../../data/content'
 import { PRIVACY_PATH, TERMS_PATH } from '../../data/legal'
 
 const Footer = () => {
@@ -27,9 +28,9 @@ const Footer = () => {
         <div>
           <h2 className="ftr-h">Contacto</h2>
           <ul>
-            <li>contacto@confeccionesjuany.cl</li>
-            <li>Santiago, Chile</li>
-            <li>Lunes a viernes, 09:00 a 18:30</li>
+            <li>{CONTACT_EMAIL}</li>
+            <li>{LOCATION}</li>
+            <li>{HOURS}</li>
           </ul>
         </div>
       </div>

@@ -13,6 +13,10 @@ const categories: Array<{ id: ProductCategory; label: string; mode: 'graduation'
   { id: 'marketing', label: 'Publicitarios', mode: 'corporate' },
 ]
 
+// /catalogo muestra todo; /catalogo?linea=graduaciones|marketing filtra por línea
+const parseLine = (value: string | null): ProductCategory | null =>
+  value === 'graduaciones' || value === 'marketing' ? value : null
+
 type Sort = 'feat' | 'asc' | 'desc' | 'fast'
 
 const normalize = (text: string) =>
@@ -28,7 +32,7 @@ const leadDays = (leadTime: string) => {
 }
 
 const CatalogPage = () => {
-  const { mode, setMode } = useThemeMode()
+  const { setMode } = useThemeMode()
   const { addItem } = useCart()
   const [searchParams, setSearchParams] = useSearchParams()
   const [products, setProducts] = useState<Product[]>([])
@@ -39,7 +43,7 @@ const CatalogPage = () => {
   const [added, setAdded] = useState<string | null>(null)
   const [configuringProduct, setConfiguringProduct] = useState<Product | null>(null)
 
-  const selectedCategory: ProductCategory = mode === 'graduation' ? 'graduaciones' : 'marketing'
+  const selectedCategory = parseLine(searchParams.get('linea'))
   const productParam = searchParams.get('producto')
 
   useEffect(() => {
@@ -88,13 +92,6 @@ const CatalogPage = () => {
     return () => window.clearTimeout(timeout)
   }, [added])
 
-  useEffect(() => {
-    document.documentElement.dataset.catalogCategory = selectedCategory
-    return () => {
-      delete document.documentElement.dataset.catalogCategory
-    }
-  }, [selectedCategory])
-
   const counts = useMemo(
     () => ({
       graduaciones: products.filter((product) => product.category === 'graduaciones').length,
@@ -108,7 +105,7 @@ const CatalogPage = () => {
   const visible = useMemo(() => {
     const needle = normalize(trimmedQuery)
     const list = products.filter((product) => {
-      if (product.category !== selectedCategory) return false
+      if (selectedCategory && product.category !== selectedCategory) return false
       if (!needle) return true
       const haystack = normalize([product.name, product.description, ...(product.tags ?? [])].join(' '))
       return haystack.includes(needle)
@@ -134,11 +131,19 @@ const CatalogPage = () => {
   }
 
   const categoryLabel = selectedCategory === 'graduaciones' ? 'Graduación' : 'Publicitarios'
+  const where = selectedCategory ? ` en ${categoryLabel}` : ''
+  const selectLine = (line: ProductCategory | null, mode?: 'graduation' | 'corporate') => {
+    const next = new URLSearchParams(searchParams)
+    if (line) next.set('linea', line)
+    else next.delete('linea')
+    setSearchParams(next, { replace: true })
+    if (mode) setMode(mode)
+  }
   const resultText = loading
     ? 'Cargando productos…'
     : trimmedQuery
-      ? `${visible.length} ${visible.length === 1 ? 'resultado' : 'resultados'} para “${trimmedQuery}” en ${categoryLabel}`
-      : `${visible.length} ${visible.length === 1 ? 'producto' : 'productos'} en ${categoryLabel}`
+      ? `${visible.length} ${visible.length === 1 ? 'resultado' : 'resultados'} para “${trimmedQuery}”${where}`
+      : `${visible.length} ${visible.length === 1 ? 'producto' : 'productos'}${where}`
 
   const clearAll = () => {
     setQuery('')
@@ -161,13 +166,17 @@ const CatalogPage = () => {
       >
         <div className="tools">
           <div className="flts flts-line" role="group" aria-label="Filtrar por línea">
+            <button type="button" className="flt" aria-pressed={selectedCategory === null} onClick={() => selectLine(null)}>
+              Todos
+              <span className="flt-n">{loading ? '' : products.length}</span>
+            </button>
             {categories.map((category) => (
               <button
                 key={category.id}
                 type="button"
                 className="flt"
                 aria-pressed={selectedCategory === category.id}
-                onClick={() => setMode(category.mode)}
+                onClick={() => selectLine(category.id, category.mode)}
               >
                 {category.label}
                 <span className="flt-n">{loading ? '' : counts[category.id]}</span>

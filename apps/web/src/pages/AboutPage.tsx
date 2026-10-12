@@ -1,22 +1,5 @@
+import { CONTACT_EMAIL, MILESTONES as milestones } from '../data/content'
 import './about.css'
-
-const milestones = [
-  {
-    year: '2012',
-    title: 'Nace Confecciones Juany Reyes',
-    description: 'Juany abre el taller familiar para vestir ceremonias escolares.',
-  },
-  {
-    year: '2016',
-    title: 'Sumamos artículos corporativos',
-    description: 'Empresas piden regalos y kits corporativos hechos a pedido.',
-  },
-  {
-    year: '2021',
-    title: 'Expansión nacional',
-    description: 'Despachos a todo Chile con control de calidad en origen.',
-  },
-]
 
 const values = [
   {
@@ -76,7 +59,7 @@ const AboutPage = () => {
           <h2 className="t-h2">¿Coordinamos?</h2>
           <p>Escríbenos y preparamos una propuesta breve con tiempos y valores.</p>
         </div>
-        <a className="btn btn-primary" href="mailto:contacto@confeccionesjuany.cl">
+        <a className="btn btn-primary" href={`mailto:${CONTACT_EMAIL}`}>
           Escríbenos
         </a>
       </section>

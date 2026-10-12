@@ -29,6 +29,10 @@ type CartContextValue = {
   addItem: (product: Product, quantity: number, configuration: CartItemConfig[]) => void
   updateQuantity: (cartItemKey: string, quantity: number) => void
   removeItem: (cartItemKey: string) => void
+  /** Vuelve a poner un ítem quitado en su posición original (Deshacer). */
+  restoreItem: (item: CartItem, index: number) => void
+  /** Reemplaza un ítem por otro con nuevas opciones y cantidad; si ya existe esa combinación, suma las cantidades. */
+  replaceItem: (cartItemKey: string, product: Product, quantity: number, configuration: CartItemConfig[]) => void
   clearCart: () => void
 }
 
@@ -110,6 +114,36 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     setItems((prev) => prev.filter((item) => item.cartItemKey !== cartItemKey))
   }, [])
 
+  const restoreItem = useCallback((item: CartItem, index: number) => {
+    setItems((prev) => {
+      if (prev.some((existing) => existing.cartItemKey === item.cartItemKey)) return prev
+      const next = [...prev]
+      next.splice(Math.min(index, next.length), 0, item)
+      return next
+    })
+  }, [])
+
+  const replaceItem = useCallback(
+    (cartItemKey: string, product: Product, quantity: number, configuration: CartItemConfig[]) => {
+      const newKey = makeCartItemKey(product.id, configuration)
+      setItems((prev) => {
+        const index = prev.findIndex((item) => item.cartItemKey === cartItemKey)
+        if (index === -1) return prev
+        const rest = prev.filter((_, i) => i !== index)
+        const merged = rest.find((item) => item.cartItemKey === newKey)
+        if (merged) {
+          return rest.map((item) =>
+            item.cartItemKey === newKey ? { ...item, quantity: item.quantity + quantity } : item
+          )
+        }
+        const next = [...rest]
+        next.splice(index, 0, { ...product, quantity, cartItemKey: newKey, configuration })
+        return next
+      })
+    },
+    []
+  )
+
   const clearCart = useCallback(() => {
     setItems([])
   }, [])
@@ -126,9 +160,11 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       addItem,
       updateQuantity,
       removeItem,
+      restoreItem,
+      replaceItem,
       clearCart,
     }),
-    [items, total, addItem, updateQuantity, removeItem, clearCart]
+    [items, total, addItem, updateQuantity, removeItem, restoreItem, replaceItem, clearCart]
   )
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>

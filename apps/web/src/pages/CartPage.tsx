@@ -1,8 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import LegalConsent from '../components/legal/LegalConsent'
+import ProductConfiguratorModal from '../components/catalog/ProductConfiguratorModal'
 import { useCart } from '../context/CartContext'
+import type { CartItem } from '../context/CartContext'
+import { PAYMENT_NOTE, RESPONSE_TIME } from '../data/content'
 import { LEGAL_VERSION } from '../data/legal'
 import { formatCurrency } from '../utils/format'
 import '../design/pages/cart.css'
@@ -30,7 +33,7 @@ const FieldError = ({ id, message }: { id: string; message?: string }) =>
   ) : null
 
 const CartPage = () => {
-  const { items, total, updateQuantity, removeItem, clearCart } = useCart()
+  const { items, total, updateQuantity, removeItem, restoreItem, replaceItem, clearCart } = useCart()
   const [form, setForm] = useState(initialFormState)
   const [submitted, setSubmitted] = useState<null | { folio: string; token: string; emailSent: boolean }>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -40,7 +43,51 @@ const CartPage = () => {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [legalAccepted, setLegalAccepted] = useState(false)
 
+  const [removed, setRemoved] = useState<null | { item: CartItem; index: number }>(null)
+  const [editing, setEditing] = useState<CartItem | null>(null)
+
   const hasItems = items.length > 0
+
+  // El aviso «Deshacer» dura 10 segundos
+  useEffect(() => {
+    if (!removed) return
+    const timeout = window.setTimeout(() => setRemoved(null), 10000)
+    return () => window.clearTimeout(timeout)
+  }, [removed])
+
+  const handleRemove = (item: CartItem) => {
+    setRemoved({ item, index: items.findIndex((entry) => entry.cartItemKey === item.cartItemKey) })
+    removeItem(item.cartItemKey)
+  }
+
+  const handleUndo = () => {
+    if (!removed) return
+    restoreItem(removed.item, removed.index)
+    setRemoved(null)
+  }
+
+  const undoToast = removed && (
+    <div className="toast" role="status">
+      <span>{removed.item.name} se quitó del carrito</span>
+      <button type="button" className="toast-act" onClick={handleUndo}>
+        Deshacer
+      </button>
+      <button type="button" className="icon-btn" aria-label="Cerrar aviso" onClick={() => setRemoved(null)}>
+        <svg className="ic" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M6 6l12 12M18 6L6 18" />
+        </svg>
+      </button>
+    </div>
+  )
+
+  const editModal = editing && (
+    <ProductConfiguratorModal
+      product={editing}
+      initial={{ quantity: editing.quantity, configuration: editing.configuration }}
+      onClose={() => setEditing(null)}
+      onAdd={(product, quantity, configuration) => replaceItem(editing.cartItemKey, product, quantity, configuration)}
+    />
+  )
 
   const lines = useMemo(() => {
     const sum = (category: string) =>
@@ -188,7 +235,7 @@ const CartPage = () => {
           </span>
           <h1 className="t-h1">Solicitud enviada</h1>
           <p className="t-lead">
-            Gracias por confiar en Confecciones Juany Reyes. Responderemos dentro de 24 horas hábiles con tu
+            Gracias por confiar en Confecciones Juany Reyes. Responderemos dentro de {RESPONSE_TIME} con tu
             cotización final.
           </p>
           <div className="folio" style={{ width: '100%' }}>
@@ -244,6 +291,7 @@ const CartPage = () => {
             </Link>
           </div>
         </div>
+        {undoToast}
       </>
     )
   }
@@ -301,9 +349,20 @@ const CartPage = () => {
                     <div className="ln-act">
                       <button
                         type="button"
+                        className="btn-text"
+                        aria-label={`Editar opciones de ${item.name}`}
+                        onClick={() => setEditing(item)}
+                      >
+                        <svg className="ic" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                          <path d="M4 20l4-1 11-11-3-3L5 16l-1 4zM14 7l3 3" />
+                        </svg>
+                        Editar opciones
+                      </button>
+                      <button
+                        type="button"
                         className="btn-text is-danger"
                         aria-label={`Quitar ${item.name} del carrito`}
-                        onClick={() => removeItem(item.cartItemKey)}
+                        onClick={() => handleRemove(item)}
                       >
                         <svg className="ic" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                           <path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a1.5 1.5 0 0 0 1.5 1.4h7a1.5 1.5 0 0 0 1.5-1.4l1-12M9 7V4.5h6V7" />
@@ -402,7 +461,7 @@ const CartPage = () => {
                 {submitLabel}
               </button>
               <p className="t-cap c-muted" style={{ textAlign: 'center' }}>
-                Enviar no implica pago. Respondemos en 24 horas hábiles.
+                Enviar no implica pago. Respondemos en {RESPONSE_TIME}.
               </p>
             </div>
             <ul className="policy" style={{ paddingTop: 16, borderTop: '1px solid var(--linea)', marginTop: 18 }}>
@@ -427,7 +486,7 @@ const CartPage = () => {
                   <path d="M6 3.5h12v17l-3-2-3 2-3-2-3 2v-17z" />
                   <path d="M9 8.5h6M9 12h6" />
                 </svg>
-                <span>Pagos contra factura una vez aprobada la propuesta.</span>
+                <span>{PAYMENT_NOTE}</span>
               </li>
             </ul>
           </aside>
@@ -561,6 +620,8 @@ const CartPage = () => {
           {submitLabel}
         </button>
       </div>
+      {undoToast}
+      {editModal}
     </>
   )
 }

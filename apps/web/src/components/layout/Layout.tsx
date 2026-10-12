@@ -4,11 +4,14 @@ import Footer from './Footer'
 import Header from './Header'
 
 const Layout = () => {
-  const { pathname } = useLocation()
+  const { pathname, hash } = useLocation()
 
   useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
-  }, [pathname])
+    // Con ancla (/#taller) baja a esa sección; sin ancla vuelve arriba
+    const target = hash ? document.getElementById(decodeURIComponent(hash.slice(1))) : null
+    if (target) target.scrollIntoView({ block: 'start', behavior: 'auto' })
+    else window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  }, [pathname, hash])
 
   return (
     <div className="site">
