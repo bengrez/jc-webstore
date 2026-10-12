@@ -285,7 +285,7 @@ const CartPage = () => {
                             {entry.type === 'COLOR' ? (
                               <>
                                 <span className="ln-sw" style={{ background: entry.value }} />
-                                <span>{entry.value}</span>
+                                <span>{item.options.find((o) => o.id === entry.optionId)?.choices.find((c) => c.value === entry.value)?.label ?? entry.value}</span>
                               </>
                             ) : entry.type === 'FILE' ? (
                               <a href={entry.value} target="_blank" rel="noopener noreferrer" className="lnk">
