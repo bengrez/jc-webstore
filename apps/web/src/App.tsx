@@ -5,7 +5,6 @@ import CartPage from './pages/CartPage'
 import CatalogPage from './pages/CatalogPage'
 import ContactPage from './pages/ContactPage'
 import HomePage from './pages/HomePage'
-import ModeLandingPage from './pages/ModeLandingPage'
 import QuotePortalPage from './pages/QuotePortalPage'
 import PrivacyPage from './pages/legal/PrivacyPage'
 import TermsPage from './pages/legal/TermsPage'
@@ -27,8 +26,8 @@ const App = () => {
         <Route path="quotes/:id" element={<AdminQuoteDetailPage />} />
         <Route path="messages" element={<AdminMessagesPage />} />
       </Route>
-      <Route index element={<ModeLandingPage />} />
       <Route element={<Layout />}>
+        <Route index element={<HomePage />} />
         <Route path="inicio" element={<HomePage />} />
         <Route path="catalogo" element={<CatalogPage />} />
         <Route path="sobre-nosotros" element={<AboutPage />} />

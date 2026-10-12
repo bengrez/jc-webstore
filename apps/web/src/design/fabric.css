@@ -1,0 +1,43 @@
+/* Tela y costura: puntadas (solo CSS), franjas azules con borde dentado y texturas de fondo. */
+/* ── Costura: puntadas con extremos redondeados (solo CSS) ──
+   Un solo recurso para todo el sistema: grosor --t, largo de puntada --d, paso --p. */
+.stitch,.steps::before,.sum-total::before,.band::after,.ftr::after,.hdr::after{
+  --t:3px;--d:9px;--p:14px;--c:var(--hilo);
+  content:"";display:block;height:var(--t);background:var(--c);
+  -webkit-mask:
+    radial-gradient(circle at calc(var(--t)/2) 50%,#000 calc(var(--t)/2 - .45px),transparent calc(var(--t)/2)) 0 0/var(--p) 100% repeat-x,
+    radial-gradient(circle at calc(var(--d) - var(--t)/2) 50%,#000 calc(var(--t)/2 - .45px),transparent calc(var(--t)/2)) 0 0/var(--p) 100% repeat-x,
+    linear-gradient(90deg,transparent calc(var(--t)/2),#000 calc(var(--t)/2),#000 calc(var(--d) - var(--t)/2),transparent calc(var(--d) - var(--t)/2)) 0 0/var(--p) 100% repeat-x;
+  mask:
+    radial-gradient(circle at calc(var(--t)/2) 50%,#000 calc(var(--t)/2 - .45px),transparent calc(var(--t)/2)) 0 0/var(--p) 100% repeat-x,
+    radial-gradient(circle at calc(var(--d) - var(--t)/2) 50%,#000 calc(var(--t)/2 - .45px),transparent calc(var(--t)/2)) 0 0/var(--p) 100% repeat-x,
+    linear-gradient(90deg,transparent calc(var(--t)/2),#000 calc(var(--t)/2),#000 calc(var(--d) - var(--t)/2),transparent calc(var(--d) - var(--t)/2)) 0 0/var(--p) 100% repeat-x;
+}
+.stitch{margin:0;border:0}
+.stitch-v{--t:3px;--d:9px;--p:14px;--c:var(--hilo);display:block;width:var(--t);background:var(--c);
+  -webkit-mask:
+    radial-gradient(circle at 50% calc(var(--t)/2),#000 calc(var(--t)/2 - .45px),transparent calc(var(--t)/2)) 0 0/100% var(--p) repeat-y,
+    radial-gradient(circle at 50% calc(var(--d) - var(--t)/2),#000 calc(var(--t)/2 - .45px),transparent calc(var(--t)/2)) 0 0/100% var(--p) repeat-y,
+    linear-gradient(180deg,transparent calc(var(--t)/2),#000 calc(var(--t)/2),#000 calc(var(--d) - var(--t)/2),transparent calc(var(--d) - var(--t)/2)) 0 0/100% var(--p) repeat-y;
+  mask:
+    radial-gradient(circle at 50% calc(var(--t)/2),#000 calc(var(--t)/2 - .45px),transparent calc(var(--t)/2)) 0 0/100% var(--p) repeat-y,
+    radial-gradient(circle at 50% calc(var(--d) - var(--t)/2),#000 calc(var(--t)/2 - .45px),transparent calc(var(--t)/2)) 0 0/100% var(--p) repeat-y,
+    linear-gradient(180deg,transparent calc(var(--t)/2),#000 calc(var(--t)/2),#000 calc(var(--d) - var(--t)/2),transparent calc(var(--d) - var(--t)/2)) 0 0/100% var(--p) repeat-y}
+
+/* ── Tela: franjas azules con borde dentado y dobladillo cosido ── */
+.band,.ftr,.tela-azul{position:relative;background-color:var(--azul);color:#fff;
+  background-image:var(--tx-gab),linear-gradient(180deg,transparent 0,rgba(2,12,36,.20) 100%);background-size:240px 240px,100% 100%}
+.band::before,.ftr::before{content:"";position:absolute;left:0;right:0;top:-10px;height:10px;
+  background:var(--tx-gab) 0 10px/240px 240px,var(--azul);
+  -webkit-mask:conic-gradient(from 135deg at 50% 0,#000 90deg,transparent 0) 0 0/20px 10px repeat-x;
+  mask:conic-gradient(from 135deg at 50% 0,#000 90deg,transparent 0) 0 0/20px 10px repeat-x}
+.band::after,.ftr::after{--t:2.5px;--d:8px;--p:13px;--c:rgba(255,255,255,.55);position:absolute;left:0;right:0;top:20px;pointer-events:none}
+
+/* ── Texturas: la tela es el material de fondo, nunca un adorno sobre el texto ──
+   Lienzo en la página y en las superficies claras; gabardina (sarga) en las franjas azules. */
+.cg-side.panel,.empty,.cta-strip,.drop,.folio,.note,.tx-tela{background-image:var(--tx-lienzo);background-size:240px 240px}
+.tx-lienzo{background:var(--blanco) var(--tx-lienzo) 0 0/240px 240px}
+.tx-tela{background-color:var(--tela)}
+.tx-gab{background-color:var(--azul);background-image:var(--tx-gab);background-size:240px 240px}
+.tx-gabn{background-color:var(--azuln);background-image:var(--tx-gab);background-size:240px 240px}
+

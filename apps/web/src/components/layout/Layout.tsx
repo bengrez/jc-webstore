@@ -2,8 +2,6 @@ import { useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import Footer from './Footer'
 import Header from './Header'
-import FloatingContactButton from '../shared/FloatingContactButton'
-import './layout.css'
 
 const Layout = () => {
   const { pathname } = useLocation()
@@ -13,13 +11,15 @@ const Layout = () => {
   }, [pathname])
 
   return (
-    <div className="layout">
+    <div className="site">
+      <a className="skip" href="#main">
+        Saltar al contenido
+      </a>
       <Header />
-      <main className="layout__main">
+      <main id="main">
         <Outlet />
       </main>
       <Footer />
-      <FloatingContactButton />
     </div>
   )
 }

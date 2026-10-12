@@ -1,0 +1,5 @@
+/* Fuentes servidas desde nuestro dominio (nada de CDN: la CSP sólo deja 'self'). */
+@import '@fontsource-variable/bricolage-grotesque/wdth.css';
+@import '@fontsource/atkinson-hyperlegible-next/400.css';
+@import '@fontsource/atkinson-hyperlegible-next/700.css';
+@import '@fontsource/cinzel/700.css';

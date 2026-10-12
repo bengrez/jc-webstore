@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { CartProvider } from './context/CartContext.tsx'
 import { ThemeProvider } from './context/ThemeContext.tsx'
+import './design/fonts.css'
+import './design/index.css'
 import './styles/global.css'
 import App from './App.tsx'
 

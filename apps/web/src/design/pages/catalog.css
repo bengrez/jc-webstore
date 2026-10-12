@@ -1,0 +1,24 @@
+/* Pantalla: catalog (secciones del lienzo v6). */
+/* ── Catálogo: barra de herramientas ── */
+.tools{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.tools-r{display:flex;gap:12px;flex-wrap:wrap}
+.tools-r .search{width:340px}
+.tools-r .sel{width:220px}
+@media (max-width:767px){
+  .tools{flex-direction:column;align-items:stretch;gap:16px}
+  .tools-r{flex-wrap:nowrap}
+  .tools-r .search{flex:1;min-width:0;width:auto}
+  .tools-r .sel{width:150px;flex:none}
+  .flts{gap:0;width:100%}
+  .flt{flex:1;flex-direction:column;justify-content:center;gap:2px;margin:0;padding:6px 2px;font-size:16px;min-height:56px}
+  .flts-line .flt{margin-bottom:-1px}
+}
+
+/* ── Catálogo: resultados ── */
+.resbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:24px 0 20px;min-height:32px}
+.empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;padding:64px 20px;border:1.5px dashed var(--campo);border-radius:8px;background:var(--tela)}
+.empty .ic-big{color:var(--azul)}
+.more{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:40px}
+.cta-strip{display:flex;gap:16px 32px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:28px 32px;border-radius:8px;background:var(--tela);border:1px solid var(--linea)}
+@media (max-width:767px){.cta-strip{padding:20px}}
+

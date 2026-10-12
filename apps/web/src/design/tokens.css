@@ -1,0 +1,78 @@
+/* Tokens del diseño v6 «banda de tela y máquina de pespunte» (lienzo de Claude Design, Fundamentos 1 y 2).
+   Única fuente de colores, tipografía y texturas. Las pantallas y los componentes sólo leen estas variables. */
+:root {
+  /* Superficies */
+  --blanco: #FFFFFF;
+  --tela: #F1F5FB;          /* paneles, resumen, franjas suaves */
+  --tiza: #E3EAF6;          /* fondos de ícono, chips, hover */
+  --linea: #D3DBE8;         /* divisores y bordes de tarjeta */
+  --campo: #7B8799;         /* borde de campos (3,6:1) */
+
+  /* Texto */
+  --tinta: #18202D;         /* texto principal y cifras (16,4:1) */
+  --tinta2: #414D62;        /* texto secundario (8,5:1) */
+  --apoyo: #586478;         /* etiquetas y ayudas (6,0:1) */
+
+  /* Marca */
+  --azul: #0B3C88;          /* títulos, enlaces, acción principal, franja de tela */
+  --azulh: #082E6B;         /* hover del botón principal */
+  --azuln: #072A5E;         /* pie de página */
+  --azulc: rgba(11, 60, 136, 0.09);
+  --hilo: #D61F5B;          /* puntadas, cinta, marcador de página */
+  --on-hilo: #FFFFFF;       /* texto sobre el hilo (5,0:1) */
+
+  /* Estados */
+  --ok: #17703F;
+  --warn: #8A5200;
+  --err: #B3261E;
+  --errbg: #FDECEA;
+  --errln: #E5A9A3;
+
+  /* Tipografía: títulos Bricolage Grotesque, texto Atkinson Hyperlegible Next, nombre de marca Cinzel (fuentes locales, ver fonts.css) */
+  --display: 'Bricolage Grotesque Variable', 'Bricolage Grotesque', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --text: 'Atkinson Hyperlegible Next', 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+  --marca: 'Cinzel', 'Trajan Pro', Georgia, 'Times New Roman', serif;
+
+  /* Texturas (se sirven desde /brand, CSP img-src 'self') */
+  --tx-lienzo: url(/brand/tx-lienzo.png);
+  --tx-gab: url(/brand/tx-gabardina.png);
+
+  color-scheme: only light;
+  --container-max: 1280px;
+
+  /* Alias para páginas que aún usan los nombres del tema anterior (portal, legales, admin) */
+  --font-heading: var(--display);
+  --font-body: var(--text);
+  --color-background: var(--blanco);
+  --color-surface: var(--blanco);
+  --color-text: var(--tinta);
+  --color-text-secondary: var(--tinta2);
+  --color-text-muted: var(--apoyo);
+  --color-border: var(--linea);
+  --color-border-subtle: var(--tiza);
+  --color-primary: var(--azul);
+  --color-primary-hover: var(--azulh);
+  --color-primary-soft: var(--azulc);
+  --color-accent: var(--hilo);
+  --color-accent-soft: rgba(214, 31, 91, 0.12);
+  --color-gold: var(--hilo);
+  --color-navy: var(--azul);
+  --color-divider: var(--linea);
+  --color-muted: var(--apoyo);
+  --color-text-soft: var(--tinta2);
+  --color-primary-strong: var(--azulh);
+  --color-dark: var(--azuln);
+  --color-dark-surface: var(--azul);
+  --color-on-dark: #FFFFFF;
+  --color-on-dark-muted: rgba(255, 255, 255, 0.82);
+  --color-border-on-dark: rgba(255, 255, 255, 0.22);
+  --shadow-sm: 0 1px 3px rgba(11, 60, 136, 0.08);
+  --shadow-md: 0 4px 12px rgba(11, 60, 136, 0.10);
+  --shadow-lg: 0 12px 32px rgba(11, 60, 136, 0.18);
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --transition-fast: 120ms ease;
+  --transition-base: 180ms ease;
+  --container-padding: clamp(20px, 4vw, 32px);
+}

@@ -1,0 +1,11 @@
+/* Pantalla: contact (secciones del lienzo v6). */
+/* ── Contacto ── */
+.contact-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:48px;align-items:start}
+.cinfo{display:flex;flex-direction:column;gap:20px}
+.cinfo-item{display:flex;gap:14px;align-items:flex-start}
+.cinfo-item h2{font:700 16px/1.35 var(--display);color:var(--azul)}
+.cinfo-item p{font:400 15px/1.55 var(--text);color:var(--tinta2)}
+.cinfo-item a{color:var(--azul);font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.ph{display:inline-block;padding:0 6px;border:1px dashed var(--apoyo);border-radius:4px;background:var(--tela);color:var(--tinta2);font:700 13px/1.6 var(--text)}
+@media (max-width:900px){.contact-grid{grid-template-columns:1fr;gap:32px}}
+

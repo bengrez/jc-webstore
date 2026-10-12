@@ -1,0 +1,114 @@
+/* Componentes base: botones, íconos, insignias, filtros, campos, cantidad y tarjeta de producto. */
+/* ── Botones: el principal es un parche cosido ── */
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 22px;border-radius:4px;border:1.5px solid transparent;font:700 16px/1.2 var(--text);text-align:center;transition:background-color .15s ease,border-color .15s ease,color .15s ease}
+.btn-primary{background:var(--azul);color:#fff;border-color:var(--azul)}
+.btn-primary::before{content:"";position:absolute;inset:3px;border:1.5px dashed rgba(255,255,255,.62);border-radius:2px;pointer-events:none}
+.btn-primary:hover{background:var(--azulh);border-color:var(--azulh)}
+.btn-secondary{background:#fff;color:var(--azul);border-color:var(--azul)}
+.btn-secondary:hover{background:var(--tiza)}
+.btn-light{background:#fff;color:var(--azul);border-color:#fff}
+.btn-light::before{content:"";position:absolute;inset:3px;border:1.5px dashed rgba(11,60,136,.55);border-radius:2px;pointer-events:none}
+.btn-light:hover{background:var(--tiza);border-color:var(--tiza)}
+.btn-lg{min-height:52px;padding:0 30px;font-size:17px}
+.btn-block{width:100%}
+.btn-text{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 6px;background:none;border:0;color:var(--azul);font:700 15px/1.2 var(--text);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
+.btn-text:hover{color:var(--azulh);text-decoration-thickness:2px}
+.btn-text.is-danger{color:var(--err)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.lnk{display:inline-flex;align-items:center;gap:6px;min-height:44px;color:var(--azul);font-weight:700;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
+.lnk:hover{color:var(--azulh);text-decoration-thickness:2px}
+.icon-btn{flex:none;display:inline-grid;place-items:center;width:44px;height:44px;border-radius:4px;border:1px solid transparent;background:transparent;color:var(--azul);position:relative}
+.icon-btn:hover{background:var(--tiza)}
+.icon-btn.is-line{border-color:var(--campo)}
+
+/* ── Iconos ── */
+.ic{fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ic-fill{fill:currentColor;stroke:none}
+
+/* ── Insignias, estados ── */
+.badge{display:inline-flex;align-items:center;min-height:28px;padding:3px 18px 3px 12px;background:var(--hilo);color:var(--on-hilo);font:700 13px/1.15 var(--text);
+  clip-path:polygon(0 0,100% 0,calc(100% - 7px) 50%,100% 100%,0 100%)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:currentColor;flex:none}
+.avail{display:inline-flex;align-items:center;gap:7px;font:700 13px/1.3 var(--text)}
+.avail-in{color:var(--ok)}
+.avail-pre{color:var(--warn)}
+.meta{display:inline-flex;align-items:center;gap:6px;font:400 13px/1.3 var(--text);color:var(--apoyo)}
+.chip{display:inline-flex;align-items:center;gap:6px;min-height:28px;padding:0 10px;border-radius:14px;background:var(--tiza);color:var(--tinta2);font:700 13px/1 var(--text)}
+
+/* ── Filtros (pestañas) ── */
+.flts{display:flex;gap:8px}
+.flt{position:relative;display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 4px;margin:0 8px 0 0;background:none;border:0;border-bottom:3px solid transparent;color:var(--tinta2);font:700 17px/1.2 var(--text);align-self:stretch}
+.flt:hover{color:var(--azul)}
+.flt[aria-pressed=true]{color:var(--azul);border-bottom-color:var(--hilo)}
+.flt-n{font:700 14px/1 var(--text);color:var(--apoyo);font-variant-numeric:tabular-nums}
+.flt[aria-pressed=true] .flt-n{color:var(--azul)}
+.flts-line{border-bottom:1px solid var(--linea)}
+.flts-line .flt{margin-bottom:-1px}
+
+/* ── Campos ── */
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field>label,.lbl{font:700 14px/1.3 var(--text);color:var(--tinta);display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.lbl-tag{font:400 13px/1.3 var(--text);color:var(--apoyo)}
+.input{width:100%;min-height:48px;padding:0 14px;border:1px solid var(--campo);border-radius:4px;background:#fff;color:var(--tinta);font:400 16px/1.4 var(--text)}
+.input::placeholder{color:#667186;opacity:1}
+.input:hover{border-color:var(--tinta2)}
+.input:focus{outline:2px solid var(--azul);outline-offset:1px;border-color:var(--azul)}
+textarea.input{padding:12px 14px;min-height:120px;resize:vertical;line-height:1.5}
+.input.is-err{border:2px solid var(--err);padding-left:13px}
+.err{display:flex;align-items:flex-start;gap:6px;color:var(--err);font:700 14px/1.4 var(--text)}
+.err .ic{margin-top:2px}
+.hint{font:400 13px/1.45 var(--text);color:var(--apoyo)}
+.sel{position:relative;display:flex;align-items:center}
+.sel select{appearance:none;-webkit-appearance:none;width:100%;min-height:48px;padding:0 40px 0 14px;border:1px solid var(--campo);border-radius:4px;background:#fff;font:400 16px/1.4 var(--text);color:var(--tinta)}
+.sel select:hover{border-color:var(--tinta2)}
+.sel .ic{position:absolute;right:12px;pointer-events:none;color:var(--azul)}
+.search{position:relative;display:flex;align-items:center}
+.search .ic{position:absolute;left:14px;color:var(--azul);pointer-events:none}
+.search .input{padding-left:44px}
+.chk{display:flex;gap:12px;align-items:flex-start}
+.chk input{width:24px;height:24px;margin:10px 0 0 10px;accent-color:var(--azul);flex:none}
+.chk label{font:400 15px/1.5 var(--text);padding:10px 0;color:var(--tinta)}
+.chk label a{color:var(--azul);font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.chk{margin-left:-10px}
+.alert{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:4px;font:700 15px/1.45 var(--text)}
+.alert-err{background:var(--errbg);color:#8A1C16;border:1px solid var(--errln)}
+.alert .ic{margin-top:2px}
+
+/* ── Cantidad ── */
+.qty{display:inline-flex;width:fit-content;max-width:100%;align-items:stretch;border:1px solid var(--campo);border-radius:4px;background:#fff;overflow:hidden}
+.qty button{width:44px;min-height:46px;display:grid;place-items:center;background:transparent;border:0;color:var(--azul)}
+.qty button:hover{background:var(--tiza)}
+.site .qty button:focus-visible{outline-offset:-4px;border-radius:2px}
+.qty button[disabled]{color:#98A2B3;cursor:not-allowed;background:transparent}
+.qty input{width:64px;min-height:46px;border:0;border-inline:1px solid var(--linea);text-align:center;font:700 17px/1 var(--display);font-variant-numeric:tabular-nums;color:var(--tinta);background:#fff;-moz-appearance:textfield}
+.qty input::-webkit-outer-spin-button,.qty input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.qty input:focus{outline:2px solid var(--azul);outline-offset:-2px}
+
+/* ── Tarjeta de producto ── */
+.card{position:relative;display:flex;flex-direction:column;background:transparent;transition:transform .15s ease}
+.card-img{position:relative;aspect-ratio:4/3;background:var(--tiza);overflow:hidden;border-radius:6px}
+.card-img::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px rgba(11,60,136,.14);pointer-events:none}
+.card:hover .card-img::after{box-shadow:inset 0 0 0 3px var(--azul)}
+.card-img img{width:100%;height:100%;object-fit:cover}
+.card-img .badge{position:absolute;left:0;top:12px;z-index:1;max-width:calc(100% - 8px)}
+.card-body{display:flex;flex-direction:column;gap:6px;padding:14px 2px 12px;flex:1}
+.card-name{font:700 20px/1.2 var(--display);letter-spacing:-.008em;color:var(--azul)}
+.card-price{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 6px;font:400 14px/1.3 var(--text);color:var(--apoyo)}
+.card-price strong{font:700 19px/1.2 var(--display);color:var(--tinta);font-variant-numeric:tabular-nums}
+.card-info{display:flex;flex-direction:column;gap:6px;margin-top:auto}
+.card-meta{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:2px}
+.card-foot{padding:0 0 4px}
+.card .btn::after,.card .stretch::after{content:"";position:absolute;inset:0}
+.grid-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:40px 24px}
+@media (max-width:1100px){.grid-cards{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:767px){
+  .grid-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:28px 12px}
+  .card-body{padding:12px 0 8px;gap:5px}
+  .card-name{font-size:17px}
+  .card-price strong{font-size:17px}
+  .card-price .pre{flex-basis:100%;font-size:13px}
+  .card-foot{padding:0}
+  .card-img .badge{top:8px;min-height:26px;padding:3px 16px 3px 10px}
+  .card .btn{min-height:44px;padding:0 12px;font-size:15px}
+}
+
