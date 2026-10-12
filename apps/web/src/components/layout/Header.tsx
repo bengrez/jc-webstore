@@ -69,7 +69,7 @@ const Header = () => {
             <path d="M9 8V7a3 3 0 0 1 6 0v1" />
           </svg>
           <span className="hide-m">Carrito</span>
-          {cartCount > 0 && <span className="cart-count">{cartCount}</span>}
+          {cartCount > 0 && <span className="cart-count" aria-hidden="true">{cartCount > 99 ? '99+' : cartCount}</span>}
         </NavLink>
         <button
           type="button"
