@@ -79,7 +79,7 @@ test('v8: la banda de tela va arriba, mide 97/90 px y la costura avanza con el s
     await page.setViewportSize({ width: ancho, height: 900 });
     await page.goto('/catalogo');
     await page.waitForLoadState('networkidle');
-    const orden = await page.evaluate(() => [...document.querySelector('.hdr')!.children].map((n) => n.className.split(' ')[0]));
+    const orden = await page.evaluate(() => [...document.querySelector('.hdr')!.children].map((n) => (n.classList.contains('hdr-in') ? 'hdr-in' : n.classList.contains('hdr-lane') ? 'hdr-lane' : n.className)));
     expect(orden.indexOf('hdr-lane')).toBeLessThan(orden.indexOf('hdr-in'));
     expect(await page.locator('.hdr').evaluate((el) => el.getBoundingClientRect().height)).toBe(alto);
   }
