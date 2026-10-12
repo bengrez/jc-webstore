@@ -17,6 +17,8 @@ const categories: Array<{ id: ProductCategory; label: string; mode: 'graduation'
 const parseLine = (value: string | null): ProductCategory | null =>
   value === 'graduaciones' || value === 'marketing' ? value : null
 
+const PAGE_SIZE = 12
+
 type Sort = 'feat' | 'asc' | 'desc' | 'fast'
 
 const normalize = (text: string) =>
@@ -42,6 +44,7 @@ const CatalogPage = () => {
   const [sort, setSort] = useState<Sort>('feat')
   const [added, setAdded] = useState<string | null>(null)
   const [configuringProduct, setConfiguringProduct] = useState<Product | null>(null)
+  const [shown, setShown] = useState(PAGE_SIZE)
 
   const selectedCategory = parseLine(searchParams.get('linea'))
   const productParam = searchParams.get('producto')
@@ -115,6 +118,11 @@ const CatalogPage = () => {
     if (sort === 'fast') return [...list].sort((a, b) => leadDays(a.leadTime) - leadDays(b.leadTime))
     return list
   }, [products, selectedCategory, trimmedQuery, sort])
+
+  // Al cambiar línea, búsqueda u orden se vuelve a la primera página
+  useEffect(() => {
+    setShown(PAGE_SIZE)
+  }, [selectedCategory, trimmedQuery, sort])
 
   const closeConfigurator = () => {
     setConfiguringProduct(null)
@@ -238,11 +246,22 @@ const CatalogPage = () => {
           </div>
         ) : loading ? null : visible.length > 0 ? (
           <div className="grid-cards">
-            {visible.map((product) => (
+            {visible.slice(0, shown).map((product) => (
               <ProductCard key={product.id} product={product} onConfigure={setConfiguringProduct} />
             ))}
           </div>
-        ) : (
+        ) : null}
+        {!loadError && !loading && visible.length > shown && (
+          <div className="more">
+            <p className="t-small c-ink2">
+              Mostrando {shown} de {visible.length}
+            </p>
+            <button type="button" className="btn btn-secondary" onClick={() => setShown((n) => n + PAGE_SIZE)}>
+              Ver más
+            </button>
+          </div>
+        )}
+        {loadError || loading ? null : visible.length > 0 ? null : (
           <div className="empty">
             <span className="ic-big">
               <svg className="ic" width="40" height="40" viewBox="0 0 24 24" aria-hidden="true" focusable="false">

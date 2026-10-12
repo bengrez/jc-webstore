@@ -77,3 +77,29 @@ test('con el configurador abierto la aguja sigue el scroll interno del panel', a
   await panel.evaluate((el) => el.scrollTo(0, el.scrollHeight));
   await expect.poll(cosido, { timeout: 5000 }).toBeGreaterThan(antes + 200);
 });
+
+test('el catálogo muestra 12 productos y «Ver más» agrega el resto', async ({ page }) => {
+  const base = {
+    description: 'Producto de prueba',
+    category: 'graduaciones',
+    price: 1000,
+    image: '/catalog/grad-stole-magna-1.jpg',
+    images: [],
+    tags: [],
+    specs: [],
+    personalization: '',
+    leadTime: '5 días hábiles',
+  };
+  const products = Array.from({ length: 30 }, (_, i) => ({ ...base, id: `p-${i}`, name: `Producto ${i + 1}` }));
+  await page.route('**/api/products', (route) => route.fulfill({ json: products }));
+  await page.goto('/catalogo');
+  await expect(page.locator('.grid-cards > *')).toHaveCount(12);
+  await expect(page.getByText('Mostrando 12 de 30')).toBeVisible();
+  await page.getByRole('button', { name: 'Ver más' }).click();
+  await expect(page.locator('.grid-cards > *')).toHaveCount(24);
+  await page.getByRole('button', { name: 'Ver más' }).click();
+  await expect(page.locator('.grid-cards > *')).toHaveCount(30);
+  await expect(page.getByRole('button', { name: 'Ver más' })).toHaveCount(0);
+  await page.getByRole('searchbox').fill('Producto 3');
+  await expect(page.getByRole('button', { name: 'Ver más' })).toHaveCount(0);
+});
