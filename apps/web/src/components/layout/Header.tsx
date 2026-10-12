@@ -21,7 +21,7 @@ const Header = () => {
   const [open, setOpen] = useState(false)
   const { items } = useCart()
   const { pathname } = useLocation()
-  const cartCount = items.reduce((sum, i) => sum + i.quantity, 0)
+  const cartCount = items.length
 
   // La máquina de pespunte recorre la banda de tela al bajar la página (decorativa, ver design/costura.ts).
   useEffect(() => {
