@@ -41,10 +41,13 @@ const Header = () => {
       <div className="hm" id="costura" aria-hidden="true">
         <div className="hm-seam">
           <i className="hm-surco" />
+          <i className="hm-hoyo" />
+          <i className="hm-sombra" />
           <i className="hm-hilo" />
         </div>
         <div className="hm-head" dangerouslySetInnerHTML={{ __html: MACHINE_HEAD_SVG }} />
       </div>
+      <div className="hdr-lane" aria-hidden="true" />
       <div className="wrap hdr-in">
         <Link className="brand" to="/" aria-label="Confecciones Juany Reyes, ir al inicio">
           <img src="/brand/simbolo-azul.png" width="44" height="44" alt="" />
@@ -81,7 +84,6 @@ const Header = () => {
           </svg>
         </button>
       </div>
-      <div className="hdr-lane" aria-hidden="true" />
       {open && (
         <nav id="mnav" className="mnav show-m" aria-label="Menú principal">
           {NAV_LINKS.map((link) => (

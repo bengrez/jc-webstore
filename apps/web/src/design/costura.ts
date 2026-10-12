@@ -5,7 +5,7 @@ export const costura = (() => {
   type V2 = [number, number]
   type Pose = { u: number; T: number; b: number; sp: number; wd: number; kmax: number }
   type Lay = { x0: number; x1: number; P: number; s: number; yp: number }
-  type Refs = { head: HTMLElement | null; disc: Element | null; rod: Element | null; bar: Element | null; lever: Element | null; link: Element | null; dogs: Element | null; hook: Element | null; giro: Element | null; loop: Element | null; hilo: Element[] }
+  type Refs = { head: HTMLElement | null; disc: Element | null; rod: Element | null; bar: Element | null; lever: Element | null; link: Element | null; dogs: Element | null; giro: Element | null; hilo: Element[] }
   type Hm = HTMLElement & { _L?: Lay | null; _m?: Refs }
   type KT = { RHK: number; RD: number; RSP: number; NLEN: number; CLAMP: number; NX: number; YP: number; C: V2; RA: number; LR: number; EYE: number; PV: V2; LT: number; DQ: number; LB: number; RB: number; PHI: number; SP: V2; RW: number; G1: V2; T: V2; G2: V2; G3: V2; HK: V2; RBK: number; FEED: V2; HOLE: number; PARK: number; CATCH: number; HSPD: number; SPD: number }
   const K: KT = {"NX": 86.0, "YP": 70.0, "C": [86.0, 17.0], "RD": 11.5, "RA": 8.0, "LR": 28.0, "NLEN": 22.5, "EYE": 19.0, "CLAMP": 10.0, "PV": [62.9, 33.5], "LT": 13.81, "DQ": 10.41, "LB": 23.0, "RB": 4.73, "PHI": 6.12, "SP": [26.0, 17.0], "RSP": 8.6, "RW": 7.2, "G1": [38.0, 5.6], "T": [45.0, 22.0], "G2": [56.0, 26.5], "G3": [79.0, 44.0], "HK": [86.0, 81.5], "RHK": 4.4, "RBK": 7.2, "FEED": [0.3, 0.74], "HOLE": 0.18, "PARK": 0.66, "CATCH": 0.08, "HSPD": 2.0, "SPD": 130.0};
@@ -45,13 +45,13 @@ export const costura = (() => {
     let nx = -dy / c, ny = dx / c; if (ny < 0) { nx = -nx; ny = -ny; }   // cuelga hacia abajo
     return 'Q' + n2((a[0] + b[0]) / 2 + nx * 2 * h) + ' ' + n2((a[1] + b[1]) / 2 + ny * 2 * h) + ' ' + n2(b[0]) + ' ' + n2(b[1]);
   }
-  const REPARTO = [0.01, 0.01, 0.05, 0.30, 0.50, 0.07, 0.06];   // qué parte del sobrante cuelga en cada tramo (carrete → ojo de la aguja)
+  const REPARTO = [0.02, 0.40, 0.48, 0.10];   // qué parte del sobrante cuelga en cada tramo (carrete → ojo de la aguja)
   let LMAX = 0;
   (function () { for (let i = 0; i < 48; i++) { const t = trazoPuntos(kin(TAU * i / 48), 1); LMAX = Math.max(LMAX, t.len); } })();
   function trazoPuntos(k: ReturnType<typeof kin>, rw: number) {
     const S0 = tangente(K.SP, rw, K.G1);
     const G4: V2 = [K.NX - 1.7, k.yN + 8], NE: V2 = [K.NX - 0.5, k.yN + K.EYE];
-    const nodes: V2[] = [S0, K.G1, K.T, K.G2, k.E, K.G3, G4, NE];
+    const nodes: V2[] = [S0, K.G1, k.E, G4, NE];
     let len = 0; for (let i = 1; i < nodes.length; i++) len += dist(nodes[i - 1], nodes[i]);
     return { nodes, len, NE };
   }
@@ -69,18 +69,10 @@ export const costura = (() => {
     return d;
   }
 
-  // El garfio rotativo (HSPD vueltas por puntada) engancha el hilo con la aguja subiendo; el bucle rodea la canilla y la palanca lo recoge.
-  function lazo(f: number) {
-    const w = f - K.CATCH; if (w < 0 || w > 0.5) return '';
-    const max = K.HSPD * TAU * 0.30, span = w < 0.30 ? K.HSPD * TAU * w : max * (1 - smooth(0.30, 0.48, w));
-    if (span < 0.08) return '';
-    const R = K.RBK + 0.5, c = K.HK, x = c[0] + R * Math.sin(span), y = c[1] - R * Math.cos(span);
-    return 'M' + K.NX + ' ' + (K.YP + 1.2) + 'L' + n2(c[0]) + ' ' + n2(c[1] - R) + 'A' + n2(R) + ' ' + n2(R) + ' 0 ' + (span > Math.PI ? 1 : 0) + ' 1 ' + n2(x) + ' ' + n2(y);
-  }
   function refs(e: Hm): Refs {
     const q = (c: string) => e.querySelector(c);
     return { head: q('.hm-head') as HTMLElement | null, disc: q('.m-disc'), rod: q('.m-rod'), bar: q('.m-bar'), lever: q('.m-lever'), link: q('.m-link'), dogs: q('.m-dogs'),
-      hook: q('.m-hook'), giro: q('.m-giro'), loop: q('.m-loop'), hilo: Array.from(e.querySelectorAll('.hebra,.hebra-env,.hebra-t')) };
+      giro: q('.m-giro'), hilo: Array.from(e.querySelectorAll('.hebra,.hebra-env,.hebra-t')) };
   }
   const tr = (el: Element | null | undefined, v: string) => { if (el) el.setAttribute('transform', v); };
   const rot = (a: number, c: V2) => 'rotate(' + n2(a * DEG) + ' ' + c[0] + ' ' + c[1] + ')';
@@ -101,13 +93,11 @@ export const costura = (() => {
     tr(m.lever, rot(k.a, K.PV));
     tr(m.link, 'translate(' + n2(k.B[0]) + ' ' + n2(k.B[1]) + ') rotate(' + n2(Math.atan2(k.B[0] - k.Q[0], k.Q[1] - k.B[1]) * DEG) + ')');
     tr(m.dogs, 'translate(0 ' + n2(2.4 * (1 - lerp(up, 0.5, q))) + ')');
-    tr(m.hook, rot(ang(K.HSPD * TAU * (f - K.CATCH), 0, q), K.HK));
     tr(m.giro, 'rotate(' + n2(s.sp) + ' ' + K.SP[0] + ' ' + K.SP[1] + ')');
-    if (m.loop) m.loop.setAttribute('d', lazo(f));
     const d = trazo(k, s.T, K.RW * s.wd, dxh, f);
     for (const el of m.hilo) el.setAttribute('d', d);
     if (m.head) { m.head.style.transform = 'translate3d(' + n2(L.x0 + xr - K.NX) + 'px,0,0) scale(' + L.s + ')'; m.head.style.top = n2(L.yp - K.YP) + 'px'; }
-    put(e, '--b', String(n2(q))); put(e, '--P', n2(L.P) + 'px'); put(e, '--wd', String(n2(s.wd))); put(e, '--x0', n2(L.x0) + 'px'); put(e, '--yp', n2(L.yp) + 'px');
+    put(e, '--s', String(n2(L.s))); put(e, '--b', String(n2(q))); put(e, '--P', n2(L.P) + 'px'); put(e, '--wd', String(n2(s.wd))); put(e, '--x0', n2(L.x0) + 'px'); put(e, '--yp', n2(L.yp) + 'px');
     put(e, '--sewn', s.kmax > 0 ? n2(s.kmax * L.P + 1.3) + 'px' : '0px');
   }
 
@@ -127,13 +117,14 @@ export const costura = (() => {
     }
     return r;
   };
-  // Recorrido: la aguja parte al inicio de la banda de tela (con la cabeza entera a la vista) y termina en el borde derecho de la banda.
+  // Recorrido: la aguja parte en el borde izquierdo del logo y termina en el borde derecho del último elemento de la fila; la banda de tela va arriba de ambos.
   function layout(e: Hm): Lay {
-    const h = e.parentElement as HTMLElement, hr = h.getBoundingClientRect(), W = hr.width, inn = h.querySelector('.hdr-in') as HTMLElement, lane = h.querySelector('.hdr-lane') as HTMLElement | null;
-    const pad = parseFloat(getComputedStyle(inn).paddingLeft) || 24, d = e.dataset;
-    const s = d.s ? parseFloat(d.s) : W >= 1366 ? 0.75 : W >= 1024 ? 0.72 : W >= 768 ? 0.68 : 0.55;
-    const yp = lane ? lane.offsetTop + lane.offsetHeight - (W >= 768 ? 14 : 12) : inn.offsetHeight - 6;
-    return { x0: pad + 86 * s + 2, x1: W - pad - 6, P: d.pitch ? parseFloat(d.pitch) : W >= 1100 ? 10 : W >= 768 ? 9 : 7, s, yp };
+    const h = e.parentElement as HTMLElement, hr = h.getBoundingClientRect(), W = hr.width, inn = h.querySelector('.hdr-in') as HTMLElement, lane = h.querySelector('.hdr-lane') as HTMLElement | null
+    const s = W >= 768 ? 0.435 : 0.39
+    const img = (h.querySelector('.brand img') || h.querySelector('.brand')) as HTMLElement, ir = img.getBoundingClientRect()
+    const items = (Array.from(inn.children) as HTMLElement[]).filter((n) => n.offsetParent !== null), lr = items[items.length - 1].getBoundingClientRect()
+    return { x0: Math.max(ir.left - hr.left, 86 * s + 8), x1: Math.min(lr.right - hr.left, W - 10),
+      P: W >= 1100 ? 10 : W >= 768 ? 9 : 7, s, yp: lane ? lane.offsetTop + lane.offsetHeight - 5 : 31 }
   }
   function measure() {
     sc = scroller() as HTMLElement; const own = sc !== root(), e = ov(); vh = own ? sc.clientHeight : window.innerHeight; docH = sc.scrollHeight;
@@ -151,7 +142,7 @@ export const costura = (() => {
     if (!e._L) measure();
     const max = docH - vh;
     if (quiet()) { reposo(e, true); return; }
-    if (max < Math.max(200, docH * 0.12)) { reposo(e, false); return; }    // en el lienzo el marco mide casi lo mismo que la página: no hay scroll que seguir
+    if (max < 24) { reposo(e, false); return; }    // en el lienzo el marco mide casi lo mismo que la página: no hay scroll que seguir
     e.classList.remove('is-static');
     const L = e._L as Lay, Lm = L.x1 - L.x0; t = t || performance.now();
     const dt = clamp(t - (tPrev || t - 16), 4, 64); tPrev = t;
@@ -188,7 +179,7 @@ export const costura = (() => {
       if (on) return; on = true; measure();
       window.addEventListener('scroll', kick, { passive: true, capture: true });
       window.addEventListener('resize', resize);
-      if (window.ResizeObserver) { ro = new ResizeObserver(resize); ro.observe(document.documentElement); }
+      if (window.ResizeObserver) { ro = new ResizeObserver(resize); ro.observe(document.getElementById('root') ?? document.documentElement) /* html mide 100 % del alto: el contenido crece en #root */; }
       frame();
     },
     stop() {

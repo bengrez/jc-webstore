@@ -50,61 +50,57 @@
   .ftr-in{grid-template-columns:1fr;gap:32px;padding-block:52px 28px}
 }
 
-/* ── Costura de cabecera: una máquina de pespunte, dibujada como plano técnico y translúcida, recorre el header de izquierda a derecha al bajar la página ──
-   Decorativa (aria-hidden, sin eventos). Parte sobre el emblema del logo y llega al borde derecho al final de la página; al subir vuelve por la misma costura.
-   El JS escribe variables (--x0 inicio del recorrido, --yp altura de la tela, --sewn largo cosido, --b difuminado de 0 a 1, --wd hilo que queda en el carrete),
-   el giro y desplazamiento de cada pieza (transform) y el trazo de la hebra. Con scroll corto y lento todo se ve nítido; con uno largo y rápido las piezas se difuminan. */
-/* La cabecera tiene dos partes: la fila de marca y menú, y debajo una banda de tela con la línea de tiza. La máquina recorre la banda y no cruza textos ni botones. */
-.hm{--x0:0px;--yp:98px;--sewn:0px;--P:10px;--b:0;--wd:1;--ac:#5F7089;--ac2:#93A0B6;
-  position:absolute;left:0;right:0;top:0;height:100%;z-index:0;pointer-events:none;overflow-x:clip}
+/* ── Cinta de costura: una banda de tela en lo más alto de la cabecera, sobre el logo y el menú, y una máquina de pespunte compacta que la cose de izquierda a derecha al bajar la página ──
+   Decorativa (aria-hidden, sin eventos). La banda es parte de la estructura de la cabecera: la línea de tiza marca el recorrido completo y la hebra la va cubriendo.
+   El JS escribe variables (--x0 inicio del recorrido, --yp altura de la tela, --s escala de la cabeza, --sewn largo cosido, --b difuminado de 0 a 1, --wd hilo que queda en el carrete),
+   el giro y desplazamiento de cada pieza (transform) y el trazo de la hebra. La hebra tiene el mismo grosor (--tw) en la máquina y en la costura. */
+.hm{--x0:0px;--yp:31px;--sewn:0px;--P:10px;--s:.435;--lw:.75px;--twn:1.2;--tw:1.2px;--b:0;--wd:1;--ac:#5F7089;--ac2:#93A0B6;
+  position:absolute;left:0;right:0;top:0;height:36px;z-index:0;pointer-events:none;overflow:hidden}
+.hdr-lane{position:relative;z-index:-2;height:36px;border-bottom:1px solid var(--linea);background:var(--tela) var(--tx-lienzo) 0 0/240px 240px;pointer-events:none}
+.hdr-lane::before{content:"";position:absolute;left:0;right:0;top:3px;height:1px;background:repeating-linear-gradient(90deg,var(--linea) 0 6px,transparent 6px 12px)}
 .hdr-in{position:relative;z-index:1;height:60px}
-.hdr-lane{position:relative;z-index:-2;height:52px;border-top:1px solid var(--linea);background:var(--tela) var(--tx-lienzo) 0 0/240px 240px;pointer-events:none}
-.hdr-lane::before{content:"";position:absolute;left:0;right:0;top:3px;height:1px;background:repeating-linear-gradient(90deg,var(--linea) 0 6px,transparent 6px 12px);opacity:.9}
-.hdr::after{z-index:-1;bottom:13px}
+.hdr::after{z-index:-1;top:30px;bottom:auto}
 .mnav{position:relative;z-index:1}
-@media (max-width:767px){.hdr-in{height:56px}.hdr-lane{height:48px}.hdr::after{bottom:11px}}
-.hm-seam{position:absolute;left:var(--x0);top:calc(var(--yp) - 4px);height:8px;width:var(--sewn);overflow:hidden}
-.hm-seam i{position:absolute;display:block;left:0;right:0}
-/* surco: la tela se hunde un poco bajo el hilo */
-.hm-surco{top:0;bottom:0;background:linear-gradient(180deg,transparent,rgba(12,26,58,.05) 30%,rgba(12,26,58,.1) 50%,rgba(12,26,58,.05) 70%,transparent)}
-/* pespunte: hilo casi continuo; en cada agujero de la aguja (cada paso) dos puntadas se juntan y el hilo se hunde */
-.hm-hilo{top:calc(50% - 1.3px);height:2.6px;
+@media (max-width:767px){.hm{height:33px}.hdr-lane{height:33px}.hdr-in{height:56px}.hdr::after{top:27px}}
+/* costura: la tela se hunde en cada agujero de la aguja y el hilo se mete en él */
+.hm-seam{position:absolute;left:var(--x0);top:calc(var(--yp) - 5px);height:10px;width:var(--sewn)}
+.hm-seam i{position:absolute;display:block}
+.hm-surco,.hm-hoyo{top:0;bottom:0}
+.hm-surco{left:-2px;width:calc(100% + 4px);background:linear-gradient(180deg,transparent 12%,rgba(12,26,58,.06) 36%,rgba(12,26,58,.1) 50%,rgba(12,26,58,.05) 66%,transparent 88%)}
+.hm-hoyo{left:-5px;width:calc(100% + 8px);
   background:
-    radial-gradient(ellipse 1.1px 1.5px at 50% 50%,rgba(8,16,36,.5),rgba(8,16,36,.22) 60%,transparent) calc(var(--P) / -2) 0/var(--P) 100% repeat-x,
-    linear-gradient(180deg,rgba(0,0,0,.2),rgba(0,0,0,0) 30%,rgba(255,255,255,.34) 42%,rgba(255,255,255,.06) 58%,rgba(0,0,0,.22)),
-    repeating-linear-gradient(116deg,rgba(255,255,255,.2) 0 .5px,rgba(0,0,0,.1) .5px 1px,transparent 1px 1.9px),
-    var(--hilo);
-  -webkit-mask:
-    radial-gradient(ellipse 1.7px .8px at 50% 0,transparent 0 45%,#000 100%) calc(var(--P) / -2) 0/var(--P) 100% repeat-x,
-    radial-gradient(ellipse 1.7px .8px at 50% 100%,transparent 0 45%,#000 100%) calc(var(--P) / -2) 0/var(--P) 100% repeat-x;
-  -webkit-mask-composite:source-in;
-  mask:
-    radial-gradient(ellipse 1.7px .8px at 50% 0,transparent 0 45%,#000 100%) calc(var(--P) / -2) 0/var(--P) 100% repeat-x,
-    radial-gradient(ellipse 1.7px .8px at 50% 100%,transparent 0 45%,#000 100%) calc(var(--P) / -2) 0/var(--P) 100% repeat-x;
-  mask-composite:intersect}
-.hm-head{position:absolute;left:0;top:0;width:108px;height:96px;transform-origin:86px 70px;will-change:transform;
-  -webkit-mask-image:linear-gradient(90deg,transparent 2px,#000 15px),linear-gradient(180deg,#000 79px,transparent 92px);-webkit-mask-composite:source-in;
-  mask-image:linear-gradient(90deg,transparent 2px,#000 15px),linear-gradient(180deg,#000 79px,transparent 92px);mask-composite:intersect}
+    radial-gradient(ellipse 1.9px 1.3px at 50% 50%,rgba(8,18,38,.62) 0,rgba(8,18,38,.3) 60%,rgba(8,18,38,0) 100%) 0 0/var(--P) 100% repeat-x,
+    radial-gradient(ellipse 4.4px 3px at 50% 54%,rgba(12,26,58,.2) 0,rgba(12,26,58,.12) 55%,rgba(12,26,58,0) 100%) 0 0/var(--P) 100% repeat-x,
+    radial-gradient(ellipse 5.2px 3.6px at 50% 58%,rgba(255,255,255,0) 60%,rgba(255,255,255,.6) 84%,rgba(255,255,255,0) 100%) 0 0/var(--P) 100% repeat-x}
+.hm-sombra,.hm-hilo{left:0;width:100%;
+  -webkit-mask:linear-gradient(90deg,#000 0,#000 calc(50% - 2.4px),transparent calc(50% - 1.2px),transparent calc(50% + 1.2px),#000 calc(50% + 2.4px),#000 100%) calc(var(--P) / -2) 0/var(--P) 100% repeat-x;
+  mask:linear-gradient(90deg,#000 0,#000 calc(50% - 2.4px),transparent calc(50% - 1.2px),transparent calc(50% + 1.2px),#000 calc(50% + 2.4px),#000 100%) calc(var(--P) / -2) 0/var(--P) 100% repeat-x}
+/* el hilo se dibuja con degradados dentro de una caja de 3 px: así su grosor (1,2 px) no depende de la posición fraccionaria de la caja y coincide con el de la hebra del cabezal */
+.hm-sombra,.hm-hilo{height:3px;bottom:auto}
+.hm-sombra{top:calc(50% - .9px);filter:blur(.5px);background:linear-gradient(180deg,transparent .8px,rgba(8,18,38,.24) 1.3px,rgba(8,18,38,.24) 2.2px,transparent 2.7px)}
+.hm-hilo{top:calc(50% - 1.5px);background:
+  linear-gradient(180deg,transparent .9px,rgba(255,255,255,.4) 1px,rgba(255,255,255,0) 1.5px,transparent 1.6px,transparent 1.6px,rgba(0,0,0,.18) 2px,transparent 2.1px),
+  linear-gradient(180deg,transparent .8px,var(--hilo) 1.05px,var(--hilo) 1.95px,transparent 2.2px)}
+.hm-head{position:absolute;left:0;top:0;width:108px;height:84px;transform-origin:86px 70px;will-change:transform;
+  -webkit-mask-image:linear-gradient(90deg,transparent 2px,#000 15px);mask-image:linear-gradient(90deg,transparent 2px,#000 15px)}
 .hm-svg{position:absolute;left:0;top:0;display:block;overflow:visible}
 /* dibujo técnico: líneas finas de acero, casi sin relleno */
-.hm-svg *{fill:none;stroke:var(--ac);stroke-width:.7;stroke-linecap:round;stroke-linejoin:round}
-.hm-svg .fino{stroke:var(--ac2);stroke-width:.5}
-.hm-svg .hilo-l{stroke:var(--hilo);stroke-opacity:.45;stroke-width:.4}
-.hm-svg .rell{fill:var(--ac);fill-opacity:.12}
+.hm-svg *{fill:none;stroke:var(--ac);stroke-width:calc(var(--lw) / var(--s));stroke-linecap:round;stroke-linejoin:round}
+.hm-svg .fino{stroke:var(--ac2);stroke-width:calc(var(--lw) * .69 / var(--s))}
+.hm-svg .hilo-l{stroke:var(--hilo);stroke-opacity:.5;stroke-width:calc(var(--lw) * .54 / var(--s))}
+.hm-svg .rell{fill:var(--ac);fill-opacity:.14}
 .hm-svg .pt{fill:var(--ac);stroke:none}
-.hm-svg .hilo-f{fill:var(--hilo);fill-opacity:.18;stroke:none}
+.hm-svg .hilo-f{fill:var(--hilo);fill-opacity:.2;stroke:none}
 .hm-svg .m-wear{transform-origin:26px 17px;transform:scale(var(--wd))}
 /* lo que se mueve: nítido a baja intensidad, difuminado y más transparente a alta */
 .hm-svg .estela path{fill:var(--ac);stroke:none;opacity:calc(.08 * var(--b))}
-.hm-svg .estela .ring{stroke:var(--ac);stroke-width:3;opacity:calc(.1 * var(--b))}
-.hm-svg .m-bar,.hm-svg .m-rod,.hm-svg .m-link,.hm-svg .m-lever,.hm-svg .m-disc,.hm-svg .m-hook,.hm-svg .m-dogs{opacity:calc(1 - .72 * var(--b))}
+.hm-svg .estela .ring{stroke:var(--ac);stroke-width:5;opacity:calc(.1 * var(--b))}
+.hm-svg .m-bar,.hm-svg .m-rod,.hm-svg .m-link,.hm-svg .m-lever,.hm-svg .m-disc,.hm-svg .m-dogs{opacity:calc(1 - .72 * var(--b))}
 .hm-svg .m-giro{opacity:calc(1 - var(--b))}
-.hm-svg .sp-ring{stroke-width:2.2;opacity:calc(.28 * var(--b))}
-/* la hebra */
-.hm-svg .hebra{stroke:var(--hilo);stroke-width:1}
-.hm-svg .hebra-t{stroke:#fff;stroke-width:.5;stroke-dasharray:.5 1.1;opacity:.4}
-.hm-svg .hebra-env{stroke:var(--hilo);stroke-width:3;opacity:calc(.12 * var(--b))}
-.hm-svg .m-loop{stroke:var(--hilo);stroke-width:.8;opacity:calc(1 - var(--b))}
+.hm-svg .sp-ring{stroke-width:3.4;opacity:calc(.28 * var(--b))}
+/* la hebra: mismo grosor que la costura */
+.hm-svg .hebra{stroke:var(--hilo);stroke-width:calc(var(--twn) / var(--s))}
+.hm-svg .hebra-t{stroke:#fff;stroke-width:calc(.45 / var(--s));stroke-dasharray:.6 1.6;opacity:.4}
+.hm-svg .hebra-env{stroke:var(--hilo);stroke-width:calc(5 / var(--s));opacity:calc(.12 * var(--b))}
 @media (prefers-reduced-motion:reduce){.hm-head{display:none}}
 @media print{.hm{display:none}}
-

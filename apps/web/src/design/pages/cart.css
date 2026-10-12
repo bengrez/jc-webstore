@@ -2,7 +2,7 @@
 /* ── Carrito ── */
 .cart-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);grid-template-areas:"lines side" "form side";gap:40px;align-items:start}
 .cg-lines{grid-area:lines;min-width:0}
-.cg-side{grid-area:side;align-self:start;position:sticky;top:104px}
+.cg-side{grid-area:side;align-self:start;position:sticky;top:114px}
 .cg-form{grid-area:form;min-width:0}
 .lines-list{display:flex;flex-direction:column}
 .ln{display:grid;grid-template-columns:112px minmax(0,1fr) auto;gap:8px 20px;padding:22px 0;border-bottom:1px solid var(--linea)}

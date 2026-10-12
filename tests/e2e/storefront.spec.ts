@@ -73,3 +73,21 @@ test('con movimiento reducido la máquina de pespunte no se anima y la costura q
   expect(ancho).toBeGreaterThan(200);
   await context.close();
 });
+
+test('v8: la banda de tela va arriba, mide 97/90 px y la costura avanza con el scroll', async ({ page }) => {
+  for (const [ancho, alto] of [[1440, 97], [390, 90]]) {
+    await page.setViewportSize({ width: ancho, height: 900 });
+    await page.goto('/catalogo');
+    await page.waitForLoadState('networkidle');
+    const orden = await page.evaluate(() => [...document.querySelector('.hdr')!.children].map((n) => n.className.split(' ')[0]));
+    expect(orden.indexOf('hdr-lane')).toBeLessThan(orden.indexOf('hdr-in'));
+    expect(await page.locator('.hdr').evaluate((el) => el.getBoundingClientRect().height)).toBe(alto);
+  }
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/catalogo');
+  await page.waitForLoadState('networkidle');
+  const cosido = () => page.locator('.hm-seam').evaluate((el) => el.getBoundingClientRect().width);
+  const antes = await cosido();
+  await page.evaluate(() => window.scrollTo(0, (document.documentElement.scrollHeight - innerHeight) / 2));
+  await expect.poll(cosido, { timeout: 5000 }).toBeGreaterThan(antes + 200);
+});
