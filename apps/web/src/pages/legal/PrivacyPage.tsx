@@ -8,7 +8,7 @@ import './legal-page.css'
 // routes/quotes.ts, contact.ts y uploads.ts (qué se recibe), mailer.ts (qué correos salen),
 // CartContext y ThemeContext (almacenamiento local) y admin-auth.ts (cookie del panel).
 const PrivacyPage = () => (
-  <article className="legal-page">
+  <article className="legal-page wrap sec">
     <header className="legal-page__header">
       <h1>Aviso de privacidad</h1>
       <p>Cómo tratamos los datos que nos entregas al pedir una cotización o escribirnos.</p>

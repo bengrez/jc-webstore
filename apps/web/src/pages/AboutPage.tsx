@@ -35,21 +35,21 @@ const values = [
 
 const AboutPage = () => {
   return (
-    <div className="about-page">
+    <div className="about-page wrap sec">
       <section className="about-hero">
-        <h1>Somos Confecciones Juany Reyes</h1>
-        <p>
+        <h1 className="t-h1">Somos Confecciones Juany Reyes</h1>
+        <p className="t-lead">
           Taller de estolas, túnicas y merchandising hecho en Chile. Trabajamos con instituciones y
           marcas con apoyo directo de la fundadora.
         </p>
       </section>
 
       <section className="about-values">
-        <h2>Nuestro sello</h2>
+        <h2 className="t-h2">Nuestro sello</h2>
         <div className="about-values__grid">
           {values.map((value) => (
             <article key={value.title}>
-              <h3>{value.title}</h3>
+              <h3 className="t-h4">{value.title}</h3>
               <p>{value.description}</p>
             </article>
           ))}
@@ -57,13 +57,13 @@ const AboutPage = () => {
       </section>
 
       <section className="about-milestones">
-        <h2>Hitos rápidos</h2>
+        <h2 className="t-h2">Hitos rápidos</h2>
         <div className="about-milestones__timeline">
           {milestones.map((milestone) => (
             <article key={milestone.year}>
               <div className="about-milestones__year">{milestone.year}</div>
               <div className="about-milestones__content">
-                <h3>{milestone.title}</h3>
+                <h3 className="t-h4">{milestone.title}</h3>
                 <p>{milestone.description}</p>
               </div>
             </article>
@@ -73,10 +73,10 @@ const AboutPage = () => {
 
       <section className="about-cta">
         <div>
-          <h2>¿Coordinamos?</h2>
+          <h2 className="t-h2">¿Coordinamos?</h2>
           <p>Escríbenos y preparamos una propuesta breve con tiempos y valores.</p>
         </div>
-        <a className="button button--primary" href="mailto:contacto@confeccionesjuany.cl">
+        <a className="btn btn-primary" href="mailto:contacto@confeccionesjuany.cl">
           Escríbenos
         </a>
       </section>

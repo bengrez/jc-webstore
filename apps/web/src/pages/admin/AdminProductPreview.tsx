@@ -30,7 +30,7 @@ const AdminProductPreview = ({ product, state, missing, warnings, includesDraftO
   const [showFull, setShowFull] = useState(false)
 
   return (
-    <aside className="admin-card admin-preview" aria-label="Vista previa del producto">
+    <aside className="admin-card admin-preview site" aria-label="Vista previa del producto">
       <div className="admin-preview__header">
         <h2 style={{ margin: 0 }}>Vista previa</h2>
         <span className="admin-preview__state" data-state={state}>

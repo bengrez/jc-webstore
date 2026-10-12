@@ -71,7 +71,7 @@ const createAndSendOtherQuote = async (request: APIRequestContext) => {
 test('cliente cotiza, admin previsualiza y envía, cliente descarga el PDF con el token', async ({ page, context }, testInfo) => {
   // ── Cliente arma la cotización ──
   await page.goto('/catalogo');
-  await page.getByRole('heading', { name: 'Estola bordada E2E' }).click();
+  await page.getByRole('button', { name: 'Personalizar Estola bordada E2E' }).click();
   const modal = page.getByRole('dialog', { name: 'Configurar Estola bordada E2E' });
   await modal.getByRole('button', { name: 'Azul ceremonial' }).click();
   await modal.getByPlaceholder('Ej: Texto bordado...').fill('Generación 2026');

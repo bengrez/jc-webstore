@@ -117,10 +117,10 @@ const QuotePortalPage = () => {
     new Date(value).toLocaleDateString('es-CL', { year: 'numeric', month: 'long', day: 'numeric' })
 
   return (
-    <div className="portal">
+    <div className="portal wrap sec">
       <header className="portal__header">
-        <h1>{folio ? `Cotización ${folio.toUpperCase()}` : 'Consultar cotización'}</h1>
-        <p>Revisa el estado de tu solicitud, descarga el PDF y responde la cotización formal.</p>
+        <h1 className="t-h1">{folio ? `Cotización ${folio.toUpperCase()}` : 'Consultar cotización'}</h1>
+        <p className="t-lead">Revisa el estado de tu solicitud, descarga el PDF y responde la cotización formal.</p>
       </header>
 
       {!token && (
@@ -131,7 +131,7 @@ const QuotePortalPage = () => {
             cotización formal{folio ? ` (${folio.toUpperCase()})` : ''}. Si no lo encuentras, escríbenos y te lo
             reenviamos.
           </p>
-          <Link to="/contacto" className="link">Ir a contacto</Link>
+          <Link to="/contacto" className="lnk">Ir a contacto</Link>
         </div>
       )}
 
@@ -143,8 +143,8 @@ const QuotePortalPage = () => {
           <div className="portal__summary">
             <div className="portal__summary-header">
               <div>
-                <span className="eyebrow">Folio</span>
-                <h2>{quote.folio}</h2>
+                <span className="portal__eyebrow">Folio</span>
+                <h2 className="t-h2">{quote.folio}</h2>
               </div>
               <span className={`portal__status ${statusInfo.className}`}>{statusInfo.label}</span>
             </div>
@@ -168,7 +168,7 @@ const QuotePortalPage = () => {
             <div className="portal__formal">
               <div className="portal__formal-header">
                 <div>
-                  <span className="eyebrow">
+                  <span className="portal__eyebrow">
                     Cotización formal{quote.formal.rev > 0 ? ` · revisión ${quote.formal.rev}` : ''}
                   </span>
                   <p>
@@ -178,7 +178,7 @@ const QuotePortalPage = () => {
                 </div>
                 {canDownload ? (
                   <a
-                    className="button button--primary"
+                    className="btn btn-primary"
                     href={`/api/portal/quotes/${encodeURIComponent(quote.folio)}/pdf?t=${encodeURIComponent(token ?? '')}`}
                     download
                   >
@@ -216,7 +216,7 @@ const QuotePortalPage = () => {
           )}
 
           <div className="portal__items">
-            <h3>Productos</h3>
+            <h3 className="t-h4">Productos</h3>
             {quote.items.map((item, i) => {
               const displayPrice = item.quotedUnitPrice ?? item.unitPrice
               return (
@@ -246,7 +246,7 @@ const QuotePortalPage = () => {
 
           {quote.notes.length > 0 && (
             <div className="portal__notes">
-              <h3>Actualizaciones</h3>
+              <h3 className="t-h4">Actualizaciones</h3>
               {quote.notes.map((note, i) => (
                 <div key={i} className="portal__note">
                   <p>{note.body}</p>
@@ -272,7 +272,7 @@ const QuotePortalPage = () => {
               <div className="portal__respond-actions">
                 <button
                   type="button"
-                  className="button button--accent"
+                  className="btn btn-primary"
                   onClick={() => handleRespond('ACCEPT')}
                   disabled={responding}
                 >
@@ -280,7 +280,7 @@ const QuotePortalPage = () => {
                 </button>
                 <button
                   type="button"
-                  className="button button--ghost portal__reject-btn"
+                  className="btn btn-secondary portal__reject-btn"
                   onClick={() => handleRespond('REJECT')}
                   disabled={responding}
                 >
@@ -302,7 +302,7 @@ const QuotePortalPage = () => {
             </div>
           )}
 
-          <Link to="/catalogo" className="link">Volver al catálogo</Link>
+          <Link to="/catalogo" className="lnk">Volver al catálogo</Link>
         </div>
       )}
     </div>

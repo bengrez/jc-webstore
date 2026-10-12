@@ -3,21 +3,21 @@
   flex-direction: column;
   gap: 4px;
   padding: 14px 18px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-gold-line);
-  border-left: 4px solid var(--color-gold);
-  background: var(--color-gold-soft);
-  color: var(--color-text);
-  font-size: 0.9rem;
+  border-radius: 4px;
+  border: 1px solid var(--linea);
+  border-left: 4px solid var(--hilo);
+  background: var(--tela);
+  color: var(--tinta);
+  font-size: 15px;
   line-height: 1.5;
 }
 
 .legal-pending {
-  background: var(--color-gold-soft);
-  color: var(--color-text);
-  border-bottom: 1px dashed var(--color-gold);
+  background: rgba(214, 31, 91, 0.1);
+  color: var(--tinta);
+  border-bottom: 1px dashed var(--hilo);
   padding: 0 3px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .legal-consent {

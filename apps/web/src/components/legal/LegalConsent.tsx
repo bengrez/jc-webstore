@@ -12,7 +12,7 @@ type LegalConsentProps = {
 // en otra pestaña para no perder lo que la persona ya escribió.
 const LegalConsent = ({ id, checked, onChange, error }: LegalConsentProps) => (
   <div className="legal-consent">
-    <div className="legal-consent__row">
+    <div className="chk">
       <input
         id={id}
         type="checkbox"
@@ -35,8 +35,12 @@ const LegalConsent = ({ id, checked, onChange, error }: LegalConsentProps) => (
       </label>
     </div>
     {error && (
-      <p id={`${id}-error`} className="legal-consent__error" role="alert">
-        {error}
+      <p id={`${id}-error`} className="err" role="alert" style={{ marginTop: 4 }}>
+        <svg className="ic" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M12 4l9 16H3L12 4z" />
+          <path d="M12 10v4M12 17v.01" />
+        </svg>
+        <span>{error}</span>
       </p>
     )}
   </div>

@@ -9,3 +9,21 @@
 .ph{display:inline-block;padding:0 6px;border:1px dashed var(--apoyo);border-radius:4px;background:var(--tela);color:var(--tinta2);font:700 13px/1.6 var(--text)}
 @media (max-width:900px){.contact-grid{grid-template-columns:1fr;gap:32px}}
 
+
+/* Propios de la pantalla (scoped para no depender del CSS de otras pantallas) */
+.contact-page .panel{background:#fff;border:1px solid var(--linea);border-radius:8px;padding:24px}
+.contact-page .form-grid{display:flex;flex-direction:column;gap:18px}
+.contact-page .fgrid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.contact-page .val-ic{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:var(--tiza);color:var(--azul);flex:none}
+.contact-page .ok-badge{display:grid;place-items:center;width:64px;height:64px;border-radius:50%;background:var(--azul);color:#fff}
+.contact-page .cinfo-aside{display:flex;flex-direction:column;gap:20px}
+.contact-page .cinfo-aside .panel{display:flex;flex-direction:column;gap:20px}
+.contact-page .cinfo-aside .panel.cta{gap:12px;align-items:flex-start}
+.contact-page .cform-ok{display:flex;flex-direction:column;gap:16px;align-items:flex-start}
+.contact-page .cform-actions{display:flex;gap:12px;flex-wrap:wrap}
+.contact-page .cform-hp{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
+@media (max-width:767px){
+  .contact-page .panel{padding:20px}
+  .contact-page .fgrid2{grid-template-columns:1fr}
+  .contact-page .btn-lg.cform-submit{width:100%}
+}

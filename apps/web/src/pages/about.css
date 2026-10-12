@@ -1,136 +1,20 @@
-.about-page {
-  display: flex;
-  flex-direction: column;
-  gap: 48px;
+/* Sobre nosotros: sistema v6 (tokens, costura, tipografías). */
+.about-page { display: flex; flex-direction: column; gap: clamp(36px, 5vw, 56px); }
+.about-hero { display: flex; flex-direction: column; gap: 14px; max-width: 680px; }
+.about-values, .about-milestones { display: flex; flex-direction: column; gap: 20px; }
+.about-values__grid, .about-milestones__timeline {
+  display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
-
-.about-hero {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.about-values__grid article, .about-milestones__timeline article {
+  display: flex; flex-direction: column; gap: 8px; padding: 24px; border-radius: 6px;
+  background: var(--tela); border: 1px solid var(--linea);
 }
-
-.about-hero h1 {
-  font-size: clamp(2rem, 4vw, 2.8rem);
-}
-
-.about-hero p {
-  color: var(--color-text-secondary);
-  line-height: 1.6;
-  max-width: 600px;
-}
-
-.about-values {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.about-values h2 {
-  font-size: 1.5rem;
-}
-
-.about-values__grid {
-  display: grid;
-  gap: 16px;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-}
-
-.about-values__grid article {
-  background: var(--color-surface);
-  padding: 28px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
-  border-left: 3px solid var(--color-primary);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.about-values__grid h3 {
-  font-family: var(--font-body);
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.about-values__grid p {
-  color: var(--color-text-secondary);
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-
-.about-milestones {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.about-milestones h2 {
-  font-size: 1.5rem;
-}
-
-.about-milestones__timeline {
-  display: grid;
-  gap: 16px;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-}
-
-.about-milestones__timeline article {
-  background: var(--color-border-subtle);
-  border-radius: var(--radius-md);
-  padding: 24px;
-  border: 1px solid var(--color-border);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.about-milestones__year {
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--color-primary);
-}
-
-.about-milestones__content h3 {
-  font-family: var(--font-body);
-  font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-
-.about-milestones__content p {
-  color: var(--color-text-secondary);
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-
+.about-values__grid article { background: var(--blanco); border-left: 4px solid var(--hilo); }
+.about-values__grid p, .about-milestones__content p { color: var(--tinta2); font-size: 15px; line-height: 1.55; }
+.about-milestones__year { font: 700 13px/1 var(--text); letter-spacing: 0.12em; color: var(--azul); }
 .about-cta {
-  background: var(--color-primary-soft);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: clamp(24px, 4vw, 40px);
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  align-items: center;
-  text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center;
+  padding: clamp(24px, 4vw, 40px); border-radius: 6px; background: var(--tela);
+  border: 1.5px dashed var(--azul); outline: 1px solid var(--tela); outline-offset: -6px;
 }
-
-.about-cta h2 {
-  font-size: 1.5rem;
-}
-
-.about-cta p {
-  color: var(--color-text-secondary);
-  line-height: 1.5;
-  max-width: 480px;
-}
-
-@media (min-width: 768px) {
-  .about-cta {
-    flex-direction: column;
-    align-items: center;
-  }
-}
+.about-cta p { color: var(--tinta2); max-width: 480px; }

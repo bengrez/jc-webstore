@@ -24,7 +24,7 @@ const TermsPage = () => {
   }, [])
 
   return (
-    <article className="legal-page">
+    <article className="legal-page wrap sec">
       <header className="legal-page__header">
         <h1>Términos de la cotización</h1>
         <p>Qué significa la cotización que te enviamos y qué pasa cuando la aceptas.</p>
