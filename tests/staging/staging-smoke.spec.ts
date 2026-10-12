@@ -49,7 +49,7 @@ test('staging: documentos legales, cotización con logo, envío formal en outbox
 
   // ── Cliente arma la cotización con un logo ──
   await page.goto('/catalogo');
-  await page.getByRole('heading', { name: 'Estola bordada Magna' }).click();
+  await page.getByRole('button', { name: 'Personalizar Estola bordada Magna' }).click();
   const modal = page.getByRole('dialog', { name: 'Configurar Estola bordada Magna' });
   await modal.getByRole('button', { name: 'Negro' }).click();
   await modal.getByRole('button', { name: 'Plateado' }).click();
