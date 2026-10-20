@@ -53,8 +53,9 @@ const PrivacyPage = () => (
       <h3>Tu cotización</h3>
       <p>
         Guardamos la solicitud, los precios que te cotizamos, cada PDF de cotización formal que emitimos (no se
-        sobrescriben: cada revisión queda guardada), las notas del taller sobre tu pedido (algunas visibles para ti en el
-        portal) y tu respuesta (aceptar o rechazar) en el portal de cotizaciones.
+        sobrescriben: cada revisión queda guardada), las notas del taller sobre tu pedido (internas, no las ves en el sitio) y tu
+        respuesta (aceptar o rechazar), que nos das por correo o teléfono. El sitio no tiene un portal donde puedas
+        ver tu cotización: te contactamos nosotros.
       </p>
       <h3>Datos de nombres de estudiantes u otras personas</h3>
       <p>
@@ -72,8 +73,7 @@ const PrivacyPage = () => (
         <li>Preparar, enviar y hacer seguimiento de tu cotización, y fabricar y entregar tu pedido si la aceptas.</li>
         <li>Responder tus mensajes y consultas.</li>
         <li>
-          Enviarte correos sobre tu solicitud: la confirmación con el enlace a tu cotización y la cotización formal en
-          PDF.
+          Enviarte correos sobre tu solicitud: la confirmación con el número de tu solicitud y la cotización formal en PDF.
         </li>
       </ul>
       <p>
@@ -139,10 +139,6 @@ const PrivacyPage = () => (
         dónde funcione el sitio. Esa transferencia es necesaria para gestionar tu solicitud. No entregamos tus datos a
         otros terceros, salvo que la ley o una autoridad competente lo exija.
       </p>
-      <p>
-        El enlace a tu cotización que te enviamos por correo incluye un código privado: quien tenga ese enlace puede ver
-        la cotización. No lo reenvíes a personas que no deban verla.
-      </p>
     </section>
 
     <section>
@@ -206,8 +202,8 @@ const PrivacyPage = () => (
     <section>
       <h2>9. Seguridad</h2>
       <p>
-        El panel de administración exige contraseña, que no se guarda en texto legible (sólo su hash). Los enlaces de las cotizaciones llevan un
-        código privado difícil de adivinar y los archivos subidos tienen nombres aleatorios. Ningún sistema es
+        El panel de administración exige contraseña, que no se guarda en texto legible (sólo su hash). Las cotizaciones
+        no se pueden consultar desde el sitio y los archivos subidos tienen nombres aleatorios. Ningún sistema es
         completamente seguro: si detectamos un incidente que afecte tus datos, lo notificaremos a la autoridad y, cuando
         la ley lo exija, a ti.
       </p>

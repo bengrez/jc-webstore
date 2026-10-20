@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { LEGAL_VERSION } from '../../apps/web/src/data/legal';
 
 // Mismos valores que el webServer de playwright.config.ts
@@ -34,12 +34,6 @@ const waitForFormalMail = async (email: string, folio: string) => {
   return findFormalMail(email, folio)!;
 };
 
-const portalLinkFrom = (mail: OutboxMail, folio: string) => {
-  const match = mail.text.match(new RegExp(`https?://\\S+/cotizacion/${folio}\\?t=[A-Za-z0-9_-]+`));
-  expect(match, 'el correo trae el link del portal con token').not.toBeNull();
-  return match![0];
-};
-
 const loginAdmin = async (page: Page) => {
   await page.goto('/admin/login');
   await page.getByLabel('Email').fill(ADMIN.email);
@@ -48,27 +42,7 @@ const loginAdmin = async (page: Page) => {
   await expect(page).toHaveURL(/\/admin\/(products|quotes)/);
 };
 
-// Segunda cotización creada y enviada por API, para probar un token ajeno
-const createAndSendOtherQuote = async (request: APIRequestContext) => {
-  const created = await request.post('/api/quotes', {
-    data: {
-      customer: { name: 'Otro Cliente', email: 'otro@e2e.test' },
-      items: [{ productId: 'e2e-estola', quantity: 10, configuration: [] }],
-      legal: { accepted: true, version: LEGAL_VERSION },
-    },
-  });
-  expect(created.status()).toBe(201);
-  const { id, folio } = (await created.json()) as { id: number; folio: string };
-  const detail = await (await request.get(`/api/admin/quotes/${id}`)).json();
-  const sent = await request.post(`/api/admin/quotes/${id}/send-quote`, {
-    data: { adminMessage: null, items: detail.items.map((i: { id: number }) => ({ itemId: i.id, quotedUnitPrice: 14000 })) },
-  });
-  expect(sent.status()).toBe(200);
-  const mail = await waitForFormalMail('otro@e2e.test', folio);
-  return new URL(portalLinkFrom(mail, folio)).searchParams.get('t')!;
-};
-
-test('cliente cotiza, admin previsualiza y envía, cliente descarga el PDF con el token', async ({ page, context }, testInfo) => {
+test('cliente cotiza y ve su número, admin previsualiza y envía, el cliente ya no tiene portal', async ({ page, context }, testInfo) => {
   // ── Cliente arma la cotización ──
   await page.goto('/catalogo');
   await page.getByRole('button', { name: 'Personalizar Estola bordada E2E' }).click();
@@ -84,17 +58,17 @@ test('cliente cotiza, admin previsualiza y envía, cliente descarga el PDF con e
   await page.getByRole('checkbox', { name: /acepto el aviso de privacidad/ }).check();
   await page.getByRole('button', { name: 'Enviar solicitud' }).click();
 
-  const statusLink = page.getByRole('link', { name: 'Ver estado de cotización' });
-  await expect(statusLink).toBeVisible();
-  // El link del carrito ya trae el token: quien crea la cotización puede verla
-  const statusHref = new URL((await statusLink.getAttribute('href'))!, 'http://e2e');
-  const folio = statusHref.pathname.split('/').pop()!;
+  // Confirmación: el número de la solicitud como referencia y el aviso de contacto, sin link a la cotización
+  await expect(page.getByRole('heading', { name: 'Solicitud enviada' })).toBeVisible();
+  const folioBox = page.locator('.folio');
+  await expect(folioBox).toContainText('Solicitud N.º');
+  const folio = (await folioBox.locator('b').innerText()).trim();
   expect(folio).toMatch(/^COT-\d{6}$/);
-  expect(statusHref.searchParams.get('t')).toMatch(/^[A-Za-z0-9_-]{43}$/);
   const quoteId = Number(folio.slice(4));
-  await statusLink.click();
-  await expect(page.getByRole('heading', { name: folio, exact: true })).toBeVisible();
-  await expect(page.getByText('Recibida')).toBeVisible();
+  await expect(page.getByText('Te contactaremos por correo o teléfono')).toBeVisible();
+  await expect(page.getByRole('link', { name: /estado de cotización/i })).toHaveCount(0);
+  await expect(page.locator('a[href*="/cotizacion"]')).toHaveCount(0);
+  await page.screenshot({ path: testInfo.outputPath('confirmacion-carrito.png'), fullPage: true });
 
   // ── Admin revisa, previsualiza y envía ──
   await loginAdmin(page);
@@ -130,50 +104,47 @@ test('cliente cotiza, admin previsualiza y envía, cliente descarga el PDF con e
   await expect(page.getByRole('table', { name: 'Revisiones emitidas' })).toContainText(`${folio}.pdf`);
   await page.screenshot({ path: testInfo.outputPath('admin-tras-envio.png'), fullPage: true });
 
-  // ── Correo simulado: PDF adjunto + link con token ──
+  // ── Correo simulado: PDF adjunto, sin link a ninguna página de la cotización ──
   const mail = await waitForFormalMail(CUSTOMER.email, folio);
   const attachment = Buffer.from(mail.attachments![0].content, 'base64');
   expect(mail.attachments![0].filename).toBe(`${folio}.pdf`);
   expect(attachment.subarray(0, 5).toString()).toBe('%PDF-');
-  const portalLink = portalLinkFrom(mail, folio);
+  expect(mail.text).not.toContain('/cotizacion/');
+  expect(mail.text).toContain('responde a este correo');
 
-  // ── Cliente descarga desde el portal con el link del correo ──
-  await page.goto(portalLink);
-  await expect(page.getByRole('heading', { name: folio, exact: true })).toBeVisible();
-  await expect(page.getByText('válida hasta el')).toBeVisible();
-  const [download] = await Promise.all([
-    page.waitForEvent('download'),
-    page.getByRole('link', { name: 'Descargar PDF' }).click(),
-  ]);
-  expect(download.suggestedFilename()).toBe(`${folio}.pdf`);
-  const downloaded = fs.readFileSync((await download.path())!);
-  expect(sha256(downloaded)).toBe(sha256(attachment));
-  await testInfo.attach(`${folio}.pdf`, { body: downloaded, contentType: 'application/pdf' });
-  await page.screenshot({ path: testInfo.outputPath('portal-con-token.png'), fullPage: true });
+  // ── El admin sigue descargando el PDF emitido, igual que antes ──
+  const adminPdf = await page.request.get(`/api/admin/quotes/${quoteId}/revisions/0/pdf`);
+  expect(adminPdf.status()).toBe(200);
+  expect(sha256(await adminPdf.body())).toBe(sha256(attachment));
+  await testInfo.attach(`${folio}.pdf`, { body: attachment, contentType: 'application/pdf' });
 
-  // Sin token el portal no muestra la cotización: pide abrir el link del correo
-  await page.goto(`/cotizacion/${folio}`);
-  await expect(page.getByText('Abre el link que te enviamos por correo.')).toBeVisible();
-  await expect(page.getByRole('heading', { name: folio, exact: true })).toHaveCount(0);
-  await expect(page.getByRole('link', { name: 'Descargar PDF' })).toHaveCount(0);
+  // ── El cliente no puede ver, descargar ni responder la cotización ──
+  const anon = await context.browser()!.newContext({ baseURL: new URL(page.url()).origin });
+  try {
+    for (const url of [`/api/portal/quotes/${folio}`, `/api/portal/quotes/${folio}/pdf`, `/api/quotes/${quoteId}`]) {
+      expect((await anon.request.get(url)).status(), url).toBe(404);
+    }
+    expect((await anon.request.post(`/api/portal/quotes/${folio}/respond`, { data: { action: 'ACCEPT' } })).status()).toBe(404);
+    expect((await anon.request.get(`/api/admin/quotes/${quoteId}/revisions/0/pdf`)).status()).toBe(401);
 
-  // ── Sin token, con uno inválido o con el de otra cotización: 404 ──
-  const token = new URL(portalLink).searchParams.get('t')!;
-  const otherToken = await createAndSendOtherQuote(page.request);
-  expect(otherToken).not.toBe(token);
-  const pdfUrl = `/api/portal/quotes/${folio}/pdf`;
-  expect((await page.request.get(pdfUrl)).status()).toBe(404);
-  expect((await page.request.get(`${pdfUrl}?t=token-inventado`)).status()).toBe(404);
-  expect((await page.request.get(`${pdfUrl}?t=${otherToken}`)).status()).toBe(404);
-  expect((await page.request.get(`${pdfUrl}?t=${token}`)).status()).toBe(200);
-  for (const t of ['', '?t=token-inventado', `?t=${otherToken}`]) {
-    expect((await page.request.get(`/api/portal/quotes/${folio}${t}`)).status()).toBe(404);
+    // La ruta vieja muestra la página simple, sin datos de la cotización, con o sin token
+    const oldPage = await anon.newPage();
+    for (const route of [`/cotizacion/${folio}?t=cualquier-token`, `/cotizacion/${folio}`, '/cotizacion']) {
+      await oldPage.goto(route);
+      await expect(oldPage.getByRole('heading', { name: 'Te contactaremos por correo o teléfono' })).toBeVisible();
+      await expect(oldPage.getByText(folio)).toHaveCount(0);
+      await expect(oldPage.getByText(CUSTOMER.name)).toHaveCount(0);
+      await expect(oldPage.getByRole('link', { name: 'Descargar PDF' })).toHaveCount(0);
+      await expect(oldPage.getByRole('button', { name: /Aceptar|Rechazar/ })).toHaveCount(0);
+    }
+    await oldPage.goto(`/cotizacion/${folio}?t=cualquier-token`);
+    await oldPage.screenshot({ path: testInfo.outputPath('ruta-vieja.png'), fullPage: true });
+  } finally {
+    await anon.close();
   }
 
-  // ── El cliente acepta con el link del correo ──
-  await page.goto(portalLink);
-  await page.getByRole('button', { name: 'Aceptar cotización' }).click();
-  await expect(page.getByText('¡Cotización aceptada!')).toBeVisible();
-  const accepted = await (await page.request.get(`/api/admin/quotes/${quoteId}`)).json();
-  expect(accepted.status).toBe('ACCEPTED');
+  // ── El admin sigue cambiando el estado a mano ──
+  const accepted = await page.request.patch(`/api/admin/quotes/${quoteId}`, { data: { status: 'ACCEPTED' } });
+  expect(accepted.status()).toBe(200);
+  expect((await (await page.request.get(`/api/admin/quotes/${quoteId}`)).json()).status).toBe('ACCEPTED');
 });

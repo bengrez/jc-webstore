@@ -24,7 +24,6 @@ import {
   sha256Hex,
   writeRevisionPdf,
 } from '../lib/quote-storage.js'
-import { generatePublicToken } from '../lib/quote-token.js'
 import { portalUrl } from '../lib/site.js'
 import {
   clearAdminSessionCookie,
@@ -648,8 +647,6 @@ adminRouter.get('/quotes/:id/pdf-preview', async (req, res) => {
   })
   const pdf = await renderQuotePdf(document, {
     siteUrl: env.PUBLIC_SITE_URL,
-    // El PDF lo lee el cliente: su link al portal lleva el token, que el portal exige
-    portalUrl: portalUrl(document.folio, quote.publicToken),
     preview: true,
   })
 
@@ -704,19 +701,7 @@ adminRouter.post('/quotes/:id/send-quote', async (req, res) => {
   const issuedAt = new Date()
   const document = buildQuoteDocument(quote, { rev, quotedAt: issuedAt, priceOverrides, adminMessage })
 
-  // El token se persiste antes de enviar para que el link del correo siempre funcione.
-  // Cotizaciones anteriores a la migración no tienen token: se asigna sólo si sigue vacío
-  // y se relee, para que dos envíos simultáneos usen el mismo.
-  let publicToken = quote.publicToken
-  if (!publicToken) {
-    await prisma.quote.updateMany({ where: { id, publicToken: null }, data: { publicToken: generatePublicToken() } })
-    publicToken = (await prisma.quote.findUniqueOrThrow({ where: { id }, select: { publicToken: true } })).publicToken!
-  }
-
-  const pdfBuffer = await renderQuotePdf(document, {
-    siteUrl: env.PUBLIC_SITE_URL,
-    portalUrl: portalUrl(document.folio, publicToken),
-  })
+  const pdfBuffer = await renderQuotePdf(document, { siteUrl: env.PUBLIC_SITE_URL })
   const fileName = revisionFileName(document.folio, rev)
 
   try {
@@ -740,7 +725,6 @@ adminRouter.post('/quotes/:id/send-quote', async (req, res) => {
       adminMessage,
       ...document.totals,
       validUntil: document.validUntil,
-      publicToken,
       pdfBuffer,
       pdfFileName: fileName,
     })

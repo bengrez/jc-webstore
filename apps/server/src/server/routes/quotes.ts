@@ -178,7 +178,6 @@ quotesRouter.post('/', async (req, res) => {
     quoteId: quote.id,
     customerName: quote.customerName,
     customerEmail: quote.customerEmail,
-    publicToken: quote.publicToken!,
     subtotal: quote.subtotal,
     itemCount: quote.items.length,
   }).catch((error) => {
@@ -188,8 +187,6 @@ quotesRouter.post('/', async (req, res) => {
   res.status(201).json({
     id: quote.id,
     folio: formatQuoteFolio(quote.id),
-    // Quien crea la cotización recibe su token: el portal lo exige para verla
-    token: quote.publicToken,
     status: quote.status,
     emailSent,
   })

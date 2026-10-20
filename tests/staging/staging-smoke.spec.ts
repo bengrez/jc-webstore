@@ -71,9 +71,9 @@ test('staging: documentos legales, cotización con logo, envío formal en outbox
   await capture(page, 'staging-carrito-checkbox', testInfo);
   await page.getByRole('button', { name: 'Enviar solicitud' }).click();
 
-  const statusLink = page.getByRole('link', { name: 'Ver estado de cotización' });
-  await expect(statusLink).toBeVisible();
-  const folio = new URL((await statusLink.getAttribute('href'))!, 'http://x').pathname.split('/').pop()!;
+  await expect(page.getByRole('heading', { name: 'Solicitud enviada' })).toBeVisible();
+  const folio = (await page.locator('.folio b').innerText()).trim();
+  expect(folio).toMatch(/^COT-\d{6}$/);
   const quoteId = Number(folio.slice(4));
 
   // ── Admin envía la cotización formal ──
@@ -91,21 +91,15 @@ test('staging: documentos legales, cotización con logo, envío formal en outbox
   await expect(page.getByRole('status')).toContainText(`Enviada a ${email}`, { timeout: 60_000 });
   expect(fs.existsSync(path.join(QUOTES_DIR, `${folio}.pdf`)), 'PDF en la carpeta de staging').toBe(true);
 
-  // ── Correo outbox → portal → descarga y aceptación ──
+  // ── Correo outbox: PDF adjunto y sin link a ninguna página de la cotización ──
   await expect.poll(() => formalMail(email, folio), { timeout: 15_000 }).toBeTruthy();
   const mail = formalMail(email, folio)!;
-  const link = mail.text.match(new RegExp(`https?://\\S+/cotizacion/${folio}\\?t=[A-Za-z0-9_-]+`))?.[0];
-  expect(link, 'link del portal con token en el correo').toBeTruthy();
-  const portal = new URL(link!);
-  await page.goto(`${portal.pathname}${portal.search}`);
-  const [download] = await Promise.all([
-    page.waitForEvent('download'),
-    page.getByRole('link', { name: 'Descargar PDF' }).click(),
-  ]);
+  expect(mail.text).not.toContain('/cotizacion/');
   const attachment = Buffer.from(mail.attachments![0].content, 'base64');
-  expect(sha256(fs.readFileSync((await download.path())!))).toBe(sha256(attachment));
-  await page.getByRole('button', { name: 'Aceptar cotización' }).click();
-  await expect(page.getByText('¡Cotización aceptada!')).toBeVisible();
+  expect(sha256(fs.readFileSync(path.join(QUOTES_DIR, `${folio}.pdf`)))).toBe(sha256(attachment));
+  // La ruta vieja no muestra la cotización
+  await page.goto(`/cotizacion/${folio}`);
+  await expect(page.getByRole('heading', { name: 'Te contactaremos por correo o teléfono' })).toBeVisible();
 
   // ── Contacto con aceptación ──
   await page.goto('/contacto');

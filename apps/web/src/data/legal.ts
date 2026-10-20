@@ -1,8 +1,8 @@
 // Versión del aviso de privacidad y de los términos de la cotización. Debe coincidir con
 // apps/server/src/server/lib/legal.ts (lo comprueba apps/server/test/legal.test.ts): cada
 // cotización y cada mensaje guardan la versión que aceptó quien los envió.
-export const LEGAL_VERSION = '2026-10-08-borrador'
-export const LEGAL_UPDATED_AT = '8 de octubre de 2026'
+export const LEGAL_VERSION = '2026-10-20-borrador'
+export const LEGAL_UPDATED_AT = '20 de octubre de 2026'
 
 export const PRIVACY_PATH = '/privacidad'
 export const TERMS_PATH = '/terminos'

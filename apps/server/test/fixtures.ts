@@ -40,5 +40,4 @@ export const makeDocument = (lines: QuoteDocumentLine[], overrides: Partial<Quot
 
 export const renderOptions = {
   siteUrl: 'https://tienda.test',
-  portalUrl: 'https://tienda.test/cotizacion/COT-000042',
 }

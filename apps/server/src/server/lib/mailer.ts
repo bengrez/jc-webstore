@@ -6,7 +6,6 @@ import type { SendMailOptions } from 'nodemailer'
 import { env } from '../../lib/env.js'
 import { formatClp } from './currency.js'
 import { formatQuoteFolio } from './quote-folio.js'
-import { portalUrl } from './site.js'
 
 type ConfigEntry = { label: string; type: string; value: string }
 
@@ -120,7 +119,6 @@ export const sendQuoteConfirmationToCustomer = async (input: {
   quoteId: number
   customerName: string
   customerEmail: string
-  publicToken: string
   subtotal: number
   itemCount: number
 }) => {
@@ -138,8 +136,7 @@ export const sendQuoteConfirmationToCustomer = async (input: {
     '',
     'Nuestro equipo revisará tu pedido y te contactaremos dentro de 24 horas hábiles.',
     '',
-    `Puedes consultar el estado de tu cotización en cualquier momento:`,
-    portalUrl(folio, input.publicToken),
+    `Tu número de solicitud es ${folio}. Guárdalo como referencia si quieres consultarnos por ella.`,
     '',
     'Gracias por confiar en Confecciones Juany Reyes.',
     '— Equipo Confecciones Juany Reyes',
@@ -167,14 +164,12 @@ export const sendFormalQuoteToCustomer = async (input: {
   ivaAmount: number
   totalAmount: number
   validUntil: Date
-  publicToken: string
   pdfBuffer: Buffer
   pdfFileName: string
 }) => {
   const transporter = getTransport()
   if (!transporter) throw new MailNotConfiguredError()
 
-  const link = portalUrl(input.folio, input.publicToken)
   const validUntil = input.validUntil.toLocaleDateString('es-CL', {
     year: 'numeric',
     month: 'long',
@@ -196,8 +191,7 @@ export const sendFormalQuoteToCustomer = async (input: {
     `Total: ${formatClp(input.totalAmount)}`,
     `Válida hasta el ${validUntil}.`,
     '',
-    'Adjuntamos el PDF. También puedes descargarlo y aceptar o rechazar la cotización en:',
-    link,
+    'Adjuntamos el PDF. Para aceptar o rechazar la cotización, responde a este correo o contáctanos.',
     '',
     'Gracias por confiar en Confecciones Juany Reyes.',
     '— Equipo Confecciones Juany Reyes',
@@ -219,29 +213,6 @@ export const sendFormalQuoteToCustomer = async (input: {
       },
     ],
   })
-}
-
-export const sendCustomerResponseNotification = async (input: {
-  quoteId: number
-  customerName: string
-  action: 'ACCEPTED' | 'REJECTED'
-}) => {
-  const transporter = getTransport()
-  if (!transporter) return false
-
-  const to = adminInbox()
-  const from = senderAddress()
-  const folio = formatQuoteFolio(input.quoteId)
-  const verb = input.action === 'ACCEPTED' ? 'ACEPTÓ' : 'RECHAZÓ'
-
-  await transporter.sendMail({
-    to,
-    from,
-    subject: `${input.customerName} ${verb} la cotización ${folio}`,
-    text: `${input.customerName} ha ${input.action === 'ACCEPTED' ? 'aceptado' : 'rechazado'} la cotización ${folio}.`,
-  })
-
-  return true
 }
 
 type ContactEmailInput = {

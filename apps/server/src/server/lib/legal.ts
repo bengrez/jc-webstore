@@ -3,7 +3,7 @@ import { z } from 'zod'
 // Versión vigente del aviso de privacidad y los términos de cotización. Debe coincidir con
 // apps/web/src/data/legal.ts (lo comprueba test/legal.test.ts). Al cambiar el texto de los documentos
 // se cambia la versión, y cada cotización o mensaje guarda la que aceptó quien lo envió.
-export const LEGAL_VERSION = '2026-10-08-borrador'
+export const LEGAL_VERSION = '2026-10-20-borrador'
 
 const legalAcceptanceSchema = z.object({
   accepted: z.literal(true),

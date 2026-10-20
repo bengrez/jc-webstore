@@ -35,7 +35,7 @@ const FieldError = ({ id, message }: { id: string; message?: string }) =>
 const CartPage = () => {
   const { items, total, updateQuantity, removeItem, restoreItem, replaceItem, clearCart } = useCart()
   const [form, setForm] = useState(initialFormState)
-  const [submitted, setSubmitted] = useState<null | { folio: string; token: string; emailSent: boolean }>(null)
+  const [submitted, setSubmitted] = useState<null | { folio: string; emailSent: boolean }>(null)
   const [submitting, setSubmitting] = useState(false)
   const [status, setStatus] = useState<null | { type: 'success' | 'error'; message: string }>(
     null
@@ -209,9 +209,9 @@ const CartPage = () => {
         return
       }
 
-      const payload = (await response.json()) as { folio: string; token: string; emailSent: boolean }
+      const payload = (await response.json()) as { folio: string; emailSent: boolean }
 
-      setSubmitted({ folio: payload.folio, token: payload.token, emailSent: payload.emailSent })
+      setSubmitted({ folio: payload.folio, emailSent: payload.emailSent })
       setStatus({ type: 'success', message: '¡Solicitud enviada!' })
       clearCart()
       setForm(initialFormState)
@@ -235,13 +235,16 @@ const CartPage = () => {
           </span>
           <h1 className="t-h1">Solicitud enviada</h1>
           <p className="t-lead">
-            Gracias por confiar en Confecciones Juany Reyes. Responderemos dentro de {RESPONSE_TIME} con tu
-            cotización final.
+            Gracias por confiar en Confecciones Juany Reyes. Te contactaremos por correo o teléfono dentro de{' '}
+            {RESPONSE_TIME} con tu cotización final.
           </p>
           <div className="folio" style={{ width: '100%' }}>
-            <span className="t-small c-ink2">Folio de tu solicitud</span>
+            <span className="t-small c-ink2">Solicitud N.º</span>
             <b>{submitted.folio}</b>
           </div>
+          <p className="t-small c-ink2" style={{ margin: 0 }}>
+            Guarda este número como referencia: te servirá si quieres consultarnos por tu solicitud.
+          </p>
           {!submitted.emailSent && (
             <p className="hint" role="status">
               Registramos tu solicitud, pero no pudimos enviar el correo automático. Si no recibes respuesta
@@ -255,13 +258,7 @@ const CartPage = () => {
             </figcaption>
           </figure>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 8 }}>
-            <Link
-              to={`/cotizacion/${submitted.folio}?t=${encodeURIComponent(submitted.token)}`}
-              className="btn btn-primary btn-lg"
-            >
-              Ver estado de cotización
-            </Link>
-            <Link to="/catalogo" className="btn btn-secondary btn-lg">
+            <Link to="/catalogo" className="btn btn-primary btn-lg">
               Volver al catálogo
             </Link>
           </div>

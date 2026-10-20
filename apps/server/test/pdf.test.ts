@@ -21,7 +21,9 @@ describe('renderQuotePdf', () => {
     expect(compact).toContain('$144.324')
     expect(compact).toContain('$903.924')
     expect(compact).toContain('IVA(19%)')
-    expect(text).toContain('https://tienda.test/cotizacion/COT-000042')
+    // Sin portal: el PDF no remite a ningún link de cotización
+    expect(text).not.toContain('/cotizacion/')
+    expect(text).toContain('responde al correo con que la recibiste')
   })
 
   it('renderiza las opciones COLOR, TEXT y FILE de cada ítem', async () => {

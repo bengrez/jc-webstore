@@ -37,8 +37,8 @@ const TermsPage = () => {
         <p>
           Los precios del catálogo son precios base («desde»): el precio final depende de la cantidad y la
           personalización y se fija en la cotización formal. Al enviar el carrito nos pides una
-          cotización; no es una compra. La cotización formal es el documento PDF con folio que te enviamos por correo y
-          que puedes descargar desde el enlace de tu cotización. Si emitimos una revisión, la última reemplaza a las
+          cotización; no es una compra. La cotización formal es el documento PDF con folio que te enviamos por correo.
+          Si emitimos una revisión, la última reemplaza a las
           anteriores.
         </p>
       </section>
@@ -69,7 +69,7 @@ const TermsPage = () => {
         <h2>4. La cotización no es una venta</h2>
         <p>
           Ni la solicitud ni la cotización obligan a comprar ni a vender. El pedido se confirma cuando aceptas la
-          cotización vigente (con el botón «Aceptar cotización» del enlace que te enviamos, o por escrito){' '}
+          cotización vigente por escrito (por ejemplo, respondiendo el correo con que la recibiste){' '}
           <Pending>[POR DEFINIR CON LA CLIENTA: y pagas el anticipo]</Pending>.
         </p>
       </section>
