@@ -55,9 +55,7 @@ const createQuote = async () => {
   expect(response.status).toBe(201)
   const body = (await response.json()) as { id: number; folio: string }
   const items = await prisma.quoteItem.findMany({ where: { quoteId: body.id }, orderBy: { id: 'asc' } })
-  // El token ya no sale de la API pública; el panel de administración sigue mostrando el link
-  const { publicToken } = await prisma.quote.findUniqueOrThrow({ where: { id: body.id } })
-  return { ...body, items, token: publicToken! }
+  return { ...body, items }
 }
 
 const sendQuote = (quoteId: number, items: Array<{ id: number }>, price = 20000, adminMessage = 'Mensaje de prueba') =>
@@ -129,7 +127,7 @@ const storedFiles = (folio: string) =>
   fs.existsSync(getQuotesStorageDir()) ? fs.readdirSync(getQuotesStorageDir()).filter((f) => f.startsWith(folio)) : []
 
 describe('envío de la cotización formal', () => {
-  it('crea la cotización con su número y sin entregar al cliente token ni link a la cotización', async () => {
+  it('crea la cotización con su número y sin token ni link a la cotización', async () => {
     const response = await api('/api/quotes', {
       method: 'POST',
       json: {
@@ -142,8 +140,9 @@ describe('envío de la cotización formal', () => {
     const body = await response.json()
     expect(Object.keys(body).sort()).toEqual(['emailSent', 'folio', 'id', 'status'])
     expect(body.folio).toMatch(/^COT-\d{6}$/)
+    // La cotización ya no guarda ningún token de acceso
     const row = await prisma.quote.findUniqueOrThrow({ where: { id: body.id } })
-    expect(JSON.stringify(body)).not.toContain(row.publicToken!)
+    expect(row).not.toHaveProperty('publicToken')
 
     // El correo de confirmación trae el número y ningún link a la cotización
     const confirmation = sendMail.mock.calls
@@ -151,7 +150,6 @@ describe('envío de la cotización formal', () => {
       .find((mail) => mail.to === 'ana@example.com' && String(mail.subject).includes(body.folio))
     expect(confirmation.text).toContain(`Tu número de solicitud es ${body.folio}`)
     expect(confirmation.text).not.toContain('/cotizacion/')
-    expect(confirmation.text).not.toContain(row.publicToken!)
   })
 
   it('guarda el subtotal referencial de la solicitud y lo conserva al enviar', async () => {
@@ -233,11 +231,9 @@ describe('envío de la cotización formal', () => {
 
     // El correo lleva el PDF adjunto y ningún link a la cotización
     const mail = formalMails()[0]
-    const token = quote.token
     expect(mail.to).toBe('ana@example.com')
     expect(mail.attachments[0].filename).toBe(`${quote.folio}.pdf`)
     expect(mail.text).not.toContain('/cotizacion/')
-    expect(mail.text).not.toContain(token)
     expect(mail.text).toContain('responde a este correo')
 
     const rev0Path = path.join(getQuotesStorageDir(), `${quote.folio}.pdf`)
@@ -254,11 +250,10 @@ describe('envío de la cotización formal', () => {
       `${quote.folio}-rev2.pdf`,
       `${quote.folio}.pdf`,
     ])
-    // El PDF ya no remite a ningún portal: ni link ni token
+    // El PDF ya no remite a ningún portal
     const rev0Text = await extractPdfText(fs.readFileSync(rev0Path))
     expect(rev0Text.links.some((link: string) => link.includes('/cotizacion/'))).toBe(false)
     expect(rev0Text.text).not.toContain('/cotizacion/')
-    expect(rev0Text.text).not.toContain(token)
 
     // La emisión original no se tocó
     expect(sha256Hex(fs.readFileSync(rev0Path))).toBe(rev0Sha)
@@ -346,17 +341,20 @@ describe('vista previa del admin', () => {
 })
 
 describe('sin portal público de cotizaciones', () => {
+  // Aunque alguien conserve un link viejo con token, no hay ruta que lo use
+  const FAKE_TOKEN = 'token-de-un-correo-antiguo'
+
   it('ninguna ruta pública expone una cotización por folio y token', async () => {
     const quote = await createQuote()
     expect((await sendQuote(quote.id, quote.items)).status).toBe(200)
 
     const portalPaths = [
       `/api/portal/quotes/${quote.folio}`,
-      `/api/portal/quotes/${quote.folio}?t=${quote.token}`,
-      `/api/portal/quotes/${quote.folio}/pdf?t=${quote.token}`,
+      `/api/portal/quotes/${quote.folio}?t=${FAKE_TOKEN}`,
+      `/api/portal/quotes/${quote.folio}/pdf?t=${FAKE_TOKEN}`,
       `/api/portal/quotes/${quote.folio}/pdf`,
       `/api/quotes/${quote.id}`,
-      `/api/quotes/${quote.folio}?t=${quote.token}`,
+      `/api/quotes/${quote.folio}?t=${FAKE_TOKEN}`,
     ]
     for (const pathname of portalPaths) {
       const response = await api(pathname)
@@ -375,7 +373,7 @@ describe('sin portal público de cotizaciones', () => {
     for (const action of ['ACCEPT', 'REJECT']) {
       const response = await api(`/api/portal/quotes/${quote.folio}/respond`, {
         method: 'POST',
-        json: { action, token: quote.token },
+        json: { action, token: FAKE_TOKEN },
       })
       expect(response.status).toBe(404)
     }

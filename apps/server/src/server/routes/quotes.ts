@@ -6,7 +6,6 @@ import { prisma } from '../../lib/prisma.js'
 import { sendQuoteNotificationEmail, sendQuoteConfirmationToCustomer } from '../lib/mailer.js'
 import { formatAvailabilityLabel } from '../lib/product.js'
 import { formatQuoteFolio } from '../lib/quote-folio.js'
-import { generatePublicToken } from '../lib/quote-token.js'
 import { checkLegalAcceptance } from '../lib/legal.js'
 
 export const quotesRouter = Router()
@@ -117,7 +116,6 @@ quotesRouter.post('/', async (req, res) => {
         subtotal,
         referenceSubtotal: subtotal,
         status: 'NEW',
-        publicToken: generatePublicToken(),
         legalAcceptedAt: legal.acceptedAt,
         legalVersion: legal.version,
         items: {

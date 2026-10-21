@@ -74,6 +74,10 @@ test('cliente cotiza y ve su número, admin previsualiza y envía, el cliente ya
   await loginAdmin(page);
   await page.goto(`/admin/quotes/${quoteId}`);
   await expect(page.getByRole('heading', { name: folio, exact: true })).toBeVisible();
+  // El detalle ya no ofrece link del cliente ni notas visibles para el cliente
+  await expect(page.getByText(/Link personal del cliente/)).toHaveCount(0);
+  await expect(page.getByLabel(/Visible para el cliente/)).toHaveCount(0);
+  await expect(page.getByLabel('Nueva nota')).toBeVisible();
   await page.getByRole('table', { name: 'Items de la cotización' }).getByRole('spinbutton').fill('17990');
   await page.getByLabel('Mensaje al cliente (opcional)').fill('Incluye el bordado del texto.');
 
