@@ -450,34 +450,29 @@ describe('detalle de admin y notas', () => {
     expect(body.quotedAt).toBeTruthy()
     expect(body.items.map((item: { quotedUnitPrice: number }) => item.quotedUnitPrice)).toEqual([19990, 19990])
     expect(body.revisions).toHaveLength(1)
-    expect(body.customerPortalUrl).toMatch(new RegExp(`/cotizacion/${quote.folio}\\?t=`))
+    expect(body).not.toHaveProperty('customerPortalUrl')
   })
 
-  it('el link personal del cliente está disponible antes de la emisión formal', async () => {
+  it('el detalle ya no trae link del cliente', async () => {
     const quote = await createQuote()
     const body = await (await api(`/api/admin/quotes/${quote.id}`, { admin: true })).json()
-    expect(body.customerPortalUrl).toBe(`https://tienda.test/cotizacion/${quote.folio}?t=${quote.token}`)
+    expect(body).not.toHaveProperty('customerPortalUrl')
+    expect(JSON.stringify(body)).not.toContain('/cotizacion/')
   })
 
-  it('las notas guardan su visibilidad y el admin las ve todas', async () => {
+  it('las notas internas se guardan y se listan sin visibilidad para el cliente', async () => {
     const quote = await createQuote()
-    const pub = await api(`/api/admin/quotes/${quote.id}/notes`, {
+    const created = await api(`/api/admin/quotes/${quote.id}/notes`, {
       method: 'POST',
       admin: true,
-      json: { body: 'Ya estamos bordando', isPublic: true },
+      json: { body: 'Ya estamos bordando' },
     })
-    expect(await pub.json()).toMatchObject({ isPublic: true })
-    await api(`/api/admin/quotes/${quote.id}/notes`, {
-      method: 'POST',
-      admin: true,
-      json: { body: 'Nota interna' },
-    })
+    expect(created.status).toBe(201)
+    expect(Object.keys(await created.json()).sort()).toEqual(['authorEmail', 'body', 'createdAt', 'id'])
 
     const detail = await (await api(`/api/admin/quotes/${quote.id}`, { admin: true })).json()
-    expect(detail.notes.map((n: { body: string; isPublic: boolean }) => [n.body, n.isPublic]).sort()).toEqual([
-      ['Nota interna', false],
-      ['Ya estamos bordando', true],
-    ])
+    expect(detail.notes.map((n: { body: string }) => n.body)).toEqual(['Ya estamos bordando'])
+    expect(detail.notes[0]).not.toHaveProperty('isPublic')
   })
 })
 

@@ -60,11 +60,9 @@ type QuoteDetail = {
   notes: Array<{
     id: number
     body: string
-    isPublic: boolean
     createdAt: string
     authorEmail: string
   }>
-  customerPortalUrl: string | null
   revisions: Array<{
     rev: number
     fileName: string
@@ -90,7 +88,6 @@ const AdminQuoteDetailPage = () => {
   const [quote, setQuote] = useState<QuoteDetail | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [noteBody, setNoteBody] = useState('')
-  const [notePublic, setNotePublic] = useState(false)
   const [saving, setSaving] = useState(false)
 
   // Send quote state
@@ -145,11 +142,10 @@ const AdminQuoteDetailPage = () => {
     try {
       const created = await adminFetch<QuoteDetail['notes'][number]>(
         `/api/admin/quotes/${quote.id}/notes`,
-        { method: 'POST', json: { body: noteBody, isPublic: notePublic } }
+        { method: 'POST', json: { body: noteBody } }
       )
       setQuote((prev) => (prev ? { ...prev, notes: [created, ...prev.notes] } : prev))
       setNoteBody('')
-      setNotePublic(false)
     } finally {
       setSaving(false)
     }
@@ -423,15 +419,6 @@ const AdminQuoteDetailPage = () => {
           </p>
         )}
 
-        {quote.customerPortalUrl && (
-          <p style={{ fontSize: '0.85rem', marginTop: 4, overflowWrap: 'anywhere' }}>
-            <strong>Link personal del cliente (ver, responder y descargar):</strong>{' '}
-            <a href={quote.customerPortalUrl} target="_blank" rel="noopener noreferrer" className="link">
-              {quote.customerPortalUrl}
-            </a>
-          </p>
-        )}
-
         {quote.revisions.length > 0 && (
           <>
             <h3>Emisiones</h3>
@@ -480,14 +467,6 @@ const AdminQuoteDetailPage = () => {
             onChange={(event) => setNoteBody(event.target.value)}
             required
           />
-          <label className="admin-form__checkbox">
-            <input
-              type="checkbox"
-              checked={notePublic}
-              onChange={(event) => setNotePublic(event.target.checked)}
-            />
-            Visible para el cliente en el portal
-          </label>
           <button type="submit" className="button button--accent" disabled={saving}>
             Agregar nota
           </button>
@@ -499,10 +478,7 @@ const AdminQuoteDetailPage = () => {
           <div className="admin-grid">
             {quote.notes.map((note) => (
               <div key={note.id} style={{ paddingTop: 10, borderTop: '1px solid var(--color-divider)' }}>
-                <div style={{ fontWeight: 600 }}>
-                  {note.authorEmail}{' '}
-                  {note.isPublic && <span className="admin-badge admin-badge--active">Visible al cliente</span>}
-                </div>
+                <div style={{ fontWeight: 600 }}>{note.authorEmail}</div>
                 <div style={{ color: 'var(--color-muted)', fontSize: '0.9rem' }}>
                   {new Date(note.createdAt).toLocaleString('es-CL')}
                 </div>

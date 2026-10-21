@@ -24,7 +24,6 @@ import {
   sha256Hex,
   writeRevisionPdf,
 } from '../lib/quote-storage.js'
-import { portalUrl } from '../lib/site.js'
 import {
   clearAdminSessionCookie,
   createAdminSessionToken,
@@ -414,9 +413,6 @@ adminRouter.get('/quotes/:id', async (req, res) => {
     legalVersion: quote.legalVersion,
     createdAt: quote.createdAt,
     updatedAt: quote.updatedAt,
-    // Link con token para compartir con el cliente; sólo existe tras la primera emisión
-    // Link personal del cliente (con token): el admin puede reenviarlo aunque aún no haya emisión formal
-    customerPortalUrl: quote.publicToken ? portalUrl(folio, quote.publicToken) : null,
     revisions: quote.revisions.map((revision) => ({
       rev: revision.rev,
       fileName: revision.filePath,
@@ -456,7 +452,6 @@ adminRouter.get('/quotes/:id', async (req, res) => {
     notes: quote.notes.map((note) => ({
       id: note.id,
       body: note.body,
-      isPublic: note.isPublic,
       createdAt: note.createdAt,
       authorEmail: note.adminUser.email,
     })),
@@ -524,8 +519,6 @@ adminRouter.post('/quotes/:id/notes', async (req, res) => {
   const parsed = z
     .object({
       body: z.string().trim().min(1),
-      // Las notas públicas se muestran al cliente en el portal
-      isPublic: z.boolean().default(false),
     })
     .safeParse(req.body)
 
@@ -538,7 +531,6 @@ adminRouter.post('/quotes/:id/notes', async (req, res) => {
       quoteId: id,
       adminUserId: req.adminUserId!,
       body: parsed.data.body,
-      isPublic: parsed.data.isPublic,
     },
     include: {
       adminUser: { select: { email: true } },
@@ -548,7 +540,6 @@ adminRouter.post('/quotes/:id/notes', async (req, res) => {
   res.status(201).json({
     id: created.id,
     body: created.body,
-    isPublic: created.isPublic,
     createdAt: created.createdAt,
     authorEmail: created.adminUser.email,
   })
