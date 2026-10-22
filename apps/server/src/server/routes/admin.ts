@@ -12,6 +12,12 @@ import {
 import { env } from '../../lib/env.js'
 import { formatQuoteFolio } from '../lib/quote-folio.js'
 import { LOCAL_IMAGE_MESSAGE, LOCAL_IMAGE_PATTERN } from '../lib/product-images.js'
+import {
+  PRODUCT_FIELD_LABELS,
+  PRODUCT_MESSAGES,
+  validateProductInput,
+  type ProductField,
+} from '../../shared/product-rules.js'
 import { renderQuotePdf } from '../lib/pdf.js'
 import { MailNotConfiguredError, sendFormalQuoteToCustomer } from '../lib/mailer.js'
 import { buildQuoteDocument, quoteDocumentInclude } from '../lib/quote-document.js'
@@ -125,11 +131,34 @@ const productInputSchema = z.object({
   isActive: z.boolean().optional(),
 })
 
-adminRouter.post('/products', async (req, res) => {
-  const parsed = productInputSchema.safeParse(req.body)
+// Misma validación que hace el formulario web antes de enviar (shared/product-rules.ts). Si algo
+// falla se responde un mensaje por campo en `fieldErrors`, nunca sólo «datos inválidos».
+const parseProductBody = (body: unknown): { ok: true; data: z.infer<typeof productInputSchema> } | { ok: false; payload: object } => {
+  const fieldErrors = validateProductInput(body)
+  const parsed = productInputSchema.safeParse(body)
+  if (Object.keys(fieldErrors).length === 0 && parsed.success) return { ok: true, data: parsed.data }
+
+  // Si las reglas compartidas pasan pero zod no (tipo inesperado), se marca el campo con un aviso general
   if (!parsed.success) {
-    return res.status(400).json({ error: 'validation_error', details: parsed.error.flatten() })
+    for (const issue of parsed.error.issues) {
+      const field = issue.path[0] as ProductField | undefined
+      if (field && PRODUCT_FIELD_LABELS[field] && !fieldErrors[field]) fieldErrors[field] = PRODUCT_MESSAGES.fallback
+    }
   }
+  const labels = Object.keys(fieldErrors).map((field) => PRODUCT_FIELD_LABELS[field as ProductField] ?? field)
+  return {
+    ok: false,
+    payload: {
+      error: 'validation_error',
+      message: labels.length ? `Revisa estos datos: ${labels.join(', ')}.` : 'Revisa los datos del producto.',
+      fieldErrors,
+    },
+  }
+}
+
+adminRouter.post('/products', async (req, res) => {
+  const parsed = parseProductBody(req.body)
+  if (!parsed.ok) return res.status(400).json(parsed.payload)
 
   const availability = availabilityLabelToEnum(parsed.data.availability)
   if (!availability) {
@@ -161,10 +190,8 @@ adminRouter.post('/products', async (req, res) => {
 })
 
 adminRouter.put('/products/:id', async (req, res) => {
-  const parsed = productInputSchema.safeParse(req.body)
-  if (!parsed.success) {
-    return res.status(400).json({ error: 'validation_error', details: parsed.error.flatten() })
-  }
+  const parsed = parseProductBody(req.body)
+  if (!parsed.ok) return res.status(400).json(parsed.payload)
 
   const availability = availabilityLabelToEnum(parsed.data.availability)
   if (!availability) {

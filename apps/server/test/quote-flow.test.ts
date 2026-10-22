@@ -474,6 +474,64 @@ describe('detalle de admin y notas', () => {
   })
 })
 
+describe('validación del formulario de producto', () => {
+  const validProduct = {
+    name: 'Producto validación',
+    description: 'Prueba',
+    category: 'graduaciones',
+    price: 1000,
+    images: ['/uploads/a.png'],
+    tags: ['t'],
+    specs: ['s'],
+    personalization: 'p',
+    minOrder: 'MOQ 1',
+    leadTime: '1 día',
+    availability: 'Disponible',
+    sampleEligible: false,
+  }
+  const send = (method: 'POST' | 'PUT', json: unknown, id = 'test-polera') =>
+    api(method === 'POST' ? '/api/admin/products' : `/api/admin/products/${id}`, { method, admin: true, json })
+
+  it('sin foto responde 400 con el motivo en el campo de la foto', async () => {
+    const response = await send('POST', { ...validProduct, images: [] })
+    expect(response.status).toBe(400)
+    const body = await response.json()
+    expect(body.error).toBe('validation_error')
+    expect(body.fieldErrors).toEqual({ images: 'Sube al menos una foto del producto.' })
+    expect(body.message).toBe('Revisa estos datos: Foto.')
+  })
+
+  it('el cuerpo vacío devuelve un mensaje por cada campo obligatorio, al crear y al editar', async () => {
+    for (const method of ['POST', 'PUT'] as const) {
+      const response = await send(method, {})
+      expect(response.status).toBe(400)
+      const { fieldErrors } = await response.json()
+      expect(Object.keys(fieldErrors).sort()).toEqual(
+        ['availability', 'category', 'description', 'images', 'leadTime', 'minOrder', 'name', 'personalization', 'price', 'specs', 'tags'].sort()
+      )
+      for (const message of Object.values(fieldErrors)) expect(typeof message).toBe('string')
+    }
+  })
+
+  it('un precio con decimales explica cómo escribirlo', async () => {
+    const response = await send('POST', { ...validProduct, price: 15.5 })
+    expect(response.status).toBe(400)
+    expect((await response.json()).fieldErrors.price).toContain('sin puntos ni decimales')
+  })
+
+  it('una imagen externa se marca en la foto y no se crea nada', async () => {
+    const before = await prisma.product.count()
+    const response = await send('POST', { ...validProduct, images: ['https://images.unsplash.com/photo-1.jpg'] })
+    expect(response.status).toBe(400)
+    expect((await response.json()).fieldErrors.images).toContain('Las imágenes deben subirse')
+    expect(await prisma.product.count()).toBe(before)
+  })
+
+  it('un producto completo se crea con el mismo cuerpo que valida el formulario', async () => {
+    expect((await send('POST', validProduct)).status).toBe(201)
+  })
+})
+
 describe('imágenes de producto estrictas', () => {
   const productPayload = (images: string[]) => ({
     name: 'Producto imágenes',

@@ -1,9 +1,7 @@
-// Las imágenes de producto se sirven sólo desde nuestro dominio (CSP `img-src 'self' data:`):
-// subidas por el admin (/uploads), catálogo demo (/catalog) o marca (/brand). Nada de URLs externas.
-export const LOCAL_IMAGE_PATTERN = /^\/(uploads|catalog|brand)\/[A-Za-z0-9][A-Za-z0-9._-]*\.(jpe?g|png|webp|gif)$/i
+import { LOCAL_IMAGE_PATTERN } from '../../shared/product-rules.js'
 
-export const LOCAL_IMAGE_MESSAGE =
-  'Las imágenes deben subirse desde el admin. Quita las imágenes externas (URLs de otros sitios).'
+// Las imágenes de producto se sirven sólo desde nuestro dominio (reglas en shared/product-rules.ts)
+export { LOCAL_IMAGE_MESSAGE, LOCAL_IMAGE_PATTERN } from '../../shared/product-rules.js'
 
 // Imagen de reemplazo cuando un producto antiguo sólo tiene imágenes externas
 export const FALLBACK_PRODUCT_IMAGE = '/brand/logo.jpeg'

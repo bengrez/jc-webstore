@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import {
+  LOCAL_IMAGE_PATTERN,
+  PRODUCT_FIELD_LABELS,
+  PRODUCT_FIELD_ORDER,
+  validateProductInput,
+} from '../../../../server/src/shared/product-rules'
+import type { ProductField, ProductFieldErrors } from '../../../../server/src/shared/product-rules'
 import type { Product } from '../../data/types'
 import { adminFetch } from './adminApi'
 import AdminProductPreview from './AdminProductPreview'
@@ -47,9 +54,8 @@ const splitLines = (value: string) =>
 
 const joinLines = (values: string[]) => values.join('\n')
 
-// Mismo criterio que el server (lib/product-images.ts): sólo imágenes de nuestro dominio.
-// Las externas de productos antiguos no se ven en el sitio (CSP) y no se pueden guardar.
-const LOCAL_IMAGE_PATTERN = /^\/(uploads|catalog|brand)\/[A-Za-z0-9][A-Za-z0-9._-]*\.(jpe?g|png|webp|gif)$/i
+// Mismas reglas que el server (shared/product-rules.ts): sólo imágenes de nuestro dominio.
+// Las externas de productos antiguas no se ven en el sitio (CSP) y no se pueden guardar.
 const isLocalImage = (url: string) => LOCAL_IMAGE_PATTERN.test(url)
 
 const emptyForm = {
@@ -102,22 +108,92 @@ const PREVIEW_PLACEHOLDER_IMAGE =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect width="400" height="300" fill="#ecefe8"/><text x="200" y="155" font-family="sans-serif" font-size="20" fill="#8a9185" text-anchor="middle">Agrega una imagen</text></svg>'
   )
 
-// Mismas reglas que valida el backend al guardar (productInputSchema).
-const getMissingFields = (form: typeof emptyForm) => {
-  const missing: string[] = []
-  if (!form.name.trim()) missing.push('Nombre')
-  if (!form.description.trim()) missing.push('Descripción')
-  if (!Number.isInteger(Number(form.price)) || Number(form.price) <= 0) {
-    missing.push('Precio (número entero mayor a 0)')
-  }
-  if (form.images.length === 0) missing.push('Al menos una imagen')
-  if (splitLines(form.tags).length === 0) missing.push('Al menos un tag')
-  if (splitLines(form.specs).length === 0) missing.push('Al menos una característica (specs)')
-  if (!form.personalization.trim()) missing.push('Personalización')
-  if (!form.leadTime.trim()) missing.push('Plazo de entrega')
-  if (!form.minOrder.trim()) missing.push('Pedido mínimo')
-  return missing
+// Lo que se envía al guardar. Las reglas (validateProductInput) las comparte el servidor, así que
+// lo que el formulario da por bueno es lo que el servidor acepta.
+const buildPayload = (form: typeof emptyForm, isActive = form.isActive) => ({
+  name: form.name,
+  description: form.description,
+  category: form.category,
+  price: Number(form.price),
+  images: form.images,
+  tags: splitLines(form.tags),
+  specs: splitLines(form.specs),
+  personalization: form.personalization,
+  minOrder: form.minOrder,
+  leadTime: form.leadTime,
+  availability: form.availability,
+  badge: form.badge ? form.badge : null,
+  sampleEligible: form.sampleEligible,
+  stockNote: form.stockNote ? form.stockNote : null,
+  isActive,
+})
+
+const validateForm = (form: typeof emptyForm) => validateProductInput(buildPayload(form))
+
+const getMissingFields = (form: typeof emptyForm) =>
+  PRODUCT_FIELD_ORDER.filter((field) => validateForm(form)[field]).map((field) => PRODUCT_FIELD_LABELS[field])
+
+// Id del control de cada campo, para enfocar el primero con error
+const FIELD_IDS: Record<ProductField, string> = {
+  name: 'prod-name',
+  category: 'prod-category',
+  description: 'prod-description',
+  price: 'prod-price',
+  availability: 'prod-availability',
+  leadTime: 'prod-leadtime',
+  minOrder: 'prod-minorder',
+  images: 'prod-images',
+  tags: 'prod-tags',
+  specs: 'prod-specs',
+  personalization: 'prod-personalization',
+  badge: 'prod-badge',
+  stockNote: 'prod-stock-note',
 }
+
+const orderedFields = (errors: ProductFieldErrors) => PRODUCT_FIELD_ORDER.filter((field) => errors[field])
+
+const summaryMessage = (errors: ProductFieldErrors) =>
+  `No se guardó: revisa ${orderedFields(errors).map((field) => PRODUCT_FIELD_LABELS[field]).join(', ')}. Los campos están marcados abajo.`
+
+// Traduce el error del servidor a un mensaje por campo y un aviso general en palabras simples.
+// El servidor responde `fieldErrors` en los 400; cualquier otra falla tampoco queda en un «error genérico».
+const describeSaveError = (error: unknown): { fieldErrors: ProductFieldErrors; message: string } => {
+  const payload = (typeof error === 'object' && error !== null ? error : {}) as {
+    error?: string
+    message?: string
+    fieldErrors?: Record<string, unknown>
+  }
+  const fieldErrors: ProductFieldErrors = {}
+  if (payload.fieldErrors && typeof payload.fieldErrors === 'object') {
+    for (const field of PRODUCT_FIELD_ORDER) {
+      const text = payload.fieldErrors[field]
+      if (typeof text === 'string' && text) fieldErrors[field] = text
+    }
+  }
+  if (Object.keys(fieldErrors).length > 0) return { fieldErrors, message: summaryMessage(fieldErrors) }
+  if (payload.error === 'unauthorized') {
+    return { fieldErrors, message: 'Tu sesión venció. Vuelve a ingresar y guarda de nuevo.' }
+  }
+  if (payload.message) return { fieldErrors, message: `No se guardó: ${payload.message}` }
+  return {
+    fieldErrors,
+    message: 'No se pudo guardar el producto por un problema del servidor. Espera un momento y vuelve a intentarlo.',
+  }
+}
+
+// Mensaje bajo un campo
+const FieldError = ({ field, errors }: { field: ProductField; errors: ProductFieldErrors }) =>
+  errors[field] ? (
+    <p className="admin-field-error" id={`${FIELD_IDS[field]}-error`} role="alert">
+      {errors[field]}
+    </p>
+  ) : null
+
+// Atributos de accesibilidad de un control con posible error
+const invalidProps = (field: ProductField, errors: ProductFieldErrors) =>
+  errors[field]
+    ? { 'aria-invalid': true as const, 'aria-describedby': `${FIELD_IDS[field]}-error` }
+    : {}
 
 const getWarnings = (form: typeof emptyForm) => {
   const warnings: string[] = []
@@ -136,6 +212,9 @@ const AdminProductsPage = () => {
   const [form, setForm] = useState(emptyForm)
   const [status, setStatus] = useState<null | { type: 'error' | 'success'; message: string }>(null)
   const [confirmDeactivate, setConfirmDeactivate] = useState(false)
+  // Errores por campo; tras el primer intento de guardar se recalculan al escribir
+  const [fieldErrors, setFieldErrors] = useState<ProductFieldErrors>({})
+  const [attempted, setAttempted] = useState(false)
 
   // Image manager state
   const [uploadingImage, setUploadingImage] = useState(false)
@@ -164,6 +243,21 @@ const AdminProductsPage = () => {
     })
   }, [])
 
+  useEffect(() => {
+    if (attempted) setFieldErrors(validateForm(form))
+  }, [form, attempted])
+
+  const resetErrors = () => {
+    setAttempted(false)
+    setFieldErrors({})
+  }
+
+  const focusField = (field: ProductField) => {
+    const element = document.getElementById(FIELD_IDS[field])
+    element?.scrollIntoView({ block: 'center' })
+    element?.focus({ preventScroll: true })
+  }
+
   // Se carga el formulario sólo al cambiar de producto: guardar una opción reemplaza el objeto
   // del producto y no debe borrar lo que el admin está editando ni el aviso de la opción.
   const loadedProductIdRef = useRef<string | null>(null)
@@ -171,6 +265,7 @@ const AdminProductsPage = () => {
     if (!selected || loadedProductIdRef.current === selected.id) return
     loadedProductIdRef.current = selected.id
     setConfirmDeactivate(false)
+    resetErrors()
     setForm(productToForm(selected))
     setShowOptionForm(false)
     setEditingOptionId(null)
@@ -181,6 +276,7 @@ const AdminProductsPage = () => {
     loadedProductIdRef.current = null
     setSelectedId(null)
     setForm(emptyForm)
+    resetErrors()
     setStatus(null)
     setConfirmDeactivate(false)
     setShowOptionForm(false)
@@ -190,23 +286,18 @@ const AdminProductsPage = () => {
     event.preventDefault()
     setStatus(null)
 
-    const payload = {
-      name: form.name,
-      description: form.description,
-      category: form.category,
-      price: Number(form.price),
-      images: form.images,
-      tags: splitLines(form.tags),
-      specs: splitLines(form.specs),
-      personalization: form.personalization,
-      minOrder: form.minOrder,
-      leadTime: form.leadTime,
-      availability: form.availability,
-      badge: form.badge ? form.badge : null,
-      sampleEligible: form.sampleEligible,
-      stockNote: form.stockNote ? form.stockNote : null,
-      isActive: form.isActive,
+    // Se valida antes de enviar: si falta algo, se marca cada campo y no se llama al servidor
+    const errors = validateForm(form)
+    setAttempted(true)
+    setFieldErrors(errors)
+    const [first] = orderedFields(errors)
+    if (first) {
+      setStatus({ type: 'error', message: summaryMessage(errors) })
+      focusField(first)
+      return
     }
+
+    const payload = buildPayload(form)
 
     try {
       if (selected) {
@@ -226,9 +317,20 @@ const AdminProductsPage = () => {
         setSelectedId(created.id)
         setStatus({ type: 'success', message: 'Producto creado.' })
       }
-    } catch {
-      setStatus({ type: 'error', message: 'Revisa los campos requeridos.' })
+      resetErrors()
+    } catch (error) {
+      showSaveError(error)
     }
+  }
+
+  // El servidor rechazó el guardado: se marca cada campo con su motivo
+  const showSaveError = (error: unknown) => {
+    const { fieldErrors: serverErrors, message } = describeSaveError(error)
+    setAttempted(false)
+    setFieldErrors(serverErrors)
+    setStatus({ type: 'error', message })
+    const [first] = orderedFields(serverErrors)
+    if (first) focusField(first)
   }
 
   const handleDeactivate = async () => {
@@ -240,32 +342,25 @@ const AdminProductsPage = () => {
 
   const handleReactivate = async () => {
     if (!selected) return
+    setStatus(null)
+    const errors = validateForm(form)
+    if (Object.keys(errors).length > 0) {
+      setAttempted(true)
+      setFieldErrors(errors)
+      setStatus({ type: 'error', message: `No se reactivó: ${summaryMessage(errors).replace('No se guardó: ', '')}` })
+      focusField(orderedFields(errors)[0])
+      return
+    }
     try {
       const updated = await adminFetch<AdminProduct>(`/api/admin/products/${selected.id}`, {
         method: 'PUT',
-        json: {
-          name: form.name,
-          description: form.description,
-          category: form.category,
-          price: Number(form.price),
-          images: form.images,
-          tags: splitLines(form.tags),
-          specs: splitLines(form.specs),
-          personalization: form.personalization,
-          minOrder: form.minOrder,
-          leadTime: form.leadTime,
-          availability: form.availability,
-          badge: form.badge || null,
-          sampleEligible: form.sampleEligible,
-          stockNote: form.stockNote || null,
-          isActive: true,
-        },
+        json: buildPayload(form, true),
       })
       setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
       setSelectedId(updated.id)
       setStatus({ type: 'success', message: 'Producto reactivado.' })
-    } catch {
-      setStatus({ type: 'error', message: 'No fue posible reactivar el producto.' })
+    } catch (error) {
+      showSaveError(error)
     }
   }
 
@@ -505,12 +600,12 @@ const AdminProductsPage = () => {
         <h2 style={{ marginTop: 0 }}>{selected ? 'Editar producto' : 'Crear producto'}</h2>
 
         {status && (
-          <div className="admin-status" data-variant={status.type} role="status" aria-live="polite">
+          <div className="admin-status" data-variant={status.type} role={status.type === 'error' ? 'alert' : 'status'} aria-live="polite">
             {status.message}
           </div>
         )}
 
-        <form className="admin-form" onSubmit={handleSubmit}>
+        <form className="admin-form" onSubmit={handleSubmit} noValidate>
 
           {/* ── Información básica ── */}
           <div className="admin-form-section">
@@ -523,13 +618,16 @@ const AdminProductsPage = () => {
                   id="prod-name"
                   value={form.name}
                   onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-                  required
+                  aria-required="true"
+                  {...invalidProps('name', fieldErrors)}
                 />
+                <FieldError field="name" errors={fieldErrors} />
               </div>
               <div>
                 <label htmlFor="prod-category">Categoría</label>
                 <select
                   id="prod-category"
+                  {...invalidProps('category', fieldErrors)}
                   value={form.category}
                   onChange={(e) =>
                     setForm((prev) => ({ ...prev, category: e.target.value as ProductCategory }))
@@ -538,6 +636,7 @@ const AdminProductsPage = () => {
                   <option value="graduaciones">Graduaciones</option>
                   <option value="marketing">Marketing</option>
                 </select>
+                <FieldError field="category" errors={fieldErrors} />
               </div>
             </div>
 
@@ -547,8 +646,10 @@ const AdminProductsPage = () => {
               rows={3}
               value={form.description}
               onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
-              required
+              aria-required="true"
+              {...invalidProps('description', fieldErrors)}
             />
+            <FieldError field="description" errors={fieldErrors} />
           </div>
 
           {/* ── Precio y logística ── */}
@@ -561,16 +662,20 @@ const AdminProductsPage = () => {
                 <input
                   id="prod-price"
                   type="number"
-                  min={1}
-                  value={form.price}
+                  inputMode="numeric"
+                  value={form.price === 0 ? '' : form.price}
                   onChange={(e) => setForm((prev) => ({ ...prev, price: Number(e.target.value) }))}
-                  required
+                  placeholder="Ej: 15990"
+                  aria-required="true"
+                  {...invalidProps('price', fieldErrors)}
                 />
+                <FieldError field="price" errors={fieldErrors} />
               </div>
               <div>
                 <label htmlFor="prod-availability">Disponibilidad</label>
                 <select
                   id="prod-availability"
+                  {...invalidProps('availability', fieldErrors)}
                   value={form.availability}
                   onChange={(e) =>
                     setForm((prev) => ({
@@ -582,6 +687,7 @@ const AdminProductsPage = () => {
                   <option value="Disponible">Disponible</option>
                   <option value="A pedido">A pedido</option>
                 </select>
+                <FieldError field="availability" errors={fieldErrors} />
               </div>
             </div>
 
@@ -593,8 +699,10 @@ const AdminProductsPage = () => {
                   value={form.leadTime}
                   onChange={(e) => setForm((prev) => ({ ...prev, leadTime: e.target.value }))}
                   placeholder="Ej: 7–10 días hábiles"
-                  required
+                  aria-required="true"
+                  {...invalidProps('leadTime', fieldErrors)}
                 />
+                <FieldError field="leadTime" errors={fieldErrors} />
               </div>
               <div>
                 <label htmlFor="prod-minorder">Pedido mínimo (MOQ)</label>
@@ -603,19 +711,25 @@ const AdminProductsPage = () => {
                   value={form.minOrder}
                   onChange={(e) => setForm((prev) => ({ ...prev, minOrder: e.target.value }))}
                   placeholder="Ej: Mínimo 50 unidades"
-                  required
+                  aria-required="true"
+                  {...invalidProps('minOrder', fieldErrors)}
                 />
+                <FieldError field="minOrder" errors={fieldErrors} />
               </div>
             </div>
           </div>
 
           {/* ── Imágenes ── */}
           <div className="admin-form-section">
-            <h4 className="admin-form-section__title">Imágenes</h4>
+            <h4 className="admin-form-section__title">Fotos</h4>
 
-            <div className="admin-image-manager">
+            <div
+              className={`admin-image-manager${fieldErrors.images ? ' admin-image-manager--invalid' : ''}`}
+              id="prod-images"
+              tabIndex={-1}
+            >
               {form.images.length === 0 && (
-                <p className="admin-image-empty">Sin imágenes. Sube al menos una.</p>
+                <p className="admin-image-empty">Sin fotos. Sube al menos una.</p>
               )}
               {form.images.some((url) => !isLocalImage(url)) && (
                 <div className="admin-status" data-variant="error" role="alert">
@@ -683,29 +797,34 @@ const AdminProductsPage = () => {
 
               </div>
             </div>
+            <FieldError field="images" errors={fieldErrors} />
           </div>
 
           {/* ── Detalles ── */}
           <div className="admin-form-section">
             <h4 className="admin-form-section__title">Detalles</h4>
 
-            <label htmlFor="prod-tags">Tags (uno por línea)</label>
+            <label htmlFor="prod-tags">Etiquetas (una por línea)</label>
             <textarea
               id="prod-tags"
               rows={2}
               value={form.tags}
               onChange={(e) => setForm((prev) => ({ ...prev, tags: e.target.value }))}
-              required
+              aria-required="true"
+              {...invalidProps('tags', fieldErrors)}
             />
+            <FieldError field="tags" errors={fieldErrors} />
 
-            <label htmlFor="prod-specs">Especificaciones (una por línea)</label>
+            <label htmlFor="prod-specs">Características (una por línea)</label>
             <textarea
               id="prod-specs"
               rows={2}
               value={form.specs}
               onChange={(e) => setForm((prev) => ({ ...prev, specs: e.target.value }))}
-              required
+              aria-required="true"
+              {...invalidProps('specs', fieldErrors)}
             />
+            <FieldError field="specs" errors={fieldErrors} />
 
             <label htmlFor="prod-personalization">Personalización</label>
             <textarea
@@ -713,8 +832,10 @@ const AdminProductsPage = () => {
               rows={2}
               value={form.personalization}
               onChange={(e) => setForm((prev) => ({ ...prev, personalization: e.target.value }))}
-              required
+              aria-required="true"
+              {...invalidProps('personalization', fieldErrors)}
             />
+            <FieldError field="personalization" errors={fieldErrors} />
 
             <div className="admin-form__row">
               <div>
@@ -724,7 +845,9 @@ const AdminProductsPage = () => {
                   value={form.badge}
                   onChange={(e) => setForm((prev) => ({ ...prev, badge: e.target.value }))}
                   placeholder="Ej: Nuevo, Popular…"
+                  {...invalidProps('badge', fieldErrors)}
                 />
+                <FieldError field="badge" errors={fieldErrors} />
               </div>
               <div>
                 <label htmlFor="prod-sample">¿Muestra disponible?</label>
@@ -747,7 +870,9 @@ const AdminProductsPage = () => {
               value={form.stockNote}
               onChange={(e) => setForm((prev) => ({ ...prev, stockNote: e.target.value }))}
               placeholder="Ej: Últimas 30 unidades, Sin stock hasta abril…"
+              {...invalidProps('stockNote', fieldErrors)}
             />
+            <FieldError field="stockNote" errors={fieldErrors} />
           </div>
 
           {/* ── Actions ── */}
